@@ -7,7 +7,7 @@
 
     const route = useRoute()
 
-    /*
+    
     const course_id = ref(NaN);
     const course_obj = ref({
         id: NaN,
@@ -21,10 +21,10 @@
     const semester_name = ref('');
     const instructor_ids = ref([]);
     const indicator_ids = ref([])
-    */
+    
 
     //--------TEST DATA--------
-    
+    /*
     const course_id = ref(1);
     const course_obj = ref({
         id: 1,
@@ -38,6 +38,7 @@
     const semester_name = ref('Fall 2025');
     const instructor_ids = ref([1, 2]);
     const indicator_ids = ref([1,2])
+    */
     //--------------------------
     
     async function initialize(){
@@ -85,7 +86,7 @@
         }
     }
 
-    //initialize();
+    initialize();
     
 </script>
 

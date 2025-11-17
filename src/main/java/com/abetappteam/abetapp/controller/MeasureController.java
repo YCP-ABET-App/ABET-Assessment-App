@@ -1,7 +1,5 @@
 package com.abetappteam.abetapp.controller;
 
-import org.springframework.web.bind.annotation.RestController;
-
 import com.abetappteam.abetapp.service.MeasureService;
 import com.abetappteam.abetapp.dto.ApiResponse;
 import com.abetappteam.abetapp.dto.MeasureDTO;
@@ -17,9 +15,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 import jakarta.validation.Valid;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 
 @RestController
 @RequestMapping("/api/measure")
