@@ -65,7 +65,7 @@
         try {
             const { data } = await api.get(`/semesters/${course_obj.value.semester_id}`);
             console.log('Fetched JSON data:', data);
-            semester_name.value = `${data.data.season} ${data.data.semesterYear}`
+            semester_name.value = `${data.data.name}`
         } catch (error) {
             console.error('Error fetching or parsing course data:', error);
         }
