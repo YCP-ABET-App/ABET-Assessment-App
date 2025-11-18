@@ -6,7 +6,7 @@
     import api from '@/api';
 
     const userStore = useUserStore()
-    const props = defineProps({mid: Number})
+    const props = defineProps({measure_prop: {type: Object, required:true}})
 
     const isAdmin = userStore.isAdmin
 
@@ -29,7 +29,55 @@
         observation: ''
     })
 
-    function complete_form_submit(){
+    async function complete_form_submit(){
+        //Check that met, exceeded, below are all ints
+        let newMetVal, newExceededVal, newBelowVal
+        try{
+            newMetVal = parseInt(complete_form_data.value.met)
+            newExceededVal = parseInt(complete_form_data.value.exceeded)
+            newBelowVal = parseInt(complete_form_data.value.below)
+        }
+        catch{
+            console.error("Met, Exceeded, and Below values must all be valid integers")
+        }
+        
+        //Define new measure object
+        const new_measure = ref({
+            "id": measure_obj.value.id,
+            "courseIndicatorId": measure_obj.value.course_indicator_id,
+            "description": measure_obj.value.measure_description,
+            "observation": complete_form_data.value.observation,
+            "recommendedAction": measure_obj.value.recommended_action,
+            "fcar": measure_obj.value.fcar,
+            "met": newMetVal as number,
+            "exceeded": newExceededVal as number,
+            "below": newBelowVal as number,
+            "createdAt": measure_obj.value.created_at,
+            "isActive": measure_obj.value.is_active
+        })
+
+        //PUT request to server
+        try {
+            const { data } = await api.put(`/measure/${measure_obj.value.id}`, new_measure);
+
+            //Update measure object
+            measure_obj.value.observation = complete_form_data.value.observation
+            measure_obj.value.met = newMetVal as number
+            measure_obj.value.exceeded = newExceededVal as number
+            measure_obj.value.below = newBelowVal as number
+        } catch (error) {
+            console.error('Error editing measure:', error);
+        }
+
+        //Reset form data
+        complete_form_data.value = {
+            met: '',
+            exceeded: '',
+            below: '',
+            observation: ''
+        }
+
+        //Close forms
         close_forms()
     }
 
@@ -116,25 +164,18 @@
     //-------------------
 
     async function initialize(){
-        //Fetch measure object
-        try {
-            const { data } = await api.get(`/measure/${props.mid}`);
-            measure_obj.value = {
-                id: data.data.id,
-                course_indicator_id: data.data.courseIndicatorId,
-                measure_description: data.data.description,
-                observation: data.data.observation,
-                recommended_action: data.data.recommendedAction,
-                fcar: data.data.fcar,
-                met: data.data.met,
-                exceeded: data.data.exceeded,
-                below: data.data.below,
-                created_at: data.data.createdAt,
-                is_active: data.data.isActive
-            }
-            console.log(`Measure ${props.mid} data: ${data}`)
-        } catch (error) {
-            console.error('Error fetching or parsing indicator data:', error);
+        measure_obj.value = {
+            id: props.measure_prop.id,
+            course_indicator_id: props.measure_prop.courseIndicatorId,
+            measure_description: props.measure_prop.description,
+            observation: props.measure_prop.observation,
+            recommended_action: props.measure_prop.recommendedAction,
+            fcar: props.measure_prop.fcar,
+            met: props.measure_prop.met,
+            exceeded: props.measure_prop.exceeded,
+            below: props.measure_prop.below,
+            created_at: props.measure_prop.createdAt,
+            is_active: props.measure_prop.isActive
         }
     }
 

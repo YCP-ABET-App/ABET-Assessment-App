@@ -17,7 +17,7 @@
         created_at: '',
         is_active: false
     })
-    const measures = ref([1,2])
+    const measures = ref([])
 
     const adding_measure = ref(false)
     const add_measure_form_data = ref({
@@ -77,23 +77,22 @@
         }
         
         //Fetch measures
-        /*
         try {
             const { data } = await api.get(`/measure/byIndicator/${props.piid}`);
-            measures.value = data;
+            measures.value = data.data;
         } catch (error) {
             console.error('Error fetching or parsing indicator data:', error);
-        }*/
+        }
     }
 
     initialize()
 </script>
 
 <template>
-    <div id="indicator_box">
+    <div id="indicator-box">
         <div id="title"><span id="pi-label">Performance Indicator: </span>{{ indicator_obj.ind_description }}</div>
         <div id="threshold-percent-title">Threshold: <span id="threshold-percent">{{ indicator_obj.threshold_percentage }}%</span></div>
-        <MeasureListing v-for="measure_id in measures" :mid="measure_id"></MeasureListing>
+        <MeasureListing v-for="measure_obj in measures" :measure_prop="measure_obj"></MeasureListing>
         <BaseButton variant="primary">Add Measure</BaseButton>
     </div>
 </template>
@@ -110,5 +109,9 @@
     #threshold-percent-title{
         color: lightgray;
         margin-bottom: 1rem;
+    }
+
+    #indicator-box{
+        text-align: left;
     }
 </style>
