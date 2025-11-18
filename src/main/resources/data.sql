@@ -30,11 +30,13 @@ VALUES
 ------------------------------------------------------------
 -- SEMESTERS
 ------------------------------------------------------------
-INSERT INTO semester (id, season, semester_year, program_id, is_active)
+INSERT INTO semester (id, name, code, type, status, start_date, end_date, academic_year, description, program_id, is_current)
 VALUES
-    (1, 'FALL', 2024, 1, TRUE),
-    (2, 'FALL', 2025, 1, TRUE),
-    (3, 'SPRING', 2024, 2, TRUE);
+    (1, 'Fall 2024', 'FALL-2024', 'FALL', 'COMPLETED', '2024-08-26', '2024-12-15', 2024, 'Fall semester for Computer Engineering program', 1, FALSE),
+    (2, 'Fall 2025', 'FALL-2025', 'FALL', 'ACTIVE', '2025-08-25', '2025-12-14', 2025, 'Current fall semester for Computer Engineering program', 1, TRUE),
+    (3, 'Spring 2024', 'SPRING-2024', 'SPRING', 'COMPLETED', '2024-01-15', '2024-05-10', 2024, 'Spring semester for Electrical Engineering program', 2, FALSE);
+
+
 
 ------------------------------------------------------------
 -- STUDENT OUTCOMES
@@ -79,10 +81,10 @@ VALUES
 ------------------------------------------------------------
 INSERT INTO course_instructor (id, program_user_id, course_id, is_active)
 VALUES
-    (1, 2, 1, TRUE), -- Bob â†’ CE101
-    (2, 3, 2, TRUE), -- Carol â†’ CE202
-    (3, 2, 3, TRUE), -- Bob â†’ CE350
-    (4, 4, 4, TRUE); -- Dave â†’ EE210
+    (1, 2, 1, TRUE), -- Bob at CE101
+    (2, 3, 2, TRUE), -- Carol at CE202
+    (3, 2, 3, TRUE), -- Bob at CE350
+    (4, 4, 4, TRUE); -- Dave at EE210
 
 ------------------------------------------------------------
 -- COURSE_INDICATOR (map PIs to courses)
