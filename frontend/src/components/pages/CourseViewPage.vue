@@ -4,11 +4,11 @@
     import api from '@/api';
     import InstructorListing from '@/components/InstructorListing.vue';
     import IndicatorListing from '@/components/IndicatorListing.vue';
-    import {BaseCard} from "@/components/ui";
+    import { BaseCard } from "@/components/ui";
 
     const route = useRoute()
 
-    
+
     const course_id = ref(NaN);
     const course_obj = ref({
         id: NaN,
@@ -22,7 +22,7 @@
     const semester_name = ref('');
     const instructor_ids = ref([]);
     const indicator_ids = ref([])
-    
+
 
     //--------TEST DATA--------
     /*
@@ -42,10 +42,7 @@
     */
     //--------------------------
 
-    async function initialize(){
-        course_id.value = parseInt(route.params.course_id as string, 10)
-
-        //Fetch Course data
+    async function fetch_course_data() {
         try {
             const { data } = await api.get(`/courses/${course_id.value}`);
             course_obj.value = {
@@ -59,26 +56,29 @@
             }
         } catch (error) {
             console.error('Error fetching or parsing course data:', error);
+            return
         }
+    }
 
-        //Fetch Semester data
+    async function fetch_semester_data() {
         try {
             const { data } = await api.get(`/semesters/${course_obj.value.semester_id}`);
-            console.log('Fetched JSON data:', data);
             semester_name.value = `${data.data.name}`
         } catch (error) {
             console.error('Error fetching or parsing course data:', error);
         }
+    }
 
-        //Fetch Instructor IDs
+    async function fetch_instructor_ids() {
         try {
             const { data } = await api.get(`/courses/${course_id.value}/instructors`);
             instructor_ids.value = data
         } catch (error) {
             console.error('Error fetching or parsing course data:', error);
         }
+    }
 
-        //Fetch Indicator IDs
+    async function fetch_indicator_ids() {
         try {
             const { data } = await api.get(`/courses/${course_id.value}/indicators`);
             indicator_ids.value = data
@@ -87,149 +87,152 @@
         }
     }
 
+    async function initialize() {
+        course_id.value = parseInt(route.params.course_id as string, 10)
+
+        //Fetch Course data
+        fetch_course_data();
+
+        //Fetch Semester data
+        fetch_semester_data();
+
+        //Fetch Instructor IDs
+        fetch_instructor_ids();
+
+        //Fetch Indicator IDs
+        fetch_indicator_ids();
+    }
+
     initialize();
-    
+
 </script>
 
 <template>
-  <section class="course-page">
+    <section class="course-page">
 
-    <!-- Header -->
-    <div class="page-header">
-      <div class="header-content">
-        <h2 class="course-title">
-          {{ course_obj.course_code }} — {{ course_obj.course_name }}
-        </h2>
+        <!-- Header -->
+        <div class="page-header">
+            <div class="header-content">
+                <h2 class="course-title">
+                    {{ course_obj.course_code }} — {{ course_obj.course_name }}
+                </h2>
 
-        <p class="subtitle">
-          {{ semester_name }}
+                <p class="subtitle">
+                    {{ semester_name }}
+                </p>
+            </div>
+        </div>
+
+        <!-- Description -->
+        <p class="course-description">
+            {{ course_obj.course_description }}
         </p>
-      </div>
-    </div>
 
-    <!-- Description -->
-    <p class="course-description">
-      {{ course_obj.course_description }}
-    </p>
+        <!-- Instructors -->
+        <section class="detail-section">
+            <h3>Instructors</h3>
+            <div class="instructor-list">
+                <InstructorListing v-for="iid in instructor_ids" :iid="iid" />
+            </div>
+        </section>
 
-    <!-- Instructors -->
-    <section class="detail-section">
-      <h3>Instructors</h3>
-      <div class="instructor-list">
-        <BaseCard
-          v-for="iid in instructor_ids"
-          :key="iid"
-          variant="elevated"
-          hoverable
-          class="mini-card"
-        >
-          <InstructorListing :iid="iid" />
-        </BaseCard>
-      </div>
+        <!-- Indicators -->
+        <section class="detail-section">
+            <h3>Performance Indicators</h3>
+
+            <div class="indicator-list">
+                <BaseCard v-for="piid in indicator_ids" :key="piid" variant="default" class="indicator-card">
+                    <IndicatorListing :piid="piid" />
+                </BaseCard>
+            </div>
+        </section>
+
     </section>
-
-    <!-- Indicators -->
-    <section class="detail-section">
-      <h3>Performance Indicators</h3>
-
-      <div class="indicator-list">
-        <BaseCard
-          v-for="piid in indicator_ids"
-          :key="piid"
-          variant="default"
-          class="indicator-card"
-        >
-          <IndicatorListing :piid="piid" />
-        </BaseCard>
-      </div>
-    </section>
-
-  </section>
 </template>
 
 <style>
 .course-page {
-  padding: 2rem;
-  max-width: 1100px;
-  margin: 0 auto;
+    padding: 2rem;
+    max-width: 1100px;
+    margin: 0 auto;
 }
 
 /* Header */
 .page-header {
-  margin-bottom: 2rem;
+    margin-bottom: 2rem;
 }
 
 .header-content {
-  margin-bottom: 0.25rem;
+    margin-bottom: 0.25rem;
 }
 
 .course-title {
-  margin: 0;
-  color: var(--color-text-primary);
-  font-size: 2rem;
-  font-weight: 700;
+    margin: 0;
+    color: var(--color-text-primary);
+    font-size: 2rem;
+    font-weight: 700;
 }
 
 .subtitle {
-  margin: 0;
-  color: var(--color-text-secondary);
-  font-size: 1rem;
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-size: 1rem;
 }
 
 /* Description */
 .course-description {
-  margin-top: 0.75rem;
-  margin-bottom: 2rem;
-  color: var(--color-text-secondary);
-  font-style: italic;
-  font-size: 1rem;
+    margin-top: 0.75rem;
+    margin-bottom: 2rem;
+    color: var(--color-text-secondary);
+    font-style: italic;
+    font-size: 1rem;
 }
 
 /* Sections */
 .detail-section {
-  margin-top: 2.5rem;
+    margin-top: 2.5rem;
 }
 
 .detail-section h3 {
-  margin: 0 0 1rem 0;
-  font-size: 1.25rem;
-  color: var(--color-text-primary);
-  border-bottom: 2px solid var(--color-border-light);
-  padding-bottom: 0.5rem;
+    margin: 0 0 1rem 0;
+    font-size: 1.25rem;
+    color: var(--color-text-primary);
+    border-bottom: 2px solid var(--color-border-light);
+    padding-bottom: 0.5rem;
 }
 
 /* Instructor list (cards) */
 .instructor-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 1rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1rem;
 }
 
 .mini-card {
-  padding: 1rem;
+    padding: 1rem;
 }
 
 /* Indicator cards */
 .indicator-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
 }
 
 .indicator-card {
-  padding: 1.25rem;
-  background: var(--color-bg-secondary);
-  border: 1px solid var(--color-border-light);
-  border-radius: 0.5rem;
+    padding: 1.25rem;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border-light);
+    border-radius: 0.5rem;
 }
 
 @media (max-width: 768px) {
-  .course-page {
-    padding: 1rem;
-  }
+    .course-page {
+        padding: 1rem;
+    }
 
-  .instructor-list {
-    grid-template-columns: 1fr;
-  }
+    .instructor-list {
+        grid-template-columns: 1fr;
+    }
 }
 </style>

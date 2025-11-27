@@ -3,6 +3,7 @@
     import { useUserStore } from '@/stores/user-store.ts'
     import { BaseButton } from '@/components/ui'
     import { BaseInput } from '@/components/ui'
+    import { BaseModal } from '@/components/ui'
     import api from '@/api';
 
     const userStore = useUserStore()
@@ -219,8 +220,7 @@
             </div>
         </div>
 
-        <div v-if="completing" class="form" id="complete-form">
-            <h4>Complete Measure</h4>
+        <BaseModal v-model:isOpen="completing" title="Complete Measure" size="md" class="form" id="complete-form">
             <div class="input-grid">
                 <BaseInput
                     v-model="complete_form_data.met"
@@ -247,10 +247,9 @@
                 />
             </div>
             <BaseButton variant="primary" class="submit-button" @click="complete_form_submit">Submit</BaseButton>
-        </div>
+        </BaseModal>
 
-        <div v-if="editing" class="form" id="edit-form">
-            <h4>Edit Measure</h4>
+        <BaseModal v-model:isOpen="editing" title="Edit Measure" size="md" class="form" id="complete-form">
             <div class="input-grid">
                 <BaseInput
                     v-model="edit_form_data.description"
@@ -260,15 +259,15 @@
                 />
             </div>
             <BaseButton variant="primary" class="submit-button" @click="edit_form_submit">Submit</BaseButton>
-        </div>
+        </BaseModal>
 
-        <div v-if="deleting" class="form" id="delete-form">
+        <BaseModal v-model:isOpen="deleting" title="Delete Measure" size="md" class="form" id="complete-form">
             <h4>Delete Measure</h4>
             Are you sure you want to delete measure?
             <BaseButton variant="danger" class="submit-button" @click="delete_measure">Delete</BaseButton>
-        </div>
+        </BaseModal>
 
-        <div v-if="rec_action" class="form" id="delete-form">
+        <BaseModal v-model:isOpen="rec_action" title="Add Recommended Action" class="form" id="delete-form">
             <div class="input-grid">
                 <BaseInput
                     v-model="ra_form_data.recommended_action"
@@ -278,7 +277,7 @@
                 />
             </div>
             <BaseButton variant="primary" class="submit-button" @click="ra_form_submit">Submit</BaseButton>
-        </div>
+        </BaseModal>
     </div>
     
 </template>
