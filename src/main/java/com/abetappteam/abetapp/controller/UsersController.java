@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 
 
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/users")
 public class UsersController extends BaseController {
 
     @Autowired
