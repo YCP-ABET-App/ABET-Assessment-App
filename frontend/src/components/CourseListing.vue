@@ -2,6 +2,7 @@
 import { ref, watch, onMounted } from "vue";
 import api from "@/api";
 import BaseCard from "@/components/ui/BaseCard.vue";
+import CourseInspectModal from "@/components/CourseInspectModal.vue";
 
 interface Course {
   id: number
@@ -20,6 +21,7 @@ const emit = defineEmits(["select"]);
 const loading = ref(false);
 const error = ref<string | null>(null);
 const courses = ref<Course[]>([]);
+const selectedCourse = ref<Course | null>(null);
 
 /* -----------------------------
  * Load courses for program
@@ -48,7 +50,12 @@ watch(() => props.programId, loadCourses);
 onMounted(loadCourses);
 
 function selectCourse(course: Course) {
+  selectedCourse.value = course;
   emit("select", course);
+}
+
+function closeInspectModal() {
+  selectedCourse.value = null;
 }
 </script>
 
@@ -92,6 +99,12 @@ function selectCourse(course: Course) {
       </BaseCard>
     </div>
   </section>
+
+  <!-- Course Inspect Modal -->
+  <CourseInspectModal
+    :course="selectedCourse"
+    @close="closeInspectModal"
+  />
 </template>
 
 <style scoped>
