@@ -34,7 +34,7 @@ initialize()
 </script>
 
 <template>
-    <router-link :to="`/instructor/${props.iid}`">
+    <router-link :to="`/instructor/${props.iid}`" class="instructor-link">
         <BaseCard variant="elevated" hoverable class="mini-card">
             <div class="instructor-card-content">
                 <div class="instructor-avatar">
@@ -55,6 +55,10 @@ initialize()
 </template>
 
 <style>
+.instructor-link {
+    text-decoration: none;
+}
+
 .instructor-card {
     cursor: pointer;
     transition: all 0.2s ease;
@@ -65,6 +69,7 @@ initialize()
     align-items: center;
     text-align: left;
     gap: 1.25rem;
+    text-decoration: none;
 }
 
 .instructor-avatar {

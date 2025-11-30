@@ -91,10 +91,10 @@
         course_id.value = parseInt(route.params.course_id as string, 10)
 
         //Fetch Course data
-        fetch_course_data();
+        await fetch_course_data();
 
         //Fetch Semester data
-        fetch_semester_data();
+        await fetch_semester_data();
 
         //Fetch Instructor IDs
         fetch_instructor_ids();
