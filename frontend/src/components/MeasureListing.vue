@@ -1,5 +1,6 @@
 <script lang="ts" setup>
     import { ref } from 'vue'
+    import { defineEmits } from 'vue'
     import { useUserStore } from '@/stores/user-store.ts'
     import { BaseButton } from '@/components/ui'
     import { BaseInput } from '@/components/ui'
@@ -8,6 +9,7 @@
 
     const userStore = useUserStore()
     const props = defineProps({measure_prop: {type: Object, required:true}})
+    const emits = defineEmits(["refresh"])
 
     const isAdmin = userStore.isAdmin
 
@@ -40,26 +42,37 @@
         }
         catch{
             console.error("Met, Exceeded, and Below values must all be valid integers")
+            return
         }
         
         //Define new measure object
         const new_measure = ref({
-            "id": measure_obj.value.id,
-            "courseIndicatorId": measure_obj.value.course_indicator_id,
-            "description": measure_obj.value.measure_description,
-            "observation": complete_form_data.value.observation,
-            "recommendedAction": measure_obj.value.recommended_action,
-            "fcar": measure_obj.value.fcar,
-            "met": newMetVal as number,
-            "exceeded": newExceededVal as number,
-            "below": newBelowVal as number,
-            "createdAt": measure_obj.value.created_at,
-            "isActive": measure_obj.value.is_active
+            id: measure_obj.value.id,
+            courseIndicatorId: measure_obj.value.course_indicator_id,
+            description: measure_obj.value.measure_description,
+            observation: complete_form_data.value.observation,
+            recommendedAction: measure_obj.value.recommended_action,
+            fcar: measure_obj.value.fcar,
+            studentsMet: newMetVal as number,
+            studentsExceeded: newExceededVal as number,
+            studentsBelow: newBelowVal as number,
+            createdAt: measure_obj.value.created_at,
+            active: measure_obj.value.is_active,
+            deleted: measure_obj.value.deleted,
+            deletedAt: measure_obj.value.deleted_at,
+            new: measure_obj.value.new,
+            status: "InReview",
+            updatedAt: measure_obj.value.updated_at,
+            version: measure_obj.value.version
         })
+        console.log("New Measure: ")
+        console.log(new_measure)
 
         //PUT request to server
         try {
-            const { data } = await api.put(`/measure/${measure_obj.value.id}`, new_measure);
+            const { data } = await api.put(`/measure/${measure_obj.value.id}`, new_measure.value);
+            console.log("Response data: ")
+            console.log(data)
 
             //Update measure object
             measure_obj.value.observation = complete_form_data.value.observation
@@ -80,6 +93,10 @@
 
         //Close forms
         close_forms()
+
+        //Refresh measures
+        set_status()
+        emits('refresh')
     }
 
     function open_edit_form(){
@@ -93,8 +110,56 @@
         description: ''
     })
 
-    function edit_form_submit(){
+    async function edit_form_submit(){
+        //Check that met, exceeded, below are all ints
+        let newDescVal = edit_form_data.value.description
+        
+        //Define new measure object
+        const new_measure = ref({
+            id: measure_obj.value.id,
+            courseIndicatorId: measure_obj.value.course_indicator_id,
+            description: newDescVal,
+            observation: measure_obj.value.observation,
+            recommendedAction: measure_obj.value.recommended_action,
+            fcar: measure_obj.value.fcar,
+            studentsMet: measure_obj.value.met,
+            studentsExceeded: measure_obj.value.met,
+            studentsBelow: measure_obj.value.met,
+            createdAt: measure_obj.value.created_at,
+            active: measure_obj.value.is_active,
+            deleted: measure_obj.value.deleted,
+            deletedAt: measure_obj.value.deleted_at,
+            new: measure_obj.value.new,
+            status: measure_obj.value.status,
+            updatedAt: measure_obj.value.updated_at,
+            version: measure_obj.value.version
+        })
+        console.log("New Measure: ")
+        console.log(new_measure)
+
+        //PUT request to server
+        try {
+            const { data } = await api.put(`/measure/${measure_obj.value.id}`, new_measure.value);
+            console.log("Response data: ")
+            console.log(data)
+
+            //Update measure object
+            measure_obj.value.measure_description = edit_form_data.value.description
+        } catch (error) {
+            console.error('Error editing measure:', error);
+        }
+
+        //Reset form data
+        edit_form_data.value = {
+            description: ''
+        }
+
+        //Close forms
         close_forms()
+
+        //Refresh measures
+        set_status()
+        emits('refresh')
     }
 
     function open_delete_form(){
@@ -104,8 +169,23 @@
         rec_action.value = false
     }
 
-    function delete_measure(){
+    async function delete_measure(){
+        //DELETE request to server
+        try {
+            const { data } = await api.delete(`/measure/${measure_obj.value.id}`);
+            console.log("Response data: ")
+            console.log(data)
+
+            //Update measure object
+            measure_obj.value.recommended_action = ra_form_data.value.recommended_action
+        } catch (error) {
+            console.error('Error deleting measure:', error);
+        }
+        
         close_forms()
+
+        //Refresh measures
+        emits('refresh')
     }
 
     function open_ra_form(){
@@ -119,8 +199,56 @@
         recommended_action: ''
     })
 
-    function ra_form_submit(){
-        close_forms();
+    async function ra_form_submit(){
+        //Check that met, exceeded, below are all ints
+        let newRAVal = ra_form_data.value.recommended_action
+        
+        //Define new measure object
+        const new_measure = ref({
+            id: measure_obj.value.id,
+            courseIndicatorId: measure_obj.value.course_indicator_id,
+            description: measure_obj.value.measure_description,
+            observation: measure_obj.value.observation,
+            recommendedAction: newRAVal,
+            fcar: measure_obj.value.fcar,
+            studentsMet: measure_obj.value.met,
+            studentsExceeded: measure_obj.value.met,
+            studentsBelow: measure_obj.value.met,
+            createdAt: measure_obj.value.created_at,
+            active: measure_obj.value.is_active,
+            deleted: measure_obj.value.deleted,
+            deletedAt: measure_obj.value.deleted_at,
+            new: measure_obj.value.new,
+            status: "Completed",
+            updatedAt: measure_obj.value.updated_at,
+            version: measure_obj.value.version
+        })
+        console.log("New Measure: ")
+        console.log(new_measure)
+
+        //PUT request to server
+        try {
+            const { data } = await api.put(`/measure/${measure_obj.value.id}`, new_measure.value);
+            console.log("Response data: ")
+            console.log(data)
+
+            //Update measure object
+            measure_obj.value.recommended_action = ra_form_data.value.recommended_action
+        } catch (error) {
+            console.error('Error editing measure:', error);
+        }
+
+        //Reset form data
+        ra_form_data.value = {
+            recommended_action: ''
+        }
+
+        //Close forms
+        close_forms()
+
+        //Refresh measures
+        set_status()        
+        emits('refresh')
     }
 
     function close_forms(){
@@ -128,6 +256,22 @@
         editing.value = false
         deleting.value = false
         rec_action.value = false
+    }
+
+    function set_status(){
+        console.log("Measure " + measure_obj.value.id + " Status: " + measure_obj.value.status)
+        if(measure_obj.value.status==="InProgress"){
+            status.value = 0
+        }
+        else if(measure_obj.value.status==="InReview"){
+            status.value = 1
+        }
+        else if(measure_obj.value.status==="Completed"){
+            status.value = 2
+        }
+        else{
+            status.value = 3
+        }
     }
 
     
@@ -142,9 +286,16 @@
         exceeded: NaN,
         below: NaN,
         created_at: '',
-        is_active: false
+        is_active: false,
+        deleted: false,
+        deleted_at: null,
+        new: false,
+        status: null,
+        updated_at: null,
+        version: null
     })
-    
+
+    const status = ref(NaN)
 
     //-----TEST DATA-----
     /*
@@ -172,12 +323,21 @@
             observation: props.measure_prop.observation,
             recommended_action: props.measure_prop.recommendedAction,
             fcar: props.measure_prop.fcar,
-            met: props.measure_prop.met,
-            exceeded: props.measure_prop.exceeded,
-            below: props.measure_prop.below,
+            met: props.measure_prop.studentsMet,
+            exceeded: props.measure_prop.studentsExceeded,
+            below: props.measure_prop.studentsBelow,
             created_at: props.measure_prop.createdAt,
-            is_active: props.measure_prop.isActive
+            is_active: props.measure_prop.active,
+            deleted: props.measure_prop.deleted,
+            deleted_at: props.measure_prop.deleted_at,
+            new: props.measure_prop.new,
+            status: props.measure_prop.status,
+            updated_at: props.measure_prop.updatedAt,
+            version: props.measure_prop.version
         }
+
+        set_status()
+        console.log("Status: " + status.value)
     }
 
     initialize()
@@ -187,25 +347,27 @@
     <div id="m-listing-body">
         <div id="measure-box">
             <div id="description">{{ measure_obj.measure_description }}</div>
-            <div v-if="measure_obj.met==null" class="complete-status">Not Completed</div>
-            <div v-else class="complete-status">Completed</div>
+            <div v-if="status==0" class="complete-status">In Progress</div>
+            <div v-else-if="status==1" class="complete-status">In Review</div>
+            <div v-else-if="status==2" class="complete-status">Completed</div>
+            <div v-else class="complete-status">Submitted</div>
             <div id="buttons">
                 <BaseButton 
-                    v-if="measure_obj.met==null && !isAdmin" 
+                    v-if="status==0 && !isAdmin" 
                     variant="primary" 
                     size="sm" 
                     @click="open_complete_form">
                     Complete
                 </BaseButton>
                 <BaseButton 
-                    v-if="measure_obj.met==null && !isAdmin" 
+                    v-if="status==0 && !isAdmin" 
                     variant="primary" 
                     size="sm" 
                     @click="open_edit_form">
                     Edit
                 </BaseButton>
                 <BaseButton 
-                    v-if="measure_obj.met!=null && isAdmin" 
+                    v-if="status==1 && isAdmin" 
                     variant="primary" 
                     size="sm" 
                     @click="open_ra_form">
