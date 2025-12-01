@@ -1,6 +1,6 @@
 <template>
   <section class="fcar-page">
-    <h1>FCAR ~ ABET Assessments</h1>
+    <h1>Edit and Export FCAR</h1>
 
     <label>Student Outcome #:</label>
     <input v-model="form.outcome" type="text" placeholder="e.g., 1.1" />
@@ -52,99 +52,126 @@
   </section>
 </template>
 
-<script>
-export default {
-  name: "FCARPage",
-  data() {
-    return {
-      form: {
-        outcome: "",
-        course: "",
-        work: "",
-        description: "",
-        targetGoal: "70% of students meeting or exceeding expectations",
-        needsImprovement: "",
-        meetsExpectations: "",
-        exceedsExpectations: "",
-        summary: "",
-        resultsMet: false,
-      },
+<script setup lang="ts">
+import { ref } from 'vue';
+import { useRoute } from 'vue-router';
+import api from '@/api';
+
+const measureId = ref(NaN)
+const route = useRoute()
+
+const form = ref({
+  outcome: "",
+  course: "",
+  work: "",
+  description: "",
+  targetGoal: "",
+  needsImprovement: "",
+  meetsExpectations: "",
+  exceedsExpectations: "",
+  summary: "",
+  resultsMet: false,
+});
+
+function makeTallies(text: string) {
+  const match = text.match(/^(\d+)/);
+  if (!match) return "";
+  const n = parseInt(match[1]);
+  return "1".repeat(Math.min(n, 15));
+}
+
+function generateReport() {
+  alert("Report generated successfully (placeholder function).");
+
+  const formValue = form.value;
+
+  const lines = [];
+  lines.push(`(${formValue.outcome || ""})`);
+  lines.push("");
+
+  if (formValue.course) lines.push(`Course: ${formValue.course}`);
+  if (formValue.work) lines.push(`Work used: ${formValue.work}`);
+  lines.push("");
+
+  lines.push("Description");
+  lines.push(formValue.description || "");
+  lines.push("");
+
+  lines.push(`Target goal: ${formValue.targetGoal}`);
+  lines.push("");
+
+  lines.push(
+    `Needs improvement: ${formValue.needsImprovement} : [${makeTallies(
+      formValue.needsImprovement
+    )}]`
+  );
+
+  lines.push(
+    `Meets expectations: ${formValue.meetsExpectations} : [${makeTallies(
+      formValue.meetsExpectations
+    )}]`
+  );
+
+  lines.push(
+    `Exceeds expectations: ${formValue.exceedsExpectations} : [${makeTallies(
+      formValue.exceedsExpectations
+    )}]`
+  );
+  lines.push("");
+
+  const resultLine = formValue.targetGoal
+    ? `Results: The target of ${formValue.targetGoal} was ${
+        formValue.resultsMet ? "achieved." : "not achieved."
+      }`
+    : "Results: Target goal data unavailable.";
+  lines.push(resultLine);
+  lines.push("");
+
+  lines.push(`Summary/Observations: ${formValue.summary}`);
+  lines.push("");
+
+  const reportText = lines.join("\n");
+
+  const blob = new Blob([reportText], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+
+  const safeCourse = (formValue.course || "FCAR_Report").replace(/[^\w\-]+/g, "_");
+  a.href = url;
+  a.download = `${safeCourse}.txt`;
+
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+async function initialize(){
+  measureId.value = parseInt(route.params.measure_id as string, 10)
+  
+  //Fetch measure data
+  try {
+    const { data } = await api.get(`/measure/${measureId.value}`);
+    form.value = {
+      outcome: data.data.outcome,
+      course: "",
+      work: "",
+      description: data.data.description,
+      targetGoal: "",
+      needsImprovement: data.data.studentsBelow,
+      meetsExpectations: data.data.studentsMet,
+      exceedsExpectations: data.data.studentsExceeded,
+      summary: data.data.observation,
+      resultsMet: false,
     };
-  },
-  methods: {
-    generateReport() {
-      alert("Report generated successfully (placeholder function).");
+  } catch (error) {
+    console.error('Error fetching or parsing measure data:', error);
+  }
+}
 
-      const lines = [];
-      lines.push(`(${this.form.outcome || ""})`);
-      lines.push("");
-
-      if (this.form.course) lines.push(`Course: ${this.form.course}`);
-      if (this.form.work) lines.push(`Work used: ${this.form.work}`);
-      lines.push("");
-
-      lines.push("Description");
-      lines.push(this.form.description || "");
-      lines.push("");
-
-      lines.push(`Target goal: ${this.form.targetGoal}`);
-      lines.push("");
-
-      lines.push(
-        `Needs improvement: ${this.form.needsImprovement} : [${this.makeTallies(
-          this.form.needsImprovement
-        )}]`
-      );
-
-      lines.push(
-        `Meets expectations: ${this.form.meetsExpectations} : [${this.makeTallies(
-          this.form.meetsExpectations
-        )}]`
-      );
-
-      lines.push(
-        `Exceeds expectations: ${this.form.exceedsExpectations} : [${this.makeTallies(
-          this.form.exceedsExpectations
-        )}]`
-      );
-      lines.push("");
-
-      const resultLine = this.form.targetGoal
-        ? `Results: The target of ${this.form.targetGoal} was ${
-            this.form.resultsMet ? "achieved." : "not achieved."
-          }`
-        : "Results: Target goal data unavailable.";
-      lines.push(resultLine);
-      lines.push("");
-
-      lines.push(`Summary/Observations: ${this.form.summary}`);
-      lines.push("");
-
-      const reportText = lines.join("\n");
-
-      const blob = new Blob([reportText], { type: "text/plain;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-
-      const safeCourse = (this.form.course || "FCAR_Report").replace(/[^\w\-]+/g, "_");
-      a.href = url;
-      a.download = `${safeCourse}.txt`;
-
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    },
-
-    makeTallies(text) {
-      const match = text.match(/^(\d+)/);
-      if (!match) return "";
-      const n = parseInt(match[1]);
-      return "1".repeat(Math.min(n, 15));
-    },
-  },
-};
+initialize()
 </script>
+
 <style scoped>
 .fcar-page {
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
