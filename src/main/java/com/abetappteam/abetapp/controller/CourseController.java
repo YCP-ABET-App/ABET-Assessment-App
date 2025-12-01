@@ -4,6 +4,7 @@ import com.abetappteam.abetapp.dto.ApiResponse;
 import com.abetappteam.abetapp.dto.CourseDTO;
 import com.abetappteam.abetapp.dto.PagedResponse;
 import com.abetappteam.abetapp.entity.Course;
+import com.abetappteam.abetapp.entity.CourseIndicator;
 import com.abetappteam.abetapp.service.CourseService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -13,7 +14,13 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
+
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
 
 /**
  * Controller for course entity operations
@@ -286,6 +293,31 @@ public class CourseController extends BaseController {
     @GetMapping("/{courseId}/indicators")
     public ResponseEntity<List<Long>> getIndicators(@PathVariable Long courseId) {
         return ResponseEntity.ok(courseService.getIndicatorIds(courseId));
+    }
+
+    //Get Course Indicator
+    @GetMapping("/courseIndicator/{courseId}/{indicatorId}")
+    public ResponseEntity<ApiResponse<Optional<CourseIndicator>>> getCourseIndicatorByCourseIdAndIndicatorId(
+        @PathVariable Long courseId, @PathVariable Long indicatorId){
+            Optional<CourseIndicator> data = courseService.getCourseIndicatorByCourseIdAndIndicatorId(
+                courseId, indicatorId);
+            return success(data, "courseIndicator successfully found");
+        }
+    
+    @GetMapping("/courseIndicator/{id}")
+    public ResponseEntity<ApiResponse<Optional<CourseIndicator>>> getCourseIndicatorById(@PathVariable Long id){
+        Optional<CourseIndicator> data = courseService.getCourseIndicatorById(id);
+        return success(data, "courseIndicator successfully found");
+    }
+
+
+    @GetMapping("/courseIndicator/getIds/{id}")
+    public ResponseEntity<ApiResponse<List<Long>>> getCourseIdAndIndicatorId(@PathVariable Long id){
+        List<Long> data = new ArrayList<>();
+        Optional<CourseIndicator> ci = courseService.getCourseIndicatorById(id);
+        data.add(ci.get().getCourseId());
+        data.add(ci.get().getIndicatorId());
+        return success(data, "course id and indicator id successfully found");
     }
 
     /**

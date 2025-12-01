@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -283,6 +284,17 @@ public class CourseService extends BaseService<Course, Long, CourseRepository> {
                 .stream()
                 .map(CourseIndicator::getIndicatorId)
                 .collect(Collectors.toList());
+    }
+
+    //Return CourseIndicator
+    @Transactional(readOnly = true)
+    public Optional<CourseIndicator> getCourseIndicatorByCourseIdAndIndicatorId(Long courseId, Long indicatorId){
+        return courseIndicatorRepository.findByCourseIdAndIndicatorId(courseId, indicatorId);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<CourseIndicator> getCourseIndicatorById(Long id){
+        return courseIndicatorRepository.findById(id);
     }
 
     @Transactional(readOnly = true)

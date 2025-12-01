@@ -4,6 +4,7 @@ import com.abetappteam.abetapp.BaseControllerTest;
 import com.abetappteam.abetapp.config.TestSecurityConfig;
 import com.abetappteam.abetapp.dto.CourseDTO;
 import com.abetappteam.abetapp.entity.Course;
+import com.abetappteam.abetapp.entity.CourseIndicator;
 import com.abetappteam.abetapp.service.CourseService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,8 +18,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -44,6 +47,7 @@ class CourseControllerUnitTest extends BaseControllerTest {
 
     private Course testCourse;
     private CourseDTO testCourseDTO;
+    private CourseIndicator testCI;
 
     @BeforeEach
     void setUp() {
@@ -62,6 +66,12 @@ class CourseControllerUnitTest extends BaseControllerTest {
         testCourseDTO.setCourseDescription("An introduction to software engineering principles");
         testCourseDTO.setSemesterId(1L);
         testCourseDTO.setStudentCount(28);
+
+        testCI = new CourseIndicator();
+        testCI.setId(1l);
+        testCI.setIndicatorId(1l);
+        testCI.setCourseId(1l);
+        testCI.setIsActive(true);
     }
 
     @Test
@@ -400,6 +410,42 @@ class CourseControllerUnitTest extends BaseControllerTest {
                 .andExpect(jsonPath("$[1]").value(8));
 
         verify(courseService).getIndicatorIds(1L);
+    }
+
+    @Test
+    void shouldGetCourseIndicatorByCourseAndIndicator() throws Exception {
+        when(courseService.getCourseIndicatorByCourseIdAndIndicatorId(1l, 1l)).thenReturn(Optional.of(testCI));
+
+        mockMvc.perform(get("/api/courses/courseIndicator/1/1"))
+            .andExpect(status().isOk())
+            .andDo(MockMvcResultHandlers.print())
+            .andExpect(jsonPath("$.data.id").value(1));
+
+        verify(courseService).getCourseIndicatorByCourseIdAndIndicatorId(1l, 1l);
+    }
+
+    @Test
+    void shouldGetCourseIndicatorById() throws Exception {
+        when(courseService.getCourseIndicatorById(1l)).thenReturn(Optional.of(testCI));
+
+        mockMvc.perform(get("/api/courses/courseIndicator/1"))
+            .andExpect(status().isOk())
+            .andDo(MockMvcResultHandlers.print())
+            .andExpect(jsonPath("$.data.id").value(1));
+
+        verify(courseService).getCourseIndicatorById(1l);
+    }
+
+    @Test
+    void shouldGetCourseIdAndIndicatorId() throws Exception {
+        when(courseService.getCourseIndicatorById(1l)).thenReturn(Optional.of(testCI));
+
+        mockMvc.perform(get("/api/courses/courseIndicator/getIds/1"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.[0]").value(1))
+            .andExpect(jsonPath("$.data.[1]").value(1));
+        
+        verify(courseService).getCourseIndicatorById(1l);
     }
 
 }
