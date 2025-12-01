@@ -855,7 +855,6 @@ onMounted(() => {
 
 .pdf-export-wrapper {
   padding: 1rem;
-  background: white;
 }
 
 .pdf-export-wrapper * {
