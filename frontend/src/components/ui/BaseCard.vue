@@ -52,7 +52,7 @@ const cardClasses = computed(() => {
 }
 
 .card-default {
-  border: 1px solid var(--color-border-light);
+  border: 1px solid var(--color-border-dark);
 }
 
 .card-bordered {

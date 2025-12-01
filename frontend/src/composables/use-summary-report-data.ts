@@ -249,7 +249,8 @@ export function useSummaryReportData(props: SummaryReportProps) {
                 description: desc,
                 metPercentage: pct,
                 status,
-                note: measure.observation ?? undefined
+                note: measure.observation ?? undefined,
+                recommendedAction: measure.recommendedAction ?? null
               });
 
               if (measure.recommendedAction) {

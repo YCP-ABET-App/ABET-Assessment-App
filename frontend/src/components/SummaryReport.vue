@@ -508,13 +508,13 @@ onMounted(() => {
             >
               <!-- Indicator Header -->
               <div class="indicator-header">
-                <span class="indicator-number">
-                  {{ indicator.indicatorNumber }}
-                </span>
+      <span class="indicator-number">
+        {{ indicator.indicatorNumber }}
+      </span>
 
                 <span class="course-code">
-                  {{ indicator.courseCode }}
-                </span>
+        {{ indicator.courseCode }}
+      </span>
               </div>
 
               <!-- Measures -->
@@ -525,49 +525,43 @@ onMounted(() => {
                   class="measure-item"
                 >
                   <div class="measure-main">
-                    <span class="measure-description">
-                      {{ measure.description }},
-                    </span>
+          <span class="measure-description">
+            {{ measure.description }},
+          </span>
 
                     <span
                       class="measure-status"
                       :class="{
-                        'status-met-comfortably': measure.status === 'Met comfortably',
-                        'status-met': measure.status === 'Met',
-                        'status-barely-not-met': measure.status === 'Barely not met',
-                        'status-not-met': measure.status === 'Not met'
-                      }"
+              'status-met-comfortably': measure.status === 'Met comfortably',
+              'status-met': measure.status === 'Met',
+              'status-barely-not-met': measure.status === 'Barely not met',
+              'status-not-met': measure.status === 'Not met'
+            }"
                     >
-                      {{ measure.status }}
-                    </span>
+            {{ measure.status }}
+          </span>
 
                     <span class="measure-percentage">
-                      ({{ measure.metPercentage }}%)
-                    </span>
+            ({{ measure.metPercentage }}%)
+          </span>
                   </div>
 
+                  <!-- Existing Notes -->
                   <div v-if="measure.note" class="measure-note">
                     {{ measure.note }}
+                  </div>
+
+                  <div
+                    v-if="measure.recommendedAction"
+                    class="measure-note"
+                    style="background: var(--color-bg-tertiary); color: var(--color-text-primary);"
+                  >
+                    <strong>Recommended Action:</strong><br />
+                    {{ measure.recommendedAction }}
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-
-          <!-- Recommended Actions -->
-          <div
-            v-if="outcome.recommendedActions.length > 0"
-            class="recommended-actions"
-          >
-            <h3>Recommended Actions:</h3>
-            <ul>
-              <li
-                v-for="(action, index) in outcome.recommendedActions"
-                :key="`rec-${index}`"
-              >
-                {{ action }}
-              </li>
-            </ul>
           </div>
         </BaseCard>
       </div>
@@ -660,10 +654,6 @@ onMounted(() => {
   gap: 2rem;
 }
 
-.outcome-card {
-  border-left: 4px solid var(--color-primary);
-}
-
 .outcome-header {
   margin-bottom: 1.5rem;
   padding-bottom: 1rem;
@@ -711,7 +701,6 @@ onMounted(() => {
   padding: 1rem;
   background: var(--color-bg-tertiary);
   border-radius: 0.5rem;
-  border-left: 3px solid var(--color-primary-light);
 }
 
 .indicator-header {
@@ -747,7 +736,6 @@ onMounted(() => {
   padding: 0.75rem;
   background: var(--color-bg-secondary);
   border-radius: 0.375rem;
-  border-left: 2px solid var(--color-border-dark);
 }
 
 .measure-main {
@@ -759,7 +747,7 @@ onMounted(() => {
 .measure-id {
   font-weight: 600;
   color: var(--color-text-primary);
-  font-family: var(--font-family-mono);
+  font-family: var(--font-family-mono),monospace;
 }
 
 .measure-description {
@@ -808,7 +796,6 @@ onMounted(() => {
   padding: 1rem;
   background: var(--color-bg-tertiary);
   border-radius: 0.5rem;
-  border-left: 3px solid var(--color-warning);
   text-align: left;
 }
 
