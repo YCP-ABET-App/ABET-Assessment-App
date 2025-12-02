@@ -19,7 +19,7 @@ const emit = defineEmits(["logout"])
 
         <template v-if="loggedIn">
           <div class="nav-divider"></div>
-          <router-link to="/setup" class="nav_button">Setup</router-link>
+          <router-link to="/settings" class="nav_button">Settings</router-link>
         </template>
 
       </div>

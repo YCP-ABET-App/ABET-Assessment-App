@@ -1,67 +1,28 @@
 <script lang="ts" setup>
-import { ref, onMounted, watch } from "vue";
+import { computed } from "vue";
 import { storeToRefs } from "pinia";
-import api from "@/api";
-
 import { useUserStore } from "@/stores/user-store";
 import AdminDashboard from "@/components/AdminDashboard.vue";
 import InstructorDashboard from "@/components/InstructorDashboard.vue";
 
-// User store
+// Get user store values
 const userStore = useUserStore();
-const { isLoggedIn, isAdmin, isInstructor } = storeToRefs(userStore);
+const {
+  isLoggedIn,
+  isAdmin,
+  isInstructor,
+  currentProgramId,
+  currentSemesterId
+} = storeToRefs(userStore);
 
-// Program selector data
-interface Program {
-  id: number;
-  name: string;
-  institution: string;
-  active: boolean;
-}
-
-const programs = ref<Program[]>([]);
-const selectedProgramId = ref<number | null>(null);
-const loadingPrograms = ref(false);
-const error = ref<string | null>(null);
-
-// Load user and available programs
-onMounted(async () => {
-  userStore.loadFromStorage();
-  await loadPrograms();
-});
-
-// Load programs from backend
-async function loadPrograms() {
-  loadingPrograms.value = true;
-  try {
-    const res = await api.get("/program", { params: { page: 0, size: 100 } });
-    const paged = res.data;
-    programs.value = paged.content ?? [];
-
-    selectedProgramId.value =
-      userStore.currentProgramId ?? programs.value[0]?.id ?? null;
-
-  } catch (err) {
-    console.error("Error loading programs:", err);
-    error.value = "Failed to load programs";
-  } finally {
-    loadingPrograms.value = false;
-  }
-}
-
-// Sync program changes back to the store
-watch(selectedProgramId, (newId) => {
-  if (newId) {
-    userStore.currentProgramId = newId;
-    userStore.saveToStorage();
-  }
+// These are now reactive refs from the store that GlobalSelectors updates
+const hasRequiredSelections = computed(() => {
+  return currentProgramId.value !== null && currentSemesterId.value !== null;
 });
 </script>
 
-
 <template>
-  <main class="homepage">
-
+  <div class="homepage">
     <!-- Not logged in -->
     <div v-if="!isLoggedIn" id="log-in-popup">
       Log in to view course information
@@ -69,83 +30,66 @@ watch(selectedProgramId, (newId) => {
 
     <!-- Logged in -->
     <div v-else id="dashboards">
-
-      <!-- PROGRAM SELECTOR (now at top of home page!) -->
-      <div class="program-selector" v-if="!loadingPrograms">
-        <label for="program-select" class="selector-label">Select Program:</label>
-
-        <select
-          id="program-select"
-          v-model.number="selectedProgramId"
-          class="program-select"
-        >
-          <option
-            v-for="program in programs"
-            :key="program.id"
-            :value="program.id"
-          >
-            {{ program.name }} - {{ program.institution }}
-          </option>
-        </select>
-      </div>
-
-      <div v-if="loadingPrograms" class="loading-screen">
-        <p>Loading programs...</p>
-      </div>
-
-      <!-- ADMIN DASHBOARD -->
-      <template v-if="isAdmin && selectedProgramId">
-        <AdminDashboard :programId="selectedProgramId" />
+      <!-- Admin Dashboard -->
+      <template v-if="isAdmin && hasRequiredSelections">
+        <h1>Admin Dashboard</h1>
+        <AdminDashboard
+          :program-id="currentProgramId"
+          :semester-id="currentSemesterId"
+        />
       </template>
 
-      <!-- Divider only if user is both admin and instructor -->
-      <hr v-if="isAdmin && isInstructor" class="section-divider" />
+      <hr v-if="isAdmin && isInstructor && hasRequiredSelections" class="section-divider" />
 
-      <!-- INSTRUCTOR DASHBOARD -->
-      <template v-if="isInstructor && selectedProgramId">
-        <InstructorDashboard :programId="selectedProgramId" />
+      <!-- Instructor Dashboard -->
+      <template v-if="isInstructor && hasRequiredSelections">
+        <h2 v-if="!isAdmin">Instructor Dashboard</h2>
+        <InstructorDashboard
+          :program-id="currentProgramId"
+          :semester-id="currentSemesterId"
+        />
       </template>
 
-      <!-- Fallback -->
-      <template v-if="!isAdmin && !isInstructor">
-        <h2>You are logged in, but your account has no dashboard privileges.</h2>
+      <!-- No selections yet -->
+      <template v-if="!hasRequiredSelections">
+        <div class="loading-screen">
+          <p>Please select a program and semester from the dropdowns above.</p>
+        </div>
       </template>
-
     </div>
-  </main>
+
+    <!-- No dashboard roles -->
+    <template v-if="isLoggedIn && !isAdmin && !isInstructor">
+      <h2>You are logged in, but your account has no dashboard privileges.</h2>
+    </template>
+  </div>
 </template>
 
-
 <style scoped>
-.program-selector {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1rem;
-  background: var(--color-bg-secondary);
-  border-radius: 0.5rem;
-  margin: 2rem 2rem 1rem;
+.homepage {
+  padding: 2rem;
 }
 
-.selector-label {
-  font-weight: 500;
-  color: var(--color-text-primary);
-  font-size: 0.875rem;
-}
-
-.program-select {
-  flex: 1;
-  color: var(--color-text-primary);
-  max-width: 350px;
-  padding: 0.625rem;
-  font-size: 0.875rem;
-  border: 1px solid var(--color-border-dark);
-  border-radius: 0.375rem;
-  background: var(--color-bg-primary);
+#log-in-popup {
+  text-align: center;
+  padding: 2rem;
+  font-size: 1.2rem;
+  color: var(--color-text-secondary);
 }
 
 .loading-screen {
   text-align: center;
   padding: 2rem;
+  color: var(--color-text-secondary);
+}
+
+.section-divider {
+  margin: 2rem 0;
+  border: none;
+  border-top: 1px solid var(--color-border-dark);
+}
+
+#dashboards h1, #dashboards h2 {
+  margin-bottom: 1.5rem;
 }
 </style>

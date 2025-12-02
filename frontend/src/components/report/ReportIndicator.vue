@@ -67,9 +67,6 @@ const props = defineProps<{
   collapseId: number;
 }>();
 
-console.log("=== INDICATOR MEASURES ===", props.indicator.measures);
-console.log("FIRST MEASURE:", props.indicator.measures?.[0]);
-
 const emit = defineEmits<{
   "update:indicator": [value: IndicatorData]
 }>();

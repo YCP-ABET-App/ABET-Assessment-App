@@ -26,8 +26,8 @@ VALUES
 INSERT INTO program_user (id, isAdmin, program_id, user_id, is_active)
 VALUES
     (1, TRUE, 1, 1, TRUE),   -- David Babcock (Admin)
-    (2, TRUE, 1, 2, TRUE),   -- James Moscola (Admin)
-    (3, TRUE, 1, 3, TRUE),   -- Dean Zeller (Admin)
+    (2, FALSE, 1, 2, TRUE),   -- James Moscola (Admin)
+    (3, FALSE, 1, 3, TRUE),   -- Dean Zeller (Admin)
     (4, TRUE, 1, 4, TRUE);   -- System Admin
 
 ------------------------------------------------------------

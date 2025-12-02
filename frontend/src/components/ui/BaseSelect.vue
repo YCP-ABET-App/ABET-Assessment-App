@@ -49,7 +49,7 @@ export interface SelectOption {
 
 export interface SelectProps {
   id?: string
-  modelValue?: string | number
+  modelValue?: string | number | null
   options: (SelectOption | string | number)[]
   label?: string
   placeholder?: string
@@ -69,8 +69,23 @@ const emit = defineEmits<{
 }>()
 
 const handleChange = (event: Event) => {
-  const target = event.target as HTMLSelectElement
-  emit('update:modelValue', target.value)
+  const el = event.target as HTMLSelectElement
+  const raw = el.value
+
+  if (raw === "") {
+    emit("update:modelValue", null)
+    return
+  }
+
+  // if this is a number-like string, convert it
+  const num = Number(raw)
+  if (!isNaN(num) && raw.trim() !== "") {
+    emit("update:modelValue", num)
+    return
+  }
+
+  // otherwise emit raw string as-is
+  emit("update:modelValue", raw)
 }
 
 const getOptionValue = (option: SelectOption | string | number): string | number => {

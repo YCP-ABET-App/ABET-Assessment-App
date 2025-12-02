@@ -13,7 +13,8 @@ interface Course {
 }
 
 const props = defineProps<{
-  programId: number | null
+  programId: number | null,
+  semesterId: number | null
 }>();
 
 const emit = defineEmits(["select"]);
@@ -23,11 +24,12 @@ const error = ref<string | null>(null);
 const courses = ref<Course[]>([]);
 const selectedCourse = ref<Course | null>(null);
 
-/* -----------------------------
- * Load courses for program
- * ----------------------------- */
+
+/* -----------------------------------------------------------
+ * Load courses (requires programId + semesterId)
+ * ----------------------------------------------------------- */
 async function loadCourses() {
-  if (!props.programId) {
+  if (!props.programId || !props.semesterId) {
     courses.value = [];
     return;
   }
@@ -36,19 +38,50 @@ async function loadCourses() {
   error.value = null;
 
   try {
-    const res = await api.get(`/program/${props.programId}/courses/active`);
-    courses.value = res.data.data ?? [];
+    const res = await api.get(`/courses/active`, {
+      params: {
+        semesterId: props.semesterId,
+        page: 0,
+        size: 200
+      }
+    });
+
+    console.log("ACTIVE COURSE RESPONSE:", res.data);
+
+    courses.value = res.data?.content ?? [];
+
+    console.log("COURSES SET TO:", courses.value);
+
   } catch (err) {
     console.error("Failed to load courses:", err);
     error.value = "Failed to load courses";
-  } finally {
+  }
+  finally {
     loading.value = false;
   }
 }
 
-watch(() => props.programId, loadCourses);
+
+/* -----------------------------------------------------------
+ * Watch for BOTH programId and semesterId
+ * ----------------------------------------------------------- */
+watch(
+  () => [props.programId, props.semesterId],
+  () => {
+    loadCourses();
+  }
+);
+
+
+/* -----------------------------------------------------------
+ * Initial fetch
+ * ----------------------------------------------------------- */
 onMounted(loadCourses);
 
+
+/* -----------------------------------------------------------
+ * Course selection
+ * ----------------------------------------------------------- */
 function selectCourse(course: Course) {
   selectedCourse.value = course;
   emit("select", course);
@@ -72,7 +105,7 @@ function closeInspectModal() {
     </div>
 
     <div v-else-if="courses.length === 0" class="empty-state">
-      <p>No active courses found for this program.</p>
+      <p>No active courses found for this semester.</p>
     </div>
 
     <div v-else class="course-grid">

@@ -80,30 +80,30 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     // Based on schema: course -> course_indicator -> measure
     // Relationship: measure.courseIndicator_id -> course_indicator.id, course_indicator.course_id -> course.id
     @Query(value = "SELECT COUNT(m.id) FROM measure m " +
-            "JOIN course_indicator ci ON m.courseIndicator_id = ci.id " +
+            "JOIN course_indicator ci ON m.course_indicator_id = ci.id " +
             "WHERE ci.course_id = :courseId AND m.is_active = true", nativeQuery = true)
     int countTotalMeasuresByCourseId(@Param("courseId") Long courseId);
 
     @Query(value = "SELECT COUNT(m.id) FROM measure m " +
-            "JOIN course_indicator ci ON m.courseIndicator_id = ci.id " +
+            "JOIN course_indicator ci ON m.course_indicator_id = ci.id " +
             "WHERE ci.course_id = :courseId AND m.is_active = true " +
             "AND (m.met IS NOT NULL OR m.exceeded IS NOT NULL OR m.below IS NOT NULL)", nativeQuery = true)
     int countCompletedMeasuresByCourseId(@Param("courseId") Long courseId);
 
     @Query(value = "SELECT COUNT(m.id) FROM measure m " +
-            "JOIN course_indicator ci ON m.courseIndicator_id = ci.id " +
+            "JOIN course_indicator ci ON m.course_indicator_id = ci.id " +
             "WHERE ci.course_id = :courseId AND m.is_active = true " +
             "AND m.met IS NULL AND m.exceeded IS NULL AND m.below IS NULL", nativeQuery = true)
     int countInProgressMeasuresByCourseId(@Param("courseId") Long courseId);
 
     @Query(value = "SELECT COUNT(m.id) FROM measure m " +
-            "JOIN course_indicator ci ON m.courseIndicator_id = ci.id " +
+            "JOIN course_indicator ci ON m.course_indicator_id = ci.id " +
             "WHERE ci.course_id = :courseId AND m.is_active = true " +
             "AND m.fcar IS NOT NULL", nativeQuery = true)
     int countSubmittedMeasuresByCourseId(@Param("courseId") Long courseId);
 
     @Query(value = "SELECT COUNT(m.id) FROM measure m " +
-            "JOIN course_indicator ci ON m.courseIndicator_id = ci.id " +
+            "JOIN course_indicator ci ON m.course_indicator_id = ci.id " +
             "WHERE ci.course_id = :courseId AND m.is_active = true " +
             "AND m.fcar IS NOT NULL AND m.recommended_action IS NOT NULL", nativeQuery = true)
     int countMeasuresInReviewByCourseId(@Param("courseId") Long courseId);
