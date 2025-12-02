@@ -2,12 +2,14 @@
 import { onMounted } from 'vue'
 import NavBar from '@/components/NavBar.vue'
 import GlobalToast from '@/components/ui/GlobalToast.vue'
-import { useUserStore } from '@/stores/user-store.js'
+import { useUserStore } from '@/stores/user-store'
+
 
 const userStore = useUserStore()
 
 onMounted(() => {
   userStore.loadFromStorage()
+  userStore.applyThemeToDocument(userStore.theme)
 })
 
 function handleLogout() {
@@ -42,24 +44,5 @@ function handleLogout() {
 #app {
   margin: 0 auto;
   text-align: center;
-  font-family: Noto Sans, system-ui, -apple-system, sans-serif;
-}
-
-header {
-  margin-bottom: 1rem;
-}
-
-.footer {
-  text-align: center;
-  color: #555;
-  font-size: 0.9rem;
-  margin-top: 3rem;
-}
-
-.footer hr {
-  border: none;
-  border-top: 1px solid #ccc;
-  margin-bottom: 1rem;
-  width: 100%;
 }
 </style>

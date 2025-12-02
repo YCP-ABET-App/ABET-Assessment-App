@@ -1,188 +1,218 @@
-import { defineStore } from "pinia";
-import { ref, computed } from "vue";
-import api from "@/api";
-import router from "@/router";
+// src/stores/user-store.ts
+import { defineStore } from 'pinia'
+import { ref, computed } from 'vue'
+import api from '@/api'
+import router from '@/router'
 
 export interface User {
-  id: number;
-  email: string;
-  firstName?: string;
-  lastName?: string;
-  role: "ADMIN" | "INSTRUCTOR" | "STUDENT" | "USER";
-  currentProgramId?: number;
+  id: number
+  email: string
+  firstName?: string
+  lastName?: string
+  role: 'ADMIN' | 'INSTRUCTOR' | 'STUDENT' | 'USER'
+  currentProgramId?: number
 }
 
 export interface ProgramAccess {
-  programId: number;
-  isAdmin: boolean;
-  role: "ADMIN" | "INSTRUCTOR";
+  programId: number
+  isAdmin: boolean
+  role: 'ADMIN' | 'INSTRUCTOR'
 }
 
-export const useUserStore = defineStore("user", () => {
+type Theme = 'light' | 'dark'
+
+export const useUserStore = defineStore('user', () => {
   // -------------------------
   // STATE
   // -------------------------
-  const user = ref<User | null>(null);
-  const authToken = ref<string | null>(null);
-  const programs = ref<ProgramAccess[]>([]);
-  const currentProgramId = ref<number | null>(null);
+  const user = ref<User | null>(null)
+  const authToken = ref<string | null>(null)
+  const programs = ref<ProgramAccess[]>([])
+  const currentProgramId = ref<number | null>(null)
 
-  const isLoading = ref(false);
-  const error = ref<string | null>(null);
+  const isLoading = ref(false)
+  const error = ref<string | null>(null)
+
+  // -------------------------
+  // THEME STATE
+  // -------------------------
+  const theme = ref<Theme>(
+    (localStorage.getItem('theme') as Theme) || 'dark'
+  )
+
+  function applyThemeToDocument(mode: Theme) {
+    document.documentElement.setAttribute('data-theme', mode)
+  }
+
+  function setTheme(newTheme: Theme) {
+    theme.value = newTheme
+    localStorage.setItem('theme', newTheme)
+    applyThemeToDocument(newTheme)
+  }
 
   // -------------------------
   // GETTERS
   // -------------------------
-  const isLoggedIn = computed(() => !!authToken.value && !!user.value);
-  const isAdmin = computed(() => user.value?.role === "ADMIN");
-  const isInstructor = computed(() => user.value?.role === "INSTRUCTOR");
+  const isLoggedIn = computed(() => !!authToken.value && !!user.value)
+  const isAdmin = computed(() => user.value?.role === 'ADMIN')
+  const isInstructor = computed(() => user.value?.role === 'INSTRUCTOR')
 
-  const userId = computed(() => user.value?.id ?? 0);
+  const userId = computed(() => user.value?.id ?? 0)
 
   const userFullName = computed(() => {
-    if (!user.value) return "";
+    if (!user.value) return ''
     if (user.value.firstName && user.value.lastName) {
-      return `${user.value.firstName} ${user.value.lastName}`;
+      return `${user.value.firstName} ${user.value.lastName}`
     }
-    return user.value.email;
-  });
+    return user.value.email
+  })
 
   // -------------------------
-  // ACTION: LOGIN
+  // LOGIN
   // -------------------------
   async function login(email: string, password: string) {
-    error.value = null;
-    isLoading.value = true;
+    error.value = null
+    isLoading.value = true
 
     try {
-      const { data } = await api.post("/users/login", { email, password });
+      const { data } = await api.post('/users/login', { email, password })
 
-      user.value = data.user;
-      authToken.value = data.authToken;
-      programs.value = data.programs;
-      currentProgramId.value = data.user.currentProgramId;
+      user.value = data.user
+      authToken.value = data.authToken
+      programs.value = data.programs
+      currentProgramId.value = data.user.currentProgramId
 
-      // Persist to storage
-      localStorage.setItem("authToken", data.authToken);
-      localStorage.setItem("currentUser", JSON.stringify(data.user));
-      localStorage.setItem("programs", JSON.stringify(data.programs));
+      localStorage.setItem('authToken', data.authToken)
+      localStorage.setItem('currentUser', JSON.stringify(data.user))
+      localStorage.setItem('programs', JSON.stringify(data.programs))
       localStorage.setItem(
-        "currentProgramId",
+        'currentProgramId',
         String(data.user.currentProgramId)
-      );
+      )
 
-      return data;
+      return data
     } catch (err: any) {
-      error.value = err?.response?.data?.message || "Login failed";
-      throw err;
+      error.value = err?.response?.data?.message || 'Login failed'
+      throw err
     } finally {
-      isLoading.value = false;
+      isLoading.value = false
     }
   }
 
   // -------------------------
-  // ACTION: SIGNUP
+  // SIGNUP
   // -------------------------
   async function signup(userData: {
-    firstName: string;
-    lastName: string;
-    email: string;
-    password: string;
+    firstName: string
+    lastName: string
+    email: string
+    password: string
   }) {
-    isLoading.value = true;
-    error.value = null;
+    isLoading.value = true
+    error.value = null
 
     try {
-      const { data } = await api.post("/users/signup", userData);
+      const { data } = await api.post('/users/signup', userData)
 
-      user.value = data.user;
-      authToken.value = data.authToken;
-      currentProgramId.value = data.user.currentProgramId ?? null;
+      user.value = data.user
+      authToken.value = data.authToken
+      currentProgramId.value = data.user.currentProgramId ?? null
 
-      localStorage.setItem("authToken", data.authToken);
-      localStorage.setItem("currentUser", JSON.stringify(data.user));
+      localStorage.setItem('authToken', data.authToken)
+      localStorage.setItem('currentUser', JSON.stringify(data.user))
 
-      return data;
+      return data
     } catch (err: any) {
-      error.value = err?.response?.data?.message || "Signup failed";
-      throw err;
+      error.value = err?.response?.data?.message || 'Signup failed'
+      throw err
     } finally {
-      isLoading.value = false;
+      isLoading.value = false
     }
   }
 
   // -------------------------
-  // ACTION: SWITCH PROGRAM
+  // SWITCH PROGRAM
   // -------------------------
   async function switchProgram(programId: number) {
-    if (!authToken.value) return;
+    if (!authToken.value) return
 
     try {
-      const { data } = await api.post("/users/switch-program", { programId });
+      const { data } = await api.post('/users/switch-program', { programId })
 
-      authToken.value = data.token;
-      currentProgramId.value = data.programId;
-      user.value!.role = data.role;
+      authToken.value = data.token
+      currentProgramId.value = data.programId
+      if (user.value) {
+        user.value.role = data.role
+      }
 
-      // Persist changes
-      localStorage.setItem("authToken", data.token);
-      localStorage.setItem("currentProgramId", String(data.programId));
-      localStorage.setItem("currentUser", JSON.stringify(user.value));
+      localStorage.setItem('authToken', data.token)
+      localStorage.setItem('currentProgramId', String(data.programId))
+      if (user.value) {
+        localStorage.setItem('currentUser', JSON.stringify(user.value))
+      }
     } catch (err) {
-      console.error("Error switching program:", err);
-      throw err;
+      console.error('Error switching program:', err)
+      throw err
     }
   }
 
   // -------------------------
-  // LOAD FROM LOCALSTORAGE
+  // LOAD FROM LOCAL STORAGE
   // -------------------------
   function loadFromStorage() {
-    const token = localStorage.getItem("authToken");
-    const storedUser = localStorage.getItem("currentUser");
-    const storedPrograms = localStorage.getItem("programs");
-    const storedPid = localStorage.getItem("currentProgramId");
+    const token = localStorage.getItem('authToken')
+    const storedUser = localStorage.getItem('currentUser')
+    const storedPrograms = localStorage.getItem('programs')
+    const storedPid = localStorage.getItem('currentProgramId')
 
-    if (token) authToken.value = token;
-    if (storedUser) user.value = JSON.parse(storedUser);
-    if (storedPrograms) programs.value = JSON.parse(storedPrograms);
-    if (storedPid) currentProgramId.value = Number(storedPid);
+    if (token) authToken.value = token
+    if (storedUser) user.value = JSON.parse(storedUser)
+    if (storedPrograms) programs.value = JSON.parse(storedPrograms)
+    if (storedPid) currentProgramId.value = Number(storedPid)
+
+    const storedTheme = localStorage.getItem('theme') as Theme | null
+    if (storedTheme === 'light' || storedTheme === 'dark') {
+      theme.value = storedTheme
+      applyThemeToDocument(storedTheme)
+    } else {
+      // make sure we apply whatever default we had
+      applyThemeToDocument(theme.value)
+    }
   }
 
   // -------------------------
-  // ACTION: SAVE TO STORAGE
+  // SAVE STORAGE
   // -------------------------
   function saveToStorage() {
     if (authToken.value) {
-      localStorage.setItem("authToken", authToken.value);
+      localStorage.setItem('authToken', authToken.value)
     }
-
     if (user.value) {
-      localStorage.setItem("currentUser", JSON.stringify(user.value));
+      localStorage.setItem('currentUser', JSON.stringify(user.value))
     }
-
     if (programs.value) {
-      localStorage.setItem("programs", JSON.stringify(programs.value));
+      localStorage.setItem('programs', JSON.stringify(programs.value))
     }
-
     if (currentProgramId.value !== null) {
-      localStorage.setItem("currentProgramId", String(currentProgramId.value));
+      localStorage.setItem('currentProgramId', String(currentProgramId.value))
+    }
+    if (theme.value) {
+      localStorage.setItem('theme', theme.value)
     }
   }
 
   // -------------------------
-  // ACTION: LOGOUT
+  // LOGOUT
   // -------------------------
   function logout() {
-    user.value = null;
-    authToken.value = null;
-    programs.value = [];
-    currentProgramId.value = null;
-    error.value = null;
+    user.value = null
+    authToken.value = null
+    programs.value = []
+    currentProgramId.value = null
+    error.value = null
 
-    localStorage.clear();
-
-    router.push("/login");
+    localStorage.clear()
+    router.push('/login')
   }
 
   return {
@@ -193,6 +223,7 @@ export const useUserStore = defineStore("user", () => {
     currentProgramId,
     isLoading,
     error,
+    theme,
 
     // Getters
     isLoggedIn,
@@ -208,5 +239,7 @@ export const useUserStore = defineStore("user", () => {
     switchProgram,
     loadFromStorage,
     saveToStorage,
-  };
-});
+    setTheme,
+    applyThemeToDocument,
+  }
+})

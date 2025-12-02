@@ -95,6 +95,12 @@ const routes = [
     meta: { requiresAuth: true, requiresAdmin: true }
   },
   {
+  path: '/settings',
+  name: 'Settings',
+  component: () => import('@/components/pages/SettingsPage.vue'),
+  meta: { requiresAuth: true }
+ },
+  {
     path: '/examples',
     name: 'Examples',
     component: ExamplePage
