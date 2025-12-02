@@ -1,6 +1,6 @@
-// composables/useToast.ts
-import { ref, readonly, inject } from 'vue'
-import type { ToastProps } from '@/components/ui/BaseToast.vue'
+// composables/use-toast.ts
+import {inject, readonly, ref} from 'vue'
+import type {ToastProps} from '@/components/ui/BaseToast.vue'
 
 export type ToastPosition =
   | 'top-left'
@@ -55,13 +55,13 @@ export function createInternalToastAPI() {
   }
 
   function sortToasts() {
-    // Group positions so animations don’t conflict
+    // Group positions so animations don't conflict
     _toasts.value = [..._toasts.value].sort((a, b) =>
       (a.position ?? 'bottom-right').localeCompare(b.position ?? 'bottom-right')
     )
   }
 
-  const api = {
+  return {
     toasts: readonly(_toasts),
     add,
     remove,
@@ -69,34 +69,32 @@ export function createInternalToastAPI() {
 
     // Helper shortcuts
     success(message: string, title?: string, duration?: number) {
-      return add({ type: 'success', message, title, duration })
+      return add({type: 'success', message, title, duration})
     },
 
     error(message: string, title?: string, duration?: number) {
-      return add({ type: 'error', message, title, duration })
+      return add({type: 'error', message, title, duration})
     },
 
     warning(message: string, title?: string, duration?: number) {
-      return add({ type: 'warning', message, title, duration })
+      return add({type: 'warning', message, title, duration})
     },
 
     info(message: string, title?: string, duration?: number) {
-      return add({ type: 'info', message, title, duration })
+      return add({type: 'info', message, title, duration})
     },
 
     toast(options: Omit<Toast, 'id'>) {
       return add(options)
     }
   }
-
-  return api
 }
 
 // ===================
 //  VueUse-style export
 // ===================
 export function useToast() {
-  const api = inject('toast')
+  const api = inject<ReturnType<typeof createInternalToastAPI>>('toast')
   if (!api) {
     console.error('❌ useToast() called before provider is registered.')
     return {
@@ -107,7 +105,7 @@ export function useToast() {
       info: () => null,
       remove: () => null,
       clear: () => null,
-      toasts: readonly([])
+      toasts: readonly(ref<Toast[]>([])) as any
     }
   }
   return api

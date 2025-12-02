@@ -59,9 +59,10 @@ import { reactive, watch } from "vue";
 import ReportMeasure from "./ReportMeasure.vue";
 import ReportCollapseTransition from "./ReportCollapseTransition.vue";
 import { useReportCollapse } from "@/composables/use-report-collapse";
+import type { IndicatorData, IndicatorMeasure } from "@/types/summary";
 
 const props = defineProps<{
-  indicator: any;
+  indicator: IndicatorData;
   editable: boolean;
   collapseId: number;
 }>();
@@ -69,7 +70,10 @@ const props = defineProps<{
 console.log("=== INDICATOR MEASURES ===", props.indicator.measures);
 console.log("FIRST MEASURE:", props.indicator.measures?.[0]);
 
-const emit = defineEmits(["update:indicator"]);
+const emit = defineEmits<{
+  "update:indicator": [value: IndicatorData]
+}>();
+
 const { isCollapsed, toggle } = useReportCollapse();
 
 // Local editable copy
@@ -80,7 +84,7 @@ const local = reactive({
 // Sync local when parent changes
 watch(
   () => props.indicator.studentCount,
-  (val) => local.studentCount = val
+  (val) => local.studentCount = val ?? 0
 );
 
 function emitUpdate() {
@@ -91,10 +95,10 @@ function emitUpdate() {
   });
 }
 
-function updateMeasure(id: number, updated: any) {
+function updateMeasure(id: number, updated: Partial<IndicatorMeasure>) {
   emit("update:indicator", {
     ...props.indicator,
-    measures: props.indicator.measures.map(m =>
+    measures: props.indicator.measures.map((m: IndicatorMeasure) =>
       m.measureId === id ? { ...m, ...updated } : m
     )
   });

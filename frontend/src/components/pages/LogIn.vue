@@ -6,25 +6,24 @@ import { useToast } from "@/composables/use-toast.ts"
 import { useUserStore } from '@/stores/user-store.ts'
 
 const router = useRouter()
-const toast = useToast()
 const userStore = useUserStore()
-
 const email_input = ref('')
 const password_input = ref('')
+const { success, error: showError, warning, info, toast } = useToast();
 
 async function login() {
   try {
     await userStore.login(email_input.value, password_input.value)
 
-    toast.success("Successfully logged in!", "Welcome")
+    success("Successfully logged in!", "Welcome")
 
     if (userStore.isAdmin || userStore.isInstructor) {
       await router.push('/dashboard')
     } else {
       await router.push('/')
     }
-  } catch (error) {
-    toast.error(
+  } catch (err) {
+    showError(
       userStore.error || "Email or password is incorrect.",
       "Login Failed"
     )

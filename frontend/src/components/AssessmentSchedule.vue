@@ -18,7 +18,7 @@ const props = withDefaults(defineProps<Props>(), {
   showToolbar: true
 });
 
-const { success, error, warning, info, toast } = useToast();
+const { success, error: showError, warning, info, toast } = useToast();
 
 // Use composable for shared data loading logic
 const {
@@ -207,7 +207,7 @@ async function copyToClipboard(text: string) {
     success('Copied to clipboard');
   } catch (err) {
     console.error('Failed to copy:', err);
-    error('Failed to copy to clipboard');
+    showError('Failed to copy to clipboard');
   }
 }
 
@@ -254,7 +254,7 @@ async function saveChanges() {
 
   } catch (err) {
     console.error('Error saving schedule:', err);
-    error('Failed to save assessment schedule');
+    showError('Failed to save assessment schedule');
   } finally {
     saving.value = false;
   }

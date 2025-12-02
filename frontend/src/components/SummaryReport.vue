@@ -51,7 +51,6 @@ const {
 } = useSummaryReportData({
   programId: props.programId,
   semesterId: activeSemesterId,
-  reportDataOverride: props.effectiveReportOverride
 });
 
 const effectiveReport = computed(() => {

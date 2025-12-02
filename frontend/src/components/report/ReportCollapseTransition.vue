@@ -20,51 +20,57 @@ const props = defineProps<{ show: boolean }>();
 const DURATION = 250;
 
 // ---- ENTER (expand) ----
-function beforeEnter(el: HTMLElement) {
-  el.style.height = "0";
-  el.style.opacity = "0";
-  el.style.overflow = "hidden";
+function beforeEnter(el: Element) {
+  const element = el as HTMLElement;
+  element.style.height = "0";
+  element.style.opacity = "0";
+  element.style.overflow = "hidden";
 }
 
-function enter(el: HTMLElement) {
-  const height = el.scrollHeight;
+function enter(el: Element) {
+  const element = el as HTMLElement;
+  const height = element.scrollHeight;
 
-  el.style.transition = `height ${DURATION}ms ease, opacity ${DURATION}ms ease`;
+  element.style.transition = `height ${DURATION}ms ease, opacity ${DURATION}ms ease`;
 
   requestAnimationFrame(() => {
-    el.style.height = height + "px";
-    el.style.opacity = "1";
+    element.style.height = height + "px";
+    element.style.opacity = "1";
   });
 }
 
-function afterEnter(el: HTMLElement) {
-  el.style.transition = "";
-  el.style.height = "auto";
-  el.style.opacity = "1";
-  el.style.overflow = "visible";
+function afterEnter(el: Element) {
+  const element = el as HTMLElement;
+  element.style.transition = "";
+  element.style.height = "auto";
+  element.style.opacity = "1";
+  element.style.overflow = "visible";
 }
 
 // ---- LEAVE (collapse) ----
-function beforeLeave(el: HTMLElement) {
-  el.style.height = el.scrollHeight + "px";
-  el.style.opacity = "1";
-  el.style.overflow = "hidden";
+function beforeLeave(el: Element) {
+  const element = el as HTMLElement;
+  element.style.height = element.scrollHeight + "px";
+  element.style.opacity = "1";
+  element.style.overflow = "hidden";
 }
 
-function leave(el: HTMLElement) {
-  el.style.transition = `height ${DURATION}ms ease, opacity ${DURATION}ms ease`;
+function leave(el: Element) {
+  const element = el as HTMLElement;
+  element.style.transition = `height ${DURATION}ms ease, opacity ${DURATION}ms ease`;
 
   requestAnimationFrame(() => {
-    el.style.height = "0px";
-    el.style.opacity = "0";
+    element.style.height = "0px";
+    element.style.opacity = "0";
   });
 }
 
-function afterLeave(el: HTMLElement) {
-  el.style.transition = "";
-  el.style.height = "";
-  el.style.opacity = "";
-  el.style.overflow = "";
+function afterLeave(el: Element) {
+  const element = el as HTMLElement;
+  element.style.transition = "";
+  element.style.height = "";
+  element.style.opacity = "";
+  element.style.overflow = "";
 }
 </script>
 

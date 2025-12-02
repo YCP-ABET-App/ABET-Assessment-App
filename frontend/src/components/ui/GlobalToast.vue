@@ -9,7 +9,7 @@
     >
       <transition-group name="toast-fade" tag="div">
         <BaseToast
-          v-for="t in toasts.filter(x => (x.position ?? 'bottom-right') === pos)"
+          v-for="t in toasts.filter((x: Toast) => (x.position ?? 'bottom-right') === pos)"
           :key="t.id"
           v-bind="t"
           @close="remove(t.id)"
@@ -21,7 +21,7 @@
 
 <script lang="ts" setup>
 import BaseToast from './BaseToast.vue'
-import { useToast } from '@/composables/use-toast'
+import { useToast, type Toast } from '@/composables/use-toast'
 
 const { toasts, remove } = useToast()
 
@@ -32,7 +32,7 @@ const positions = [
   'bottom-right',
   'top-center',
   'bottom-center'
-]
+] as const
 </script>
 
 <style scoped>
