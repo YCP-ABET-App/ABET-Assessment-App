@@ -68,7 +68,7 @@
     >
       <div v-if="selectedInstructor" class="instructor-details">
         <!-- Personal Info -->
-        <section class="detail-section">
+        <section class="detail-section personal-info-section">
           <div class="section-header">
             <h3>Personal Information</h3>
             <button
@@ -80,32 +80,44 @@
             </button>
           </div>
 
-          <div v-if="!isEditingInfo" class="detail-grid">
-            <div class="detail-item">
-              <span class="detail-label">Name:</span>
-              <span class="detail-value">
-                {{ selectedInstructor.firstName }} {{ selectedInstructor.lastName }}
-              </span>
-            </div>
-            <div class="detail-item">
-              <span class="detail-label">Email:</span>
-              <span class="detail-value">
-                <a :href="`mailto:${selectedInstructor.email}`">
-                  {{ selectedInstructor.email }}
-                </a>
-              </span>
-            </div>
-            <div class="detail-item">
-              <span class="detail-label">Role:</span>
-              <span class="detail-value">
-                {{ selectedInstructor.role }}
-              </span>
-            </div>
-            <div class="detail-item">
-              <span class="detail-label">User ID:</span>
-              <span class="detail-value">
-                {{ selectedInstructor.userId }}
-              </span>
+          <div v-if="!isEditingInfo" class="personal-info-display">
+            <div class="info-card">
+              <div class="info-row">
+                <div class="info-field">
+                  <span class="field-label">First Name</span>
+                  <span class="field-value">{{ selectedInstructor.firstName }}</span>
+                </div>
+                <div class="info-field">
+                  <span class="field-label">Last Name</span>
+                  <span class="field-value">{{ selectedInstructor.lastName }}</span>
+                </div>
+              </div>
+              
+              <div class="info-row">
+                <div class="info-field info-field-wide">
+                  <span class="field-label">Email Address</span>
+                  <span class="field-value">
+                    <a :href="`mailto:${selectedInstructor.email}`" class="email-link">
+                      {{ selectedInstructor.email }}
+                    </a>
+                  </span>
+                </div>
+              </div>
+              
+              <div class="info-row">
+                <div class="info-field">
+                  <span class="field-label">Role</span>
+                  <span class="field-value">
+                    <span :class="['role-badge-display', selectedInstructor.role.toLowerCase()]">
+                      {{ selectedInstructor.role }}
+                    </span>
+                  </span>
+                </div>
+                <div class="info-field">
+                  <span class="field-label">User ID</span>
+                  <span class="field-value field-value-muted">{{ selectedInstructor.userId }}</span>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -171,7 +183,11 @@
         <section class="detail-section">
           <h3>Courses ({{ selectedInstructor.courses?.length || 0 }})</h3>
 
-          <div v-if="selectedInstructor.courses?.length > 0">
+          <div v-if="loadingMeasures" class="loading-measures">
+            <p>Loading measures data...</p>
+          </div>
+
+          <div v-else-if="selectedInstructor.courses?.length > 0">
             <table class="courses-table">
               <thead>
               <tr>
@@ -184,12 +200,16 @@
               <tr
                 v-for="course in selectedInstructor.courses"
                 :key="course.id"
+                class="course-row clickable"
+                @click="showCourseDetails(course)"
               >
                 <td>{{ course.courseCode || course.course_code }}</td>
                 <td>{{ course.courseName || course.course_name || '—' }}</td>
                 <td>
-                  <span v-if="course.measuresCompleted !== undefined">
-                    {{ course.measuresCompleted }}/{{ course.measuresTotal }}
+                  <span v-if="course.measuresCompleted !== undefined && course.measuresTotal !== undefined">
+                    <span class="measures-count">
+                      {{ course.measuresCompleted }}/{{ course.measuresTotal }}
+                    </span>
                     <span class="progress-percent">
                       ({{ course.measuresTotal && course.measuresTotal > 0
                       ? Math.round(
@@ -198,7 +218,7 @@
                       : 0 }}%)
                     </span>
                   </span>
-                  <span v-else>—</span>
+                  <span v-else class="no-data">—</span>
                 </td>
               </tr>
               </tbody>
@@ -217,6 +237,90 @@
         </button>
       </template>
     </BaseModal>
+
+    <!-- Course Details Modal -->
+    <BaseModal
+      v-model:isOpen="showCourseModal"
+      v-if="selectedCourse"
+      @close="closeCourseModal"
+      size="lg"
+    >
+      <template #header>
+        <h2>{{ selectedCourse.courseCode || selectedCourse.course_code }}</h2>
+      </template>
+
+      <div class="course-modal-content">
+        <!-- Course Information -->
+        <section class="detail-section">
+          <h3>Course Information</h3>
+          <div class="info-card">
+            <div class="info-row">
+              <div class="info-field">
+                <span class="field-label">COURSE CODE</span>
+                <span class="field-value">
+                  {{ selectedCourse.courseCode || selectedCourse.course_code }}
+                </span>
+              </div>
+              <div class="info-field">
+                <span class="field-label">COURSE NAME</span>
+                <span class="field-value">
+                  {{ selectedCourse.courseName || selectedCourse.course_name || '—' }}
+                </span>
+              </div>
+            </div>
+            <div class="info-row">
+              <div class="info-field info-field-wide">
+                <span class="field-label">DESCRIPTION</span>
+                <span class="field-value">
+                  {{ selectedCourse.courseDescription || selectedCourse.course_description || 'No description available' }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Measures Progress -->
+        <section class="detail-section">
+          <h3>Measures Progress</h3>
+          <div class="measures-summary">
+            <div class="progress-card">
+              <div class="progress-label">Total Measures</div>
+              <div class="progress-value">{{ selectedCourse.measuresTotal || 0 }}</div>
+            </div>
+            <div class="progress-card">
+              <div class="progress-label">Completed</div>
+              <div class="progress-value completed">{{ selectedCourse.measuresCompleted || 0 }}</div>
+            </div>
+            <div class="progress-card">
+              <div class="progress-label">Completion Rate</div>
+              <div class="progress-value">
+                {{ selectedCourse.measuresTotal && selectedCourse.measuresTotal > 0
+                  ? Math.round(((selectedCourse.measuresCompleted || 0) / selectedCourse.measuresTotal) * 100)
+                  : 0 }}%
+              </div>
+            </div>
+          </div>
+
+          <!-- Progress Bar -->
+          <div class="progress-bar-container">
+            <div 
+              class="progress-bar-fill"
+              :style="{
+                width: selectedCourse.measuresTotal && selectedCourse.measuresTotal > 0
+                  ? `${Math.round(((selectedCourse.measuresCompleted || 0) / selectedCourse.measuresTotal) * 100)}%`
+                  : '0%'
+              }"
+            ></div>
+          </div>
+        </section>
+      </div>
+
+      <template #footer>
+        <button class="btn-primary" @click="closeCourseModal">
+          Close
+        </button>
+      </template>
+    </BaseModal>
   </section>
 </template>
 
@@ -229,16 +333,22 @@ import BaseInput from "@/components/ui/BaseInput.vue";
 import BaseSelect from "@/components/ui/BaseSelect.vue";
 import { useToast } from "@/composables/use-toast";
 
-const toast = useToast();
+const toast = useToast() as {
+  success: (msg: string) => void;
+  error: (msg: string) => void;
+  info?: (msg: string) => void;
+};
 
 interface Course {
   id: number;
   courseCode?: string;
   courseName?: string;
+  courseDescription?: string;
 
   // API fallback naming (snake_case)
   course_code?: string;
   course_name?: string;
+  course_description?: string;
 
   // Measures progress fields
   measuresCompleted?: number;
@@ -287,6 +397,9 @@ const selectedInstructor = ref<Instructor | null>(null);
 const showModal = ref(false);
 const loading = ref(false);
 const error = ref<string | null>(null);
+const loadingMeasures = ref(false);
+const showCourseModal = ref(false);
+const selectedCourse = ref<Course | null>(null);
 
 // Editing state
 const isEditingInfo = ref(false);
@@ -303,6 +416,38 @@ const roleOptions = [
   { value: "INSTRUCTOR", label: "Instructor" },
   { value: "ADMIN", label: "Admin" }
 ];
+
+/* -----------------------------
+ * Load measures for courses
+ * ----------------------------- */
+async function loadMeasuresForCourses(courses: Course[]): Promise<Course[]> {
+  return await Promise.all(
+    courses.map(async (course) => {
+      try {
+        // Get measures for each indicator
+        const measuresRes = await api.get(`/measure/byCourse/${course.id}`);
+        const allMeasures = measuresRes.data.data ?? [];
+        
+        // Count completed measures
+        const measuresCompleted = allMeasures.filter((m: any) => {
+          return (m.observation && m.observation.trim()) ||
+                 (m.recommendedAction && m.recommendedAction.trim()) ||
+                 (m.recommended_action && m.recommended_action.trim()) ||
+                 (m.fcar && m.fcar.trim());
+        }).length;
+        
+        return {
+          ...course,
+          measuresTotal: allMeasures.length,
+          measuresCompleted: measuresCompleted
+        };
+      } catch (err) {
+        console.error(`Error loading measures for course ${course.id}:`, err);
+        return { ...course, measuresTotal: undefined, measuresCompleted: undefined };
+      }
+    })
+  );
+}
 
 /* -----------------------------
  * Load instructors for program
@@ -327,6 +472,9 @@ async function loadProgramInstructors() {
             params: { programUserId: pu.id }
           });
 
+          const courses = coursesRes.data.data ?? [];
+          const coursesWithMeasures = await loadMeasuresForCourses(courses);
+
           return {
             programUserId: pu.id,
             userId: pu.userId,
@@ -334,8 +482,8 @@ async function loadProgramInstructors() {
             lastName: user.lastName,
             email: user.email,
             role: pu.adminStatus ? "ADMIN" : "INSTRUCTOR",
-            courseCount: (coursesRes.data.data ?? []).length,
-            courses: coursesRes.data.data ?? []
+            courseCount: courses.length,
+            courses: coursesWithMeasures
           };
         } catch {
           return null;
@@ -350,6 +498,29 @@ async function loadProgramInstructors() {
     error.value = "Failed to load instructors";
   } finally {
     loading.value = false;
+  }
+}
+
+/* -----------------------------
+ * Reload measures when modal opens
+ * ----------------------------- */
+async function reloadMeasuresForInstructor(instructor: Instructor) {
+  if (!instructor.courses || instructor.courses.length === 0) return;
+  
+  loadingMeasures.value = true;
+  
+  try {
+    const updatedCourses = await loadMeasuresForCourses(instructor.courses);
+    instructor.courses = updatedCourses;
+    
+    const idx = instructors.value.findIndex(i => i.programUserId === instructor.programUserId);
+    if (idx !== -1) {
+      instructors.value[idx].courses = updatedCourses;
+    }
+  } catch (err) {
+    console.error("Error reloading measures:", err);
+  } finally {
+    loadingMeasures.value = false;
   }
 }
 
@@ -457,11 +628,23 @@ function closeModal() {
   showModal.value = false;
   selectedInstructor.value = null;
   isEditingInfo.value = false;
+  loadingMeasures.value = false;
 }
 
 function showInstructorDetails(i: Instructor) {
   selectedInstructor.value = i;
   showModal.value = true;
+  reloadMeasuresForInstructor(i);
+}
+
+function showCourseDetails(course: Course) {
+  selectedCourse.value = course;
+  showCourseModal.value = true;
+}
+
+function closeCourseModal() {
+  showCourseModal.value = false;
+  selectedCourse.value = null;
 }
 </script>
 
@@ -469,6 +652,74 @@ function showInstructorDetails(i: Instructor) {
 .instructors-page {
   width: 100%;
   padding: 0.4rem 0.75rem;
+}
+
+/* Clickable course rows */
+.course-row.clickable {
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.course-row.clickable:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Course modal content */
+.course-modal-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* Measures summary cards */
+.measures-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.progress-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.progress-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 0.5rem;
+}
+
+.progress-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.progress-value.completed {
+  color: #60a5fa;
+}
+
+/* Progress bar */
+.progress-bar-container {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #60a5fa, #3b82f6);
+  transition: width 0.3s ease;
+  border-radius: 4px;
 }
 
 .page-header {
@@ -502,6 +753,13 @@ function showInstructorDetails(i: Instructor) {
 
 .error-state {
   color: var(--color-error);
+}
+
+.loading-measures {
+  text-align: center;
+  padding: 1.5rem;
+  color: var(--color-text-secondary);
+  font-style: italic;
 }
 
 /* Instructors Grid */
@@ -608,36 +866,252 @@ function showInstructorDetails(i: Instructor) {
   padding: 0;
 }
 
-.detail-grid {
+/* Personal Info Display */
+.personal-info-section {
+  background: rgba(255, 255, 255, 0.02);
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.personal-info-display {
+  margin-top: 0;
+}
+
+.info-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.info-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.info-row:last-child {
+  margin-bottom: 0;
+}
+
+.info-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.info-field-wide {
+  grid-column: 1 / -1;
+}
+
+.field-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.field-value {
+  font-size: 1rem;
+  color: var(--color-text-primary, #212529);
+  font-weight: 500;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--color-border-light, #e9ecef);
+}
+
+.field-value-muted {
+  color: rgba(255, 255, 255, 0.5);
+  font-family: 'Courier New', monospace;
+  font-size: 0.875rem;
+}
+
+.email-link {
+  color: var(--color-primary, #60a5fa);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.email-link:hover {
+  text-decoration: underline;
+  color: var(--color-primary-dark, #0056b3);
+}
+
+.role-badge-display {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.375rem 0.875rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.role-badge-display.admin {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.role-badge-display.instructor {
+  background: rgba(168, 85, 247, 0.15);
+  color: #a78bfa;
+  border: 1px solid rgba(168, 85, 247, 0.3);
+}
+
+/* Outcomes List */
+.outcomes-list {
+  display: flex;
+  flex-direction: column;
   gap: 1rem;
 }
 
-.detail-item {
+.outcome-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.5rem;
+  padding: 1.25rem;
+  transition: all 0.2s;
+}
+
+.outcome-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.outcome-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.outcome-number {
+  background: linear-gradient(135deg, #60a5fa, #3b82f6);
+  color: white;
+  font-weight: 700;
+  font-size: 0.875rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.375rem;
+  min-width: 2.5rem;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.outcome-content {
+  flex: 1;
+}
+
+.outcome-description {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.5;
+}
+
+/* Indicators */
+.indicators-section {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.indicators-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.indicators-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.indicator-count {
+  background: rgba(168, 85, 247, 0.15);
+  color: #a78bfa;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  border: 1px solid rgba(168, 85, 247, 0.3);
+}
+
+.indicators-list {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.5rem;
 }
 
-.detail-label {
+.indicator-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 0.375rem;
+  border-left: 3px solid #a78bfa;
+}
+
+.indicator-badge {
+  background: rgba(168, 85, 247, 0.2);
+  color: #a78bfa;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  min-width: 2rem;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.indicator-text {
+  flex: 1;
   font-size: 0.875rem;
-  color: var(--color-text-secondary);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.indicator-threshold {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.5);
   font-weight: 500;
+  flex-shrink: 0;
 }
 
-.detail-value {
-  font-size: 1rem;
-  color: var(--color-text-primary);
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 3rem 2rem;
+  color: rgba(255, 255, 255, 0.5);
 }
 
-.detail-value a {
-  color: var(--color-primary);
-  text-decoration: none;
+.empty-state-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.3;
 }
 
-.detail-value a:hover {
-  text-decoration: underline;
+.empty-state-text {
+  font-size: 0.95rem;
+  font-style: italic;
+}
+
+@media (max-width: 768px) {
+  .outcome-header {
+    flex-direction: column;
+  }
+
+  .indicator-item {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
 }
 
 /* Edit Form */
@@ -701,9 +1175,20 @@ function showInstructorDetails(i: Instructor) {
   background: var(--color-bg-secondary);
 }
 
+.measures-count {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
 .progress-percent {
   color: var(--color-text-secondary);
   font-size: 0.875rem;
+  margin-left: 0.25rem;
+}
+
+.no-data {
+  color: var(--color-text-tertiary);
+  font-style: italic;
 }
 
 .no-courses {
@@ -767,22 +1252,13 @@ function showInstructorDetails(i: Instructor) {
     padding: 1rem;
   }
 
-  .program-selector {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.5rem;
-  }
-
-  .program-select {
-    max-width: 100%;
-  }
-
   .instructors-grid {
     grid-template-columns: 1fr;
   }
 
-  .detail-grid {
+  .info-row {
     grid-template-columns: 1fr;
+    gap: 1rem;
   }
 
   .form-row {
@@ -812,6 +1288,14 @@ function showInstructorDetails(i: Instructor) {
 
   .form-actions button {
     width: 100%;
+  }
+
+  .personal-info-section {
+    padding: 1rem;
+  }
+
+  .info-card {
+    padding: 1rem;
   }
 }
 </style>
