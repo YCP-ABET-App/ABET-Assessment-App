@@ -5,7 +5,6 @@ import { useUserStore } from "@/stores/user-store";
 import CourseListing from "@/components/CourseListing.vue";
 import ProgramInstructorsPage from "@/components/pages/ProgramInstructorsPage.vue";
 import SummaryReport from "@/components/SummaryReport.vue";
-import ImportSummaryPage from "@/components/pages/ImportSummaryPage.vue";
 
 const userStore = useUserStore();
 const { currentProgramId: programId } = storeToRefs(userStore);
