@@ -65,14 +65,10 @@
             updatedAt: measure_obj.value.updated_at,
             version: measure_obj.value.version
         })
-        console.log("New Measure: ")
-        console.log(new_measure)
 
         //PUT request to server
         try {
             const { data } = await api.put(`/measure/${measure_obj.value.id}`, new_measure.value);
-            console.log("Response data: ")
-            console.log(data)
 
             //Update measure object
             measure_obj.value.observation = complete_form_data.value.observation
@@ -337,7 +333,6 @@
         }
 
         set_status()
-        console.log("Status: " + status.value)
     }
 
     initialize()

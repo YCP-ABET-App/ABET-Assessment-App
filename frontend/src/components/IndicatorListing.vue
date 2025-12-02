@@ -6,7 +6,7 @@
     import BaseModal from './ui/BaseModal.vue';
     import BaseInput from './ui/BaseInput.vue';
 
-    const props = defineProps({piid: Number})
+    const props = defineProps({piid: Number, course_id: Number})
 
     const indicator_obj = ref({
         id: NaN,
@@ -38,6 +38,7 @@
     async function fetch_measures(){
         try {
             const { data } = await api.get(`/measure/byIndicator/${props.piid}`);
+            console.log(data)
             measures.value = data.data;
         } catch (error) {
             console.error('Error fetching or parsing indicator data:', error);
@@ -45,13 +46,25 @@
     }
 
     async function add_form_submit(){
+        let ciid
+
+        //Get course indicator id
+        try {
+            const { data } = await api.get(`courses/courseIndicator/${props.course_id}/${props.piid}`)
+            console.log(data)
+            ciid = data.data.id
+        } catch(error) {
+            console.error('Error fetching course/indicator joint ID: ', error)
+            return
+        }
+
         //Check that met, exceeded, below are all ints
         let newDescVal = add_form_data.value.description
         
         //Define new measure object
         const new_measure = ref({
             id: null,
-            courseIndicatorId: 1, //TEMPORARY! FIND A WAY TO RETRIEVE THIS
+            courseIndicatorId: ciid,
             description: newDescVal,
             observation: null,
             recommendedAction: null,
@@ -74,8 +87,6 @@
         //POST request to server
         try {
             const { data } = await api.post(`/measure`, new_measure.value);
-            console.log("Response data: ")
-            console.log(data)
         } catch (error) {
             console.error('Error editing measure:', error);
         }
@@ -139,7 +150,7 @@
     <div id="indicator-box">
         <div id="title"><span id="pi-label">Performance Indicator: </span>{{ indicator_obj.ind_description }}</div>
         <div id="threshold-percent-title">Threshold: <span id="threshold-percent">{{ indicator_obj.threshold_percentage }}%</span></div>
-        <MeasureListing v-for="measure_obj in measures" :measure_prop="measure_obj" @refresh="fetch_measures"></MeasureListing>
+        <MeasureListing v-for="measure_obj in measures" :key="measure_obj" :measure_prop="measure_obj" @refresh="fetch_measures"></MeasureListing>
         <BaseButton variant="primary" @click="open_add_form">Add Measure</BaseButton>
     </div>
 

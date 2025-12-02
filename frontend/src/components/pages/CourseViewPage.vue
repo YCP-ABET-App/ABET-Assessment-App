@@ -142,7 +142,7 @@
 
             <div class="indicator-list">
                 <BaseCard v-for="piid in indicator_ids" :key="piid" variant="default" class="indicator-card">
-                    <IndicatorListing :piid="piid" />
+                    <IndicatorListing :piid="piid" :course_id="course_id"/>
                 </BaseCard>
             </div>
         </section>
