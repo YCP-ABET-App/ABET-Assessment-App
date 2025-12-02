@@ -2,7 +2,7 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import api from '@/api';
 import { BaseCard, BaseSpinner, BaseButton, BaseSelect, BaseModal } from '@/components/ui';
-import { useSummaryReportData } from '@/composables/use-summary-report-data';
+import {type SummaryReportData, useSummaryReportData} from '@/composables/use-summary-report-data';
 import { useToast } from '@/composables/use-toast';
 import SummaryReportTemplate from "./SummaryReportTemplate.vue";
 

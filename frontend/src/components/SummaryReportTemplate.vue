@@ -96,7 +96,7 @@ function handleRegenerate() {
     <BaseCard>
       <h2>Summary Results {{ localReport.academicYear }}</h2>
       <p class="header-meta">
-        {{ localReport.generatedDate }} â€”
+        {{ localReport.generatedDate }} |
         {{ localReport.generatedBy.join(", ") }}
       </p>
     </BaseCard>
