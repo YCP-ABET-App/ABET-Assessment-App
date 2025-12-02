@@ -130,14 +130,10 @@
             updatedAt: measure_obj.value.updated_at,
             version: measure_obj.value.version
         })
-        console.log("New Measure: ")
-        console.log(new_measure)
 
         //PUT request to server
         try {
             const { data } = await api.put(`/measure/${measure_obj.value.id}`, new_measure.value);
-            console.log("Response data: ")
-            console.log(data)
 
             //Update measure object
             measure_obj.value.measure_description = edit_form_data.value.description
@@ -169,8 +165,6 @@
         //DELETE request to server
         try {
             const { data } = await api.delete(`/measure/${measure_obj.value.id}`);
-            console.log("Response data: ")
-            console.log(data)
 
             //Update measure object
             measure_obj.value.recommended_action = ra_form_data.value.recommended_action
@@ -219,14 +213,10 @@
             updatedAt: measure_obj.value.updated_at,
             version: measure_obj.value.version
         })
-        console.log("New Measure: ")
-        console.log(new_measure)
 
         //PUT request to server
         try {
             const { data } = await api.put(`/measure/${measure_obj.value.id}`, new_measure.value);
-            console.log("Response data: ")
-            console.log(data)
 
             //Update measure object
             measure_obj.value.recommended_action = ra_form_data.value.recommended_action
@@ -255,7 +245,6 @@
     }
 
     function set_status(){
-        console.log("Measure " + measure_obj.value.id + " Status: " + measure_obj.value.status)
         if(measure_obj.value.status==="InProgress"){
             status.value = 0
         }

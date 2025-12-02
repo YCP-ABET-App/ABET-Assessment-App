@@ -12,16 +12,13 @@
     <input v-model="form.work" type="text" placeholder="Assessment 1, Question 5" />
 
     <label>Description:</label>
-    <textarea v-model="form.description" placeholder="Briefly describe the assignment or activity used for assessment..."></textarea>
+    <textarea v-model="form.description"
+      placeholder="Briefly describe the assignment or activity used for assessment..."></textarea>
 
     <div class="divider"></div>
 
     <label>Target Goal:</label>
-    <input
-      v-model="form.targetGoal"
-      type="text"
-      placeholder="70% of students meeting or exceeding expectations"
-    />
+    <input v-model="form.targetGoal" type="text" placeholder="70% of students meeting or exceeding expectations" />
 
     <div class="row">
       <div>
@@ -43,10 +40,7 @@
     <div class="divider"></div>
 
     <label>Summary & Observations:</label>
-    <textarea
-      v-model="form.summary"
-      placeholder="Summarize findings, trends, and recommendations..."
-    ></textarea>
+    <textarea v-model="form.summary" placeholder="Summarize findings, trends, and recommendations..."></textarea>
 
     <button @click="generateReport">Generate Report</button>
   </section>
@@ -120,9 +114,8 @@ function generateReport() {
   lines.push("");
 
   const resultLine = formValue.targetGoal
-    ? `Results: The target of ${formValue.targetGoal} was ${
-        formValue.resultsMet ? "achieved." : "not achieved."
-      }`
+    ? `Results: The target of ${formValue.targetGoal} was ${formValue.resultsMet ? "achieved." : "not achieved."
+    }`
     : "Results: Target goal data unavailable.";
   lines.push(resultLine);
   lines.push("");
@@ -146,27 +139,58 @@ function generateReport() {
   URL.revokeObjectURL(url);
 }
 
-async function initialize(){
+async function initialize() {
   measureId.value = parseInt(route.params.measure_id as string, 10)
-  
+  let measure_data
   //Fetch measure data
   try {
     const { data } = await api.get(`/measure/${measureId.value}`);
-    form.value = {
-      outcome: data.data.outcome,
-      course: "",
-      work: "",
-      description: data.data.description,
-      targetGoal: "",
-      needsImprovement: data.data.studentsBelow,
-      meetsExpectations: data.data.studentsMet,
-      exceedsExpectations: data.data.studentsExceeded,
-      summary: data.data.observation,
-      resultsMet: false,
-    };
+    measure_data = data.data
   } catch (error) {
     console.error('Error fetching or parsing measure data:', error);
   }
+
+  //Get course and indicator ids
+  let course_id, ind_id
+  try {
+    const { data } = await api.get(`/courses/courseIndicator/getIds/${measure_data.courseIndicatorId}`)
+    course_id = data.data[0]
+    ind_id = data.data[1]
+  } catch (error) {
+    console.error('Error fetching course and indicator ids: ', error)
+  }
+
+  //Fetch course data
+  let course_data
+  try {
+    const { data } = await api.get(`/courses/${course_id}`);
+    course_data = data.data
+  } catch (error) {
+    console.error('Error fetching or parsing course data:', error);
+  }
+
+  //Fetch indicator data
+  let ind_data
+  try {
+    const { data } = await api.get(`/performance-indicators/${ind_id}`);
+    ind_data = data.data
+  } catch (error) {
+    console.error('Error fetching or parsing course data:', error);
+  }
+
+  //Auto-populate form data
+  form.value = {
+    outcome: `${ind_data.studentOutcomeId}.${ind_data.id}`,
+    course: course_data.courseName,
+    work: "",
+    description: measure_data.description,
+    targetGoal: `${ind_data.thresholdPercentage}`,
+    needsImprovement: measure_data.studentsBelow,
+    meetsExpectations: measure_data.studentsMet,
+    exceedsExpectations: measure_data.studentsExceeded,
+    summary: measure_data.observation,
+    resultsMet: false,
+  };
 }
 
 initialize()
@@ -215,7 +239,8 @@ textarea {
 button {
   margin-top: 1.5rem;
   padding: 0.75rem 1.25rem;
-  background: #1B5E20; /* DARK GREEN */
+  background: #1B5E20;
+  /* DARK GREEN */
   color: white;
   font-size: 1rem;
   border: none;
@@ -224,7 +249,7 @@ button {
 }
 
 button:hover {
-  background: #14451A; /* DARKER GREEN */
+  background: #14451A;
+  /* DARKER GREEN */
 }
 </style>
-
