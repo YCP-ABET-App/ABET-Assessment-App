@@ -208,13 +208,13 @@ public class CourseController extends BaseController {
         return pagedSuccess(courses);
     }
 
-    /**
-     * Find course by course code (e.g., "CS101")
-     */
     @GetMapping("/code/{courseCode}")
-    public ResponseEntity<ApiResponse<Course>> getCourseByCourseCode(@PathVariable String courseCode) {
-        logger.info("Fetching course by course code: {}", courseCode);
-        Course course = courseService.findByCourseCode(courseCode);
+    public ResponseEntity<ApiResponse<Course>> getCourseByCourseCode(
+            @PathVariable String courseCode,
+            @RequestParam Long semesterId) {
+
+        logger.info("Fetching course {} for semester {}", courseCode, semesterId);
+        Course course = courseService.findByCourseCodeAndSemesterId(courseCode, semesterId);
         return success(course, "Course retrieved successfully");
     }
 

@@ -1,22 +1,26 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue';
 import api from '@/api';
-import { BaseCard, BaseSpinner, BaseButton, BaseSelect } from '@/components/ui';
+import { BaseCard, BaseSpinner, BaseButton, BaseSelect, BaseModal } from '@/components/ui';
 import { useSummaryReportData } from '@/composables/use-summary-report-data';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import { useToast } from '@/composables/use-toast';
+import SummaryReportTemplate from "./SummaryReportTemplate.vue";
 
 interface Props {
   programId: number;
   semesterId?: number; // Optional - if not provided, show selector
   showExportButton?: boolean;
   showSemesterSelector?: boolean; // Control whether to show selector
+  effectiveReportOverride?: SummaryReportData | null;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   showExportButton: true,
-  showSemesterSelector: true
+  showSemesterSelector: true,
+  effectiveReportOverride: null
 });
+
+const { toast } = useToast();
 
 // Semester selection
 interface Semester {
@@ -46,7 +50,12 @@ const {
   loadReportData
 } = useSummaryReportData({
   programId: props.programId,
-  semesterId: activeSemesterId
+  semesterId: activeSemesterId,
+  reportDataOverride: props.effectiveReportOverride
+});
+
+const effectiveReport = computed(() => {
+  return props.effectiveReportOverride || reportData.value;
 });
 
 // Semester dropdown options
@@ -55,6 +64,26 @@ const semesterOptions = computed(() =>
     label: `${s.name} (${s.academicYear}-${s.academicYear + 1})`,
     value: s.id
   }))
+);
+
+const reportDataInternal = ref<any | null>(null);
+
+// Import modal state
+const showImportModal = ref(false);
+const selectedFile = ref<File | null>(null);
+const fileInputRef = ref<HTMLInputElement | null>(null);
+const importing = ref(false);
+const importError = ref<string | null>(null);
+const importSuccess = ref(false);
+
+watch(
+  () => effectiveReport.value,
+  (newVal) => {
+    reportDataInternal.value = newVal
+      ? JSON.parse(JSON.stringify(newVal))
+      : null;
+  },
+  { immediate: true }
 );
 
 // Load semesters for selector
@@ -77,13 +106,18 @@ async function loadSemesters() {
 
     semesters.value = res.data.content || [];
 
-    // Auto-select current semester if available
     const current = semesters.value.find(s => s.isCurrent);
+
     if (current) {
       selectedSemesterId.value = current.id;
     } else if (semesters.value.length > 0) {
       selectedSemesterId.value = semesters.value[0].id;
     }
+
+    if (selectedSemesterId.value && props.programId) {
+      loadReportData();
+    }
+
   } catch (err) {
     console.error('Error loading semesters:', err);
     semesterError.value = 'Failed to load semesters';
@@ -92,287 +126,406 @@ async function loadSemesters() {
   }
 }
 
-// Format measure display
-function formatMeasure(measure: any): string {
-  return `${measure.courseCode}: ${measure.description}, ${measure.status} (${measure.metPercentage}%)`;
-}
+// Save edited report data back to backend
+async function saveReportToBackend(editedReport: any) {
+  try {
+    console.log('Saving report changes...', editedReport);
 
-// Export report as text
-function exportAsText() {
-  if (!reportData.value) return;
+    let savedCount = 0;
+    let failedCount = 0;
 
-  const lines: string[] = [];
-  lines.push(`Summary results ${reportData.value.academicYear}`);
-  lines.push(`${reportData.value.generatedDate} - ${reportData.value.generatedBy.join(', ')}`);
-  lines.push('');
+    // Iterate through outcomes, indicators, and measures to save changes
+    for (const outcome of editedReport.outcomes) {
+      for (const indicator of outcome.indicators) {
+        for (const measure of indicator.measures) {
+          // Convert string inputs back to numbers
+          const met = Number(measure.studentsMet ?? measure.met ?? 0);
+          const exceeded = Number(measure.studentsExceeded ?? measure.exceeded ?? 0);
+          const below = Number(measure.studentsBelow ?? measure.below ?? 0);
 
-  reportData.value.outcomes.forEach(outcome => {
-    lines.push(`Outcome (${outcome.outcomeNumber}) - ${outcome.overallStatus}`);
+          console.log(`Saving measure ${measure.measureId}:`, { met, exceeded, below });
 
-    outcome.indicators.forEach(indicator => {
-      lines.push(`(${indicator.indicatorNumber}) - ${indicator.courseCode}`);
+          try {
+            await api.put(`/measure/${measure.measureId}`, {
+              id: measure.measureId,
+              courseIndicatorId: measure.courseIndicatorId,
 
-      indicator.measures.forEach(measure => {
-        lines.push(`${indicator.indicatorNumber}-${measure.courseCode.toLowerCase()}: ${measure.description}, ${measure.status} (${measure.metPercentage}%)`);
-        if (measure.note) {
-          lines.push(`    ${measure.note}`);
+              // Editable text fields
+              description: measure.description,
+              observation: measure.note ?? null,
+              recommendedAction: measure.recommendedAction ?? null,
+              fcar: null,
+
+              // Raw numeric fields - use the correct field names expected by backend
+              studentsMet: met,
+              studentsExceeded: exceeded,
+              studentsBelow: below,
+
+              // Status
+              status: "Complete",
+
+              active: true
+            });
+            savedCount++;
+          } catch (err) {
+            console.error(`Failed to save measure ${measure.measureId}:`, err);
+            failedCount++;
+          }
         }
-      });
+      }
+    }
+
+    console.log(`Report saved: ${savedCount} successful, ${failedCount} failed`);
+
+    // Show success toast
+    toast({
+      type: 'success',
+      title: 'Changes Saved',
+      message: `Successfully saved ${savedCount} measure${savedCount !== 1 ? 's' : ''}`,
+      duration: 3000
     });
 
-    if (outcome.recommendedActions.length > 0) {
-      lines.push('Recommended actions:');
-      outcome.recommendedActions.forEach(action => {
-        lines.push(`â— ${action}`);
+    if (failedCount > 0) {
+      toast({
+        type: 'warning',
+        title: 'Some Changes Failed',
+        message: `${failedCount} measure${failedCount !== 1 ? 's' : ''} could not be saved`,
+        duration: 4000
+      });
+    }
+  } catch (err) {
+    console.error('Failed to save report:', err);
+    error.value = 'Failed to save changes';
+
+    toast({
+      type: 'error',
+      title: 'Save Failed',
+      message: 'Could not save changes to the report',
+      duration: 5000
+    });
+
+    throw err; // Re-throw so the template knows it failed
+  }
+}
+
+// Handle save event from template - save then reload
+async function handleSave(editedReport: any) {
+  try {
+    await saveReportToBackend(editedReport);
+    // Wait a moment for backend to process, then reload
+    await new Promise(resolve => setTimeout(resolve, 300));
+    await loadReportData();
+  } catch (err) {
+    console.error('Save and reload failed:', err);
+  }
+}
+
+// Import functionality
+function handleImport() {
+  console.log('handleImport called');
+  showImportModal.value = true;
+  importError.value = null;
+  importSuccess.value = false;
+  selectedFile.value = null;
+  console.log('showImportModal set to:', showImportModal.value);
+}
+
+function closeImportModal() {
+  showImportModal.value = false;
+  selectedFile.value = null;
+  importError.value = null;
+  importSuccess.value = false;
+}
+
+function triggerFileInput() {
+  fileInputRef.value?.click();
+}
+
+function handleFileSelect(event: Event) {
+  const target = event.target as HTMLInputElement;
+  if (target.files && target.files.length > 0) {
+    selectedFile.value = target.files[0];
+    importError.value = null;
+  }
+}
+
+async function processImport() {
+  if (!selectedFile.value) {
+    importError.value = 'Please select a file to import';
+    return;
+  }
+
+  if (!activeSemesterId.value) {
+    importError.value = 'Please select a semester first';
+    return;
+  }
+
+  importing.value = true;
+  importError.value = null;
+  importSuccess.value = false;
+
+  try {
+    // Parse the file based on type
+    const fileExtension = selectedFile.value.name.split('.').pop()?.toLowerCase();
+
+    let parsedData: any[] = [];
+
+    if (fileExtension === 'txt') {
+      parsedData = await importFromText(selectedFile.value);
+    } else if (fileExtension === 'pdf') {
+      parsedData = await importFromPDF(selectedFile.value);
+    } else if (fileExtension === 'csv') {
+      parsedData = await importFromCSV(selectedFile.value);
+    } else if (fileExtension === 'xlsx' || fileExtension === 'xls') {
+      parsedData = await importFromExcel(selectedFile.value);
+    } else {
+      throw new Error('Unsupported file format. Please use PDF, TXT, CSV, or Excel files.');
+    }
+
+    // Send directly to backend import endpoint
+    await sendImportToBackend(parsedData);
+
+    importSuccess.value = true;
+
+    // Show success toast
+    toast({
+      type: 'success',
+      title: 'Import Successful',
+      message: `Successfully imported ${parsedData.length} measures`,
+      duration: 3000
+    });
+
+    // Wait a moment to show success message, then close and reload
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    closeImportModal();
+    await loadReportData();
+
+  } catch (err: any) {
+    console.error('Import failed:', err);
+    importError.value = err.message || 'Failed to import file';
+
+    // Show error toast
+    toast({
+      type: 'error',
+      title: 'Import Failed',
+      message: err.message || 'Failed to import file',
+      duration: 5000
+    });
+  } finally {
+    importing.value = false;
+  }
+}
+
+async function sendImportToBackend(measureUpdates: any[]) {
+  // Group measures by outcome and indicator
+  const outcomeMap = new Map<number, any>();
+
+  for (const update of measureUpdates) {
+    const outcomeNum = parseInt(update.indicatorNumber.split('.')[0]);
+
+    if (!outcomeMap.has(outcomeNum)) {
+      outcomeMap.set(outcomeNum, {
+        number: outcomeNum,  // Changed from outcomeNumber to number
+        status: null,
+        indicators: []
       });
     }
 
-    lines.push('');
-  });
+    const outcome = outcomeMap.get(outcomeNum);
 
-  const text = lines.join('\n');
-  const blob = new Blob([text], { type: 'text/plain' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `ABET_Summary_${reportData.value.academicYear}.txt`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+    // Parse the full indicator number as a double (e.g., "1.1" -> 1.1)
+    const indicatorNumberDouble = parseFloat(update.indicatorNumber);
+
+    // Find or create indicator in outcome
+    let indicator = outcome.indicators.find((ind: any) => ind.number === indicatorNumberDouble);
+
+    if (!indicator) {
+      indicator = {
+        number: indicatorNumberDouble,  // Use number (double), not indicatorNumber (string)
+        courses: []
+      };
+      outcome.indicators.push(indicator);
+    }
+
+    // Find or create course in indicator
+    let course = indicator.courses.find((c: any) => c.courseCode === update.courseCode);
+
+    if (!course) {
+      course = {
+        courseCode: update.courseCode,
+        measures: []
+      };
+      indicator.courses.push(course);
+    }
+
+    // Add measure to course - use metPercentage and recommendedActions as array
+    course.measures.push({
+      description: update.description,
+      metPercentage: update.percentage,  // Send percentage, not counts
+      status: update.status,
+      recommendedActions: update.recommendedAction ? [update.recommendedAction] : []  // Send as array
+    });
+  }
+
+  // Convert map to array
+  const outcomes = Array.from(outcomeMap.values());
+
+  const payload = {
+    semesterId: activeSemesterId.value,
+    outcomes: outcomes
+  };
+
+  console.log('Sending import to backend:', JSON.stringify(payload, null, 2));
+
+  // Send to backend
+  const response = await api.post('/import/summary', payload);
+
+  console.log('Import response:', response.data);
+
+  return response.data;
 }
 
-async function exportAsPDF() {
-  const data = reportData.value;
-  if (!data) return;
+async function importFromText(file: File): Promise<any[]> {
+  const text = await file.text();
+  return parseNarrativeFormat(text);
+}
 
-  const doc = new jsPDF('p', 'pt', 'letter');
-  const left = 40;
-  const topMargin = 40;
-  let cursorY = topMargin;
+async function importFromPDF(file: File): Promise<any[]> {
+  // Read PDF as text using browser's File API
+  // Note: This requires the PDF to be text-based, not scanned images
+  const arrayBuffer = await file.arrayBuffer();
 
-  // ------------------------------
-  // Normalize values from report
-  // ------------------------------
-  const semester = String(data.semesterName ?? '');
-  const academicYear = String(data.academicYear ?? '');
-  const generatedDate = String(data.generatedDate ?? '');
+  // For basic text extraction from PDF, we'll need to use a library
+  // For now, show a helpful error with instructions
+  throw new Error('PDF import requires text extraction. Please convert your PDF to TXT format first, or we can add PDF parsing support with a library.');
+}
 
-  const generatedBy = Array.isArray(data.generatedBy)
-    ? data.generatedBy.join(', ')
-    : String(data.generatedBy ?? '');
+async function parseNarrativeFormat(text: string): Promise<any[]> {
+  // Parse the narrative format like the example:
+  // "(1.1) - CS 101"
+  // "1.1-cs101: Assignment 3 MS1, Dominoes Initialization, Met comfortably (86.4%)"
+  // "Recommended actions:"
+  // "● Action text"
 
-  // ============================
-  //  TITLE PAGE
-  // ============================
-  doc.setFont('Times', 'bold');
-  doc.setFontSize(24);
-  doc.text('ABET Assessment Summary Report', left, cursorY);
+  const lines = text.split('\n').map(line => line.trim()).filter(line => line);
+  const measureUpdates: any[] = [];
+  let currentRecommendedAction: string | null = null;
+  let lastMeasure: any = null;
 
-  cursorY += 40;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
 
-  doc.setFont('Times', 'normal');
-  doc.setFontSize(14);
+    // Check if this is a recommended action line
+    if (line.toLowerCase().includes('recommended action')) {
+      // Next line(s) might contain the action
+      currentRecommendedAction = '';
+      continue;
+    }
 
-  doc.text(`Program ID: ${String(props.programId)}`, left, cursorY);
-  cursorY += 24;
-
-  if (semester) {
-    doc.text(`Semester: ${semester}`, left, cursorY);
-    cursorY += 20;
-  }
-
-  if (academicYear) {
-    doc.text(`Academic Year: ${academicYear}`, left, cursorY);
-    cursorY += 20;
-  }
-
-  if (generatedDate) {
-    doc.text(`Generated On: ${generatedDate}`, left, cursorY);
-    cursorY += 20;
-  }
-
-  if (generatedBy) {
-    doc.text(`Generated By: ${generatedBy}`, left, cursorY);
-  }
-
-  // ============================
-  //  OUTCOME SUMMARY PAGE
-  // ============================
-  doc.addPage();
-  cursorY = topMargin;
-
-  doc.setFont('Times', 'bold');
-  doc.setFontSize(18);
-  doc.text('Outcome Summary', left, cursorY);
-  cursorY += 20;
-
-  if (data.outcomes && data.outcomes.length > 0) {
-    const outcomeSummary = data.outcomes.map((o: any) => [
-      `Outcome ${String(o.outcomeNumber ?? '')}`,
-      String(o.overallStatus ?? ''),
-      String(o.outcomeDescription ?? ''),
-    ]);
-
-    autoTable(doc, {
-      head: [['Outcome', 'Status', 'Description']],
-      body: outcomeSummary,
-      startY: cursorY,
-      margin: { left },
-      styles: { font: 'Times', fontSize: 11, cellPadding: 4 },
-      headStyles: { fillColor: [50, 50, 50], textColor: 255 },
-    });
-  } else {
-    doc.setFont('Times', 'normal');
-    doc.setFontSize(12);
-    doc.text('No outcome data available.', left, cursorY + 10);
-  }
-
-  // ============================
-  //  OUTCOME → INDICATOR TABLES
-  // ============================
-  if (data.outcomes && data.outcomes.length > 0) {
-    data.outcomes.forEach((outcome: any) => {
-      // New page per outcome
-      doc.addPage();
-      cursorY = topMargin;
-
-      doc.setFont('Times', 'bold');
-      doc.setFontSize(18);
-      doc.text(
-        `Outcome ${String(outcome.outcomeNumber ?? '')} - ${String(
-          outcome.overallStatus ?? ''
-        )}`,
-        left,
-        cursorY
-      );
-      cursorY += 20;
-
-      if (outcome.outcomeDescription) {
-        doc.setFont('Times', 'italic');
-        doc.setFontSize(12);
-        doc.text(String(outcome.outcomeDescription), left, cursorY);
-        cursorY += 30;
-      } else {
-        cursorY += 10;
-      }
-
-      const indicators = outcome.indicators ?? [];
-
-      indicators.forEach((indicator: any) => {
-        // Indicator header
-        doc.setFont('Times', 'bold');
-        doc.setFontSize(14);
-
-        const indicatorNumber = String(indicator.indicatorNumber ?? '');
-        const courseCode = indicator.courseCode
-          ? `(${String(indicator.courseCode)})`
-          : '';
-        const indicatorTitle = `Indicator ${indicatorNumber} ${courseCode}`.trim();
-
-        doc.text(indicatorTitle, left, cursorY);
-        cursorY += 16;
-
-        const measures = indicator.measures ?? [];
-
-        if (measures.length === 0) {
-          doc.setFont('Times', 'normal');
-          doc.setFontSize(11);
-          doc.text('No measures recorded for this indicator.', left, cursorY);
-          cursorY += 20;
-          return;
+    // Check if this is a bullet point action
+    if (currentRecommendedAction !== null && (line.startsWith('●') || line.startsWith('•') || line.startsWith('-'))) {
+      const actionText = line.replace(/^[●•\-]\s*/, '').trim();
+      if (actionText) {
+        currentRecommendedAction = actionText;
+        // Apply to last measure if available
+        if (lastMeasure) {
+          lastMeasure.recommendedAction = currentRecommendedAction;
         }
+        currentRecommendedAction = null;
+      }
+      continue;
+    }
 
-        const rows = measures.map((m: any) => [
-          String(m.description ?? ''),
-          String(m.status ?? ''),
-          `${m.metPercentage ?? ''}%`,
-          String(m.note ?? ''),
-        ]);
+    // Look for measure lines with format: "X.Y-courseCode: description, status (percentage%)"
+    const measureMatch = line.match(/^(\d+\.\d+)-([a-zA-Z0-9]+):\s*(.+?),\s*(Met comfortably|Met|Barely not met|Not met)\s*\((\d+\.?\d*)%\)/);
 
-        autoTable(doc, {
-          head: [['Measure', 'Status', 'Met %', 'Notes']],
-          body: rows,
-          startY: cursorY,
-          margin: { left },
-          styles: { font: 'Times', fontSize: 10, cellPadding: 4 },
-          headStyles: { fillColor: [70, 70, 70], textColor: 255 },
-        });
+    if (measureMatch) {
+      const [, indicatorNum, courseCode, description, status, percentage] = measureMatch;
 
-        // Safely read lastAutoTable.finalY
-        const last = (doc as any).lastAutoTable;
-        const finalY =
-          last && typeof last.finalY === 'number' && !isNaN(last.finalY)
-            ? last.finalY
-            : cursorY;
+      // Calculate students met/exceeded/below based on percentage and status
+      const pct = parseFloat(percentage);
 
-        cursorY = finalY + 25;
+      lastMeasure = {
+        indicatorNumber: indicatorNum,
+        courseCode: courseCode.toUpperCase(),
+        description: description.trim(),
+        status,
+        percentage: pct,
+        recommendedAction: null
+      };
+
+      measureUpdates.push(lastMeasure);
+      currentRecommendedAction = null;
+    }
+  }
+
+  if (measureUpdates.length === 0) {
+    throw new Error('No valid measure data found in file. Expected format: "1.1-cs101: Description, Status (XX.X%)"');
+  }
+
+  console.log('Found measures to import:', measureUpdates);
+  console.log('Sample measures:', measureUpdates.slice(0, 5).map(m => ({
+    indicatorNumber: m.indicatorNumber,
+    courseCode: m.courseCode,
+    percentage: m.percentage,
+    status: m.status
+  })));
+  return measureUpdates;
+}
+
+async function importFromCSV(file: File): Promise<any[]> {
+  // Read the CSV file
+  const text = await file.text();
+  const lines = text.split('\n').filter(line => line.trim());
+
+  if (lines.length < 2) {
+    throw new Error('CSV file is empty or has no data rows');
+  }
+
+  // Parse CSV (simple implementation - assumes comma-separated)
+  const headers = lines[0].split(',').map(h => h.trim());
+  const data: any[] = [];
+
+  for (let i = 1; i < lines.length; i++) {
+    const values = lines[i].split(',').map(v => v.trim());
+    const row: any = {};
+    headers.forEach((header, index) => {
+      row[header] = values[index];
+    });
+    data.push(row);
+  }
+
+  // Transform CSV data to the same format as narrative parser
+  const measureUpdates: any[] = [];
+
+  for (const row of data) {
+    const indicatorNum = row.indicatorNumber || row.indicator;
+    const courseCode = (row.courseCode || row.course || '').toUpperCase();
+    const percentage = parseFloat(row.percentage || row.metPercentage || '0');
+
+    if (indicatorNum && courseCode && !isNaN(percentage)) {
+      measureUpdates.push({
+        indicatorNumber: indicatorNum,
+        courseCode: courseCode,
+        description: row.description || '',
+        status: row.status || 'Met',
+        percentage: percentage,
+        recommendedAction: row.recommendedAction || null
       });
-    });
+    }
   }
 
-  // ============================
-  //  RECOMMENDED ACTIONS PAGE
-  // ============================
-  doc.addPage();
-  cursorY = topMargin;
-
-  doc.setFont('Times', 'bold');
-  doc.setFontSize(18);
-  doc.text('Recommended Actions', left, cursorY);
-  cursorY += 20;
-
-  const allActions =
-    data.outcomes?.flatMap((o: any) => o.recommendedActions ?? []) ?? [];
-
-  if (allActions.length === 0) {
-    doc.setFont('Times', 'normal');
-    doc.setFontSize(12);
-    doc.text(
-      'No recommended actions recorded for this assessment cycle.',
-      left,
-      cursorY
-    );
-  } else {
-    const recRows = allActions.map((a: any) => [`• ${String(a)}`]);
-
-    autoTable(doc, {
-      head: [['Action Items']],
-      body: recRows,
-      margin: { left },
-      startY: cursorY,
-      styles: { font: 'Times', fontSize: 11, cellPadding: 4 },
-      headStyles: { fillColor: [90, 90, 90], textColor: 255 },
-    });
+  if (measureUpdates.length === 0) {
+    throw new Error('No valid measure data found in CSV');
   }
 
-  // ============================
-  //  FOOTERS (PAGE X of Y)
-  // ============================
-  const pageCount =
-    typeof (doc as any).getNumberOfPages === 'function'
-      ? (doc as any).getNumberOfPages()
-      : 1;
+  return measureUpdates;
+}
 
-  for (let i = 1; i <= pageCount; i++) {
-    doc.setPage(i);
-    doc.setFont('Times', 'normal');
-    doc.setFontSize(10);
-
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
-
-    doc.text(
-      `Page ${i} of ${pageCount}`,
-      pageWidth - 70,
-      pageHeight - 20
-    );
-  }
-
-  // ============================
-  //  SAVE
-  // ============================
-  doc.save(`ABET_Summary_Report_${academicYear || 'Report'}.pdf`);
+async function importFromExcel(file: File): Promise<any[]> {
+  // For Excel files, we'd need a library like xlsx
+  // For now, show a message that this feature is coming soon
+  throw new Error('Excel import is not yet implemented. Please use CSV or TXT format.');
 }
 
 // Lifecycle
@@ -442,130 +595,15 @@ onMounted(() => {
       </BaseButton>
     </div>
 
-    <!-- Report Content -->
-    <div v-else-if="reportData">
-      <div class="pdf-export-wrapper">
-      <!-- Header -->
-      <BaseCard class="report-header">
-        <div class="header-content">
-          <h1>Summary Results {{ reportData.academicYear }}</h1>
-          <p class="header-meta">
-            {{ reportData.generatedDate }} - {{ reportData.generatedBy.join(', ') }}
-          </p>
-        </div>
-
-        <div v-if="showExportButton" class="header-actions">
-          <BaseButton
-            variant="primary"
-            size="sm"
-            @click="exportAsText"
-          >
-            Export as Text
-          </BaseButton>
-
-          <BaseButton
-            variant="primary"
-            size="sm"
-            @click="exportAsPDF"
-          >
-            Export as PDF
-          </BaseButton>
-        </div>
-      </BaseCard>
-
-      <!-- Outcomes -->
-      <div class="outcomes-container">
-        <BaseCard
-          v-for="outcome in reportData.outcomes"
-          :key="`outcome-${outcome.outcomeNumber}`"
-          class="outcome-card"
-        >
-          <!-- Outcome Header -->
-          <div class="outcome-header">
-            <h2 class="outcome-title">
-              Outcome ({{ outcome.outcomeNumber }}) -
-              <span
-                class="outcome-status"
-                :class="{
-                  'status-met': outcome.overallStatus === 'MET',
-                  'status-partial': outcome.overallStatus === 'Partially Met',
-                  'status-not-met': outcome.overallStatus === 'Not Met'
-                }"
-              >
-                {{ outcome.overallStatus }}
-              </span>
-            </h2>
-
-            <p class="outcome-description">{{ outcome.outcomeDescription }}</p>
-          </div>
-
-          <!-- Indicators -->
-          <div class="indicators-container">
-            <div
-              v-for="indicator in outcome.indicators"
-              :key="indicator.id"
-              class="indicator-section"
-            >
-              <!-- Indicator Header -->
-              <div class="indicator-header">
-      <span class="indicator-number">
-        {{ indicator.indicatorNumber }}
-      </span>
-
-                <span class="course-code">
-        {{ indicator.courseCode }}
-      </span>
-              </div>
-
-              <!-- Measures -->
-              <div class="measures-list">
-                <div
-                  v-for="measure in indicator.measures"
-                  :key="measure.measureId"
-                  class="measure-item"
-                >
-                  <div class="measure-main">
-          <span class="measure-description">
-            {{ measure.description }},
-          </span>
-
-                    <span
-                      class="measure-status"
-                      :class="{
-              'status-met-comfortably': measure.status === 'Met comfortably',
-              'status-met': measure.status === 'Met',
-              'status-barely-not-met': measure.status === 'Barely not met',
-              'status-not-met': measure.status === 'Not met'
-            }"
-                    >
-            {{ measure.status }}
-          </span>
-
-                    <span class="measure-percentage">
-            ({{ measure.metPercentage }}%)
-          </span>
-                  </div>
-
-                  <!-- Existing Notes -->
-                  <div v-if="measure.note" class="measure-note">
-                    {{ measure.note }}
-                  </div>
-
-                  <div
-                    v-if="measure.recommendedAction"
-                    class="measure-note"
-                    style="background: var(--color-bg-tertiary); color: var(--color-text-primary);"
-                  >
-                    <strong>Recommended Action:</strong><br />
-                    {{ measure.recommendedAction }}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </BaseCard>
-      </div>
-      </div>
+    <!-- Unified Renderer -->
+    <div v-else-if="reportDataInternal">
+      <SummaryReportTemplate
+        v-model:report="reportDataInternal"
+        @save="handleSave"
+        @import="handleImport"
+        @regenerate="loadReportData"
+        @reload="loadReportData"
+      />
     </div>
 
     <!-- Empty State -->
@@ -577,6 +615,58 @@ onMounted(() => {
         }}
       </p>
     </div>
+
+    <!-- Import Modal (outside conditional chain) -->
+    <BaseModal
+      :isOpen="showImportModal"
+      title="Import Summary Data"
+      @close="closeImportModal"
+    >
+      <div class="import-modal-content">
+        <p>Upload a file containing summary report data. Supported formats: PDF, TXT, CSV, Excel.</p>
+
+        <div class="file-upload-section">
+          <input
+            ref="fileInputRef"
+            type="file"
+            accept=".csv,.xlsx,.xls,.pdf,.txt"
+            @change="handleFileSelect"
+            style="display: none"
+          />
+
+          <BaseButton variant="primary" @click="triggerFileInput">
+            Choose File
+          </BaseButton>
+
+          <span v-if="selectedFile" class="selected-file-name">
+            {{ selectedFile.name }}
+          </span>
+        </div>
+
+        <div v-if="importError" class="import-error">
+          {{ importError }}
+        </div>
+
+        <div v-if="importSuccess" class="import-success">
+          Summary data imported successfully! The page will reload to show the updated data.
+        </div>
+      </div>
+
+      <template #footer>
+        <div class="modal-footer-buttons">
+          <BaseButton variant="secondary" @click="closeImportModal">
+            Cancel
+          </BaseButton>
+          <BaseButton
+            variant="primary"
+            @click="processImport"
+            :disabled="!selectedFile || importing"
+          >
+            {{ importing ? 'Importing...' : 'Import' }}
+          </BaseButton>
+        </div>
+      </template>
+    </BaseModal>
   </div>
 </template>
 
@@ -625,10 +715,6 @@ onMounted(() => {
 }
 
 /* Report Header */
-.report-header {
-  margin-bottom: 2rem;
-}
-
 .header-content h1 {
   margin: 0 0 0.5rem 0;
   font-size: 1.75rem;
@@ -636,169 +722,7 @@ onMounted(() => {
   color: var(--color-text-primary);
 }
 
-.header-meta {
-  margin: 0;
-  font-size: 0.95rem;
-  color: var(--color-text-secondary);
-}
-
-.header-actions {
-  margin-top: 1rem;
-  gap: 0.5rem;
-}
-
-/* Outcomes */
-.outcomes-container {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-}
-
-.outcome-header {
-  margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
-  border-bottom: 2px solid var(--color-border-light);
-}
-
-.outcome-title {
-  margin: 0 0 0.5rem 0;
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: var(--color-text-primary);
-}
-
-.outcome-status {
-  font-weight: 700;
-}
-
-.status-met {
-  color: var(--color-success);
-}
-
-.status-partial {
-  color: var(--color-warning);
-}
-
-.status-not-met {
-  color: var(--color-error);
-}
-
-.outcome-description {
-  margin: 0;
-  font-size: 0.95rem;
-  color: var(--color-text-secondary);
-  font-style: italic;
-}
-
-/* Indicators */
-.indicators-container {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.indicator-section {
-  padding: 1rem;
-  background: var(--color-bg-tertiary);
-  border-radius: 0.5rem;
-}
-
-.indicator-header {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
-  font-size: 1rem;
-  font-weight: 600;
-}
-
-.indicator-number {
-  color: var(--color-text-primary);
-}
-
-.course-code {
-  color: var(--color-text-primary);
-  background: var(--color-bg-secondary);
-  padding: 0.25rem 0.75rem;
-  border-radius: 0.375rem;
-  font-weight: 600;
-  font-size: 0.9rem;
-}
-
-/* Measures */
-.measures-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.measure-item {
-  padding: 0.75rem;
-  background: var(--color-bg-secondary);
-  border-radius: 0.375rem;
-}
-
-.measure-main {
-  font-size: 0.9rem;
-  line-height: 1.6;
-  color: var(--color-text-primary);
-}
-
-.measure-id {
-  font-weight: 600;
-  color: var(--color-text-primary);
-  font-family: var(--font-family-mono),monospace;
-}
-
-.measure-description {
-  margin: 0 0.25rem;
-}
-
-.measure-status {
-  font-weight: 600;
-  margin: 0 0.25rem;
-}
-
-.status-met-comfortably {
-  color: var(--color-success-dark);
-}
-
-.status-met {
-  color: var(--color-info);
-}
-
-.status-barely-not-met {
-  color: var(--color-warning);
-}
-
-.status-not-met {
-  color: var(--color-error);
-}
-
-.measure-percentage {
-  color: var(--color-text-secondary);
-  font-style: italic;
-}
-
-.measure-note {
-  margin-top: 0.5rem;
-  padding: 0.5rem;
-  background: var(--color-bg-tertiary);
-  border-radius: 0.25rem;
-  font-size: 0.85rem;
-  color: var(--color-text-secondary);
-  font-style: italic;
-}
-
 /* Recommended Actions */
-.recommended-actions {
-  margin-top: 1.5rem;
-  padding: 1rem;
-  background: var(--color-bg-tertiary);
-  border-radius: 0.5rem;
-  text-align: left;
-}
-
 .recommended-actions h3 {
   margin: 0 0 0.75rem 0;
   font-size: 1.1rem;
@@ -824,24 +748,6 @@ onMounted(() => {
   .selector-content {
     max-width: 100%;
   }
-
-  .outcome-title {
-    font-size: 1.25rem;
-  }
-
-  .indicator-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
-  }
-
-  .measure-main {
-    font-size: 0.85rem;
-  }
-}
-
-.pdf-export-wrapper {
-  padding: 1rem;
 }
 
 .pdf-export-wrapper * {
@@ -859,12 +765,52 @@ onMounted(() => {
     padding: 0;
   }
 }
+
 .summary-report {
   gap: 1rem;
 }
 
-.outcome-card {
-  page-break-inside: avoid;
-  margin-bottom: 2rem;
+/* Import Modal Styles */
+.import-modal-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.file-upload-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border: 2px dashed var(--color-border-light);
+  border-radius: 0.5rem;
+  background: var(--color-bg-secondary);
+}
+
+.selected-file-name {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+}
+
+.import-error {
+  padding: 0.75rem;
+  background: var(--color-error-light, #fee);
+  color: var(--color-error);
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+}
+
+.import-success {
+  padding: 0.75rem;
+  background: var(--color-success-light, #efe);
+  color: var(--color-success, #0a0);
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+}
+
+.modal-footer-buttons {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
 }
 </style>

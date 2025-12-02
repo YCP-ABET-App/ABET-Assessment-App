@@ -18,7 +18,7 @@ const props = withDefaults(defineProps<Props>(), {
   showToolbar: true
 });
 
-const toast = useToast();
+const { success, error, warning, info, toast } = useToast();
 
 // Use composable for shared data loading logic
 const {
@@ -151,7 +151,7 @@ function applyCourseSelection() {
   row.assignments.set(selectorYear.value, Array.from(selectedCourses.value));
 
   closeCourseSelector();
-  toast.success('Course assignment updated', 'Changes not yet saved');
+  success('Course assignment updated', 'Changes not yet saved');
 }
 
 function closeCourseSelector() {
@@ -171,12 +171,12 @@ function clearSelectedCells() {
         });
       }
     });
-    toast.info('Cleared selected rows', 'Changes not yet saved');
+    info('Cleared selected rows', 'Changes not yet saved');
   } else if (selectedCell.value) {
     const row = scheduleData.value.find(r => r.outcomeId === selectedCell.value!.outcomeId);
     if (row) {
       row.assignments.set(selectedCell.value.year, []);
-      toast.info('Cleared cell', 'Changes not yet saved');
+      info('Cleared cell', 'Changes not yet saved');
     }
   }
 }
@@ -204,10 +204,10 @@ function copySelection() {
 async function copyToClipboard(text: string) {
   try {
     await navigator.clipboard.writeText(text);
-    toast.success('Copied to clipboard');
+    success('Copied to clipboard');
   } catch (err) {
     console.error('Failed to copy:', err);
-    toast.error('Failed to copy to clipboard');
+    error('Failed to copy to clipboard');
   }
 }
 
@@ -250,11 +250,11 @@ async function saveChanges() {
     // await api.post(`/program/${props.programId}/assessment-schedule`, payload);
 
     console.log('Would save:', payload);
-    toast.success('Assessment schedule saved successfully');
+    success('Assessment schedule saved successfully');
 
   } catch (err) {
     console.error('Error saving schedule:', err);
-    toast.error('Failed to save assessment schedule');
+    error('Failed to save assessment schedule');
   } finally {
     saving.value = false;
   }

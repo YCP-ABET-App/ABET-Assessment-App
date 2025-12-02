@@ -195,6 +195,13 @@ public class CourseService extends BaseService<Course, Long, CourseRepository> {
     }
 
     @Transactional(readOnly = true)
+    public Course findByCourseCodeAndSemesterId(String courseCode, Long semesterId) {
+        return repository.findByCourseCodeIgnoreCaseAndSemesterId(courseCode, semesterId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Course not found with code: " + courseCode + " for semester " + semesterId));
+    }
+
+    @Transactional(readOnly = true)
     public boolean existsByCourseCode(String courseCode) {
         return repository.existsByCourseCodeIgnoreCase(courseCode);
     }

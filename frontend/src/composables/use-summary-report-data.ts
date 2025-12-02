@@ -9,12 +9,24 @@ import api from '@/api';
 // A single measure attached to an indicator for a specific course
 export interface IndicatorMeasure {
   measureId: number;
+  courseIndicatorId: number;
   courseCode: string;
   description: string;
+
+  studentsMet: number;
+  studentsExceeded: number;
+  studentsBelow: number;
+
+  met: number;
+  exceeded: number;
+  below: number;
+
   metPercentage: number;
   status: string;
   note?: string;
+  recommendedAction?: string | null;
 }
+
 
 // A performance indicator + course pairing in the summary report
 export interface IndicatorData {
@@ -62,7 +74,7 @@ export function useSummaryReportData(props: SummaryReportProps) {
   const error = ref<string | null>(null);
   const reportData = ref<SummaryReportData | null>(null);
 
-  // Normalized props → always numbers
+  // Normalized props â†’ always numbers
   const programId = computed(() =>
     typeof props.programId === 'number'
       ? props.programId
@@ -142,6 +154,7 @@ export function useSummaryReportData(props: SummaryReportProps) {
       // ------------------------------
       const outcomesRes = await api.get(`/outcome/bySemester/${semesterId.value}`);
       const outcomes = outcomesRes.data.data ?? [];
+      console.log('Loaded outcomes:', outcomes.length, outcomes);
 
       if (outcomes.length === 0) {
         error.value = 'No student outcomes found for this semester';
@@ -185,6 +198,7 @@ export function useSummaryReportData(props: SummaryReportProps) {
         });
 
         allCourses = coursesRes.data.content ?? coursesRes.data.data ?? [];
+        console.log('Loaded active courses:', allCourses.length, allCourses);
       } catch (err: any) {
         throw new Error('Failed to load courses');
       }
@@ -201,6 +215,7 @@ export function useSummaryReportData(props: SummaryReportProps) {
         });
 
         const indicators = indicatorsRes.data.data ?? [];
+        console.log(`Outcome ${outcome.number}: found ${indicators.length} indicators`);
         const indicatorDataArray: IndicatorData[] = [];
         const recommendedActions: string[] = [];
 
@@ -225,6 +240,8 @@ export function useSummaryReportData(props: SummaryReportProps) {
               courseMeasures.some((cm: any) => cm.id === m.id)
             );
 
+            console.log(`  Course ${course.courseCode} + Indicator ${indicator.id}: ${matched.length} measures`);
+
             const formattedMeasures: IndicatorMeasure[] = [];
 
             for (const measure of matched) {
@@ -245,12 +262,19 @@ export function useSummaryReportData(props: SummaryReportProps) {
 
               formattedMeasures.push({
                 measureId: measure.id,
+                courseIndicatorId: measure.courseIndicatorId,
                 courseCode: course.courseCode,
                 description: desc,
+                studentsMet: met,
+                studentsExceeded: exceeded,
+                studentsBelow: below,
+                met,
+                exceeded,
+                below,
                 metPercentage: pct,
                 status,
                 note: measure.observation ?? undefined,
-                recommendedAction: measure.recommendedAction ?? null
+                recommendedAction: measure.recommendedAction ?? null,
               });
 
               if (measure.recommendedAction) {
@@ -269,6 +293,7 @@ export function useSummaryReportData(props: SummaryReportProps) {
                 id: indicator.id,
                 indicatorNumber: `${outcome.number}.${indicatorNumber}`,
                 courseCode: course.courseCode,
+                studentCount: course.studentCount ?? 0,
                 measures: formattedMeasures
               });
             }

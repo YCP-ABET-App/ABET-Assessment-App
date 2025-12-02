@@ -222,4 +222,9 @@ public class MeasureService extends BaseService<Measure, Long, MeasureRepository
 
         return output;
     }
+
+    @Transactional
+    public Measure createFromImport(Measure m) {
+        return repository.save(m);
+    }
 }
