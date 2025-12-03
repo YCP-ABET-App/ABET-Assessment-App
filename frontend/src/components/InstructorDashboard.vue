@@ -99,7 +99,7 @@ async function loadCourseMeasures(courseId: number): Promise<Measure[]> {
 async function loadInstructorCourses() {
   if (!programUserId.value || !semesterId.value) return;
 
-  const cRes = await api.get("/courses/instructor", {
+  const cRes = await api.get("/courses/instructor/semester", {
     params: {
       programUserId: programUserId.value,
       semesterId: semesterId.value
