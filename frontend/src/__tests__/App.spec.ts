@@ -87,7 +87,7 @@ describe('App', () => {
         email: 'test@user.com',
         firstName: 'Test',
         lastName: 'User',
-        role: 'USER',
+        role: 'INSTRUCTOR',
       },
     })
 
