@@ -6,7 +6,8 @@ import { useToast } from '@/composables/use-toast';
 import { useAssessmentScheduleData } from '@/composables/use-assessment-schedule-data';
 
 interface Props {
-  programId: number;
+  programId: number | null;
+  semesterId: number | null;
   startYear?: number;
   yearCount?: number;
   editable?: boolean;
@@ -27,13 +28,14 @@ const {
   error,
   courses,
   outcomes,
+  indicators,
   scheduleData,
-  courseOutcomeMappings,
+  courseIndicatorMappings,
   academicYears,
   loadData,
   getCourseCodesForCell,
   getCourseNamesForCell,
-  formatIndicatorList
+  getIndicatorTooltip
 } = useAssessmentScheduleData(props);
 
 // Computed property to show data summary
@@ -43,12 +45,12 @@ const dataSummary = computed(() => {
   return {
     courseCount: courses.value.length,
     outcomeCount: outcomes.value.length,
-    mappedCourses: courseOutcomeMappings.value.filter(m =>
-      Object.keys(m.outcomeMappings).length > 0
+    indicatorCount: indicators.value.length,
+    mappedCourses: courseIndicatorMappings.value.filter(m =>
+      Object.keys(m.indicatorMappings).length > 0
     ).length,
-    totalIndicators: courseOutcomeMappings.value.reduce((sum, m) =>
-        sum + Object.values(m.outcomeMappings).reduce((s, indicators) => s + indicators.length, 0),
-      0
+    totalMappings: courseIndicatorMappings.value.reduce((sum, m) =>
+      sum + Object.keys(m.indicatorMappings).length, 0
     )
   };
 });
@@ -56,11 +58,11 @@ const dataSummary = computed(() => {
 // Editing state (only needed when editable)
 const saving = ref(false);
 const selectedRows = ref<Set<number>>(new Set());
-const selectedCell = ref<{ outcomeId: number; year: string } | null>(null);
+const selectedCell = ref<{ indicatorId: number; year: string } | null>(null);
 
 // Course selection modal
 const showCourseSelector = ref(false);
-const selectorOutcomeId = ref<number | null>(null);
+const selectorIndicatorId = ref<number | null>(null);
 const selectorYear = ref<string | null>(null);
 const selectedCourses = ref<Set<number>>(new Set());
 const courseSearchTerm = ref('');
@@ -77,13 +79,13 @@ const filteredCourses = computed(() => {
 });
 
 // Cell state helpers
-function isCellSelected(outcomeId: number, year: string): boolean {
-  return selectedCell.value?.outcomeId === outcomeId &&
+function isCellSelected(indicatorId: number, year: string): boolean {
+  return selectedCell.value?.indicatorId === indicatorId &&
     selectedCell.value?.year === year;
 }
 
-function isRowSelected(outcomeId: number): boolean {
-  return selectedRows.value.has(outcomeId);
+function isRowSelected(indicatorId: number): boolean {
+  return selectedRows.value.has(indicatorId);
 }
 
 function getCellClass(year: string): string {
@@ -97,26 +99,26 @@ function getCellClass(year: string): string {
 }
 
 // Selection handlers (only for editable mode)
-function handleCellClick(event: MouseEvent, outcomeId: number, year: string) {
+function handleCellClick(event: MouseEvent, indicatorId: number, year: string) {
   if (!props.editable) return;
 
   if (event.ctrlKey || event.metaKey) {
-    toggleRowSelection(outcomeId);
+    toggleRowSelection(indicatorId);
   } else {
-    selectCell(outcomeId, year);
+    selectCell(indicatorId, year);
   }
 }
 
-function selectCell(outcomeId: number, year: string) {
-  selectedCell.value = { outcomeId, year };
+function selectCell(indicatorId: number, year: string) {
+  selectedCell.value = { indicatorId, year };
   selectedRows.value.clear();
 }
 
-function toggleRowSelection(outcomeId: number) {
-  if (selectedRows.value.has(outcomeId)) {
-    selectedRows.value.delete(outcomeId);
+function toggleRowSelection(indicatorId: number) {
+  if (selectedRows.value.has(indicatorId)) {
+    selectedRows.value.delete(indicatorId);
   } else {
-    selectedRows.value.add(outcomeId);
+    selectedRows.value.add(indicatorId);
   }
   selectedCell.value = null;
 }
@@ -124,7 +126,7 @@ function toggleRowSelection(outcomeId: number) {
 function selectAllRows() {
   selectedRows.value.clear();
   scheduleData.value.forEach(row => {
-    selectedRows.value.add(row.outcomeId);
+    selectedRows.value.add(row.indicatorId);
   });
   selectedCell.value = null;
 }
@@ -135,16 +137,16 @@ function clearSelection() {
 }
 
 // Editing handlers
-function handleCellDoubleClick(outcomeId: number, year: string) {
+function handleCellDoubleClick(indicatorId: number, year: string) {
   if (!props.editable) return;
-  openCourseSelector(outcomeId, year);
+  openCourseSelector(indicatorId, year);
 }
 
-function openCourseSelector(outcomeId: number, year: string) {
-  selectorOutcomeId.value = outcomeId;
+function openCourseSelector(indicatorId: number, year: string) {
+  selectorIndicatorId.value = indicatorId;
   selectorYear.value = year;
 
-  const row = scheduleData.value.find(r => r.outcomeId === outcomeId);
+  const row = scheduleData.value.find(r => r.indicatorId === indicatorId);
   const currentCourses = row?.assignments.get(year) || [];
   selectedCourses.value = new Set(currentCourses);
 
@@ -161,9 +163,9 @@ function toggleCourseSelection(courseId: number) {
 }
 
 function applyCourseSelection() {
-  if (!selectorOutcomeId.value || !selectorYear.value) return;
+  if (!selectorIndicatorId.value || !selectorYear.value) return;
 
-  const row = scheduleData.value.find(r => r.outcomeId === selectorOutcomeId.value);
+  const row = scheduleData.value.find(r => r.indicatorId === selectorIndicatorId.value);
   if (!row) return;
 
   row.assignments.set(selectorYear.value, Array.from(selectedCourses.value));
@@ -174,15 +176,15 @@ function applyCourseSelection() {
 
 function closeCourseSelector() {
   showCourseSelector.value = false;
-  selectorOutcomeId.value = null;
+  selectorIndicatorId.value = null;
   selectorYear.value = null;
   selectedCourses.value.clear();
 }
 
 function clearSelectedCells() {
   if (selectedRows.value.size > 0) {
-    selectedRows.value.forEach(outcomeId => {
-      const row = scheduleData.value.find(r => r.outcomeId === outcomeId);
+    selectedRows.value.forEach(indicatorId => {
+      const row = scheduleData.value.find(r => r.indicatorId === indicatorId);
       if (row) {
         academicYears.value.forEach(year => {
           row.assignments.set(year, []);
@@ -191,7 +193,7 @@ function clearSelectedCells() {
     });
     toast.info('Cleared selected rows', 'Changes not yet saved');
   } else if (selectedCell.value) {
-    const row = scheduleData.value.find(r => r.outcomeId === selectedCell.value!.outcomeId);
+    const row = scheduleData.value.find(r => r.indicatorId === selectedCell.value!.indicatorId);
     if (row) {
       row.assignments.set(selectedCell.value.year, []);
       toast.info('Cleared cell', 'Changes not yet saved');
@@ -202,19 +204,19 @@ function clearSelectedCells() {
 function copySelection() {
   if (selectedRows.value.size > 0) {
     const data = Array.from(selectedRows.value)
-      .map(outcomeId => {
-        const row = scheduleData.value.find(r => r.outcomeId === outcomeId);
+      .map(indicatorId => {
+        const row = scheduleData.value.find(r => r.indicatorId === indicatorId);
         if (!row) return '';
 
         return academicYears.value
-          .map(year => getCourseCodesForCell(outcomeId, year))
+          .map(year => getCourseCodesForCell(indicatorId, year))
           .join('\t');
       })
       .join('\n');
 
     copyToClipboard(data);
   } else if (selectedCell.value) {
-    const value = getCourseCodesForCell(selectedCell.value.outcomeId, selectedCell.value.year);
+    const value = getCourseCodesForCell(selectedCell.value.indicatorId, selectedCell.value.year);
     copyToClipboard(value);
   }
 }
@@ -260,7 +262,7 @@ async function saveChanges() {
 
   try {
     const payload = scheduleData.value.map(row => ({
-      outcomeId: row.outcomeId,
+      indicatorId: row.indicatorId,
       assignments: Object.fromEntries(row.assignments)
     }));
 
@@ -279,27 +281,27 @@ async function saveChanges() {
 }
 
 // Lifecycle
-watch(() => props.programId, () => {
-  if (props.programId) {
+watch(() => [props.programId, props.semesterId] as const, () => {
+  if (props.programId && props.semesterId) {
     loadData();
   }
-});
+}, { immediate: false });
 
 // Track when data finishes loading successfully
 watch([loading, error], ([newLoading, newError]) => {
-  if (!newLoading && !newError && courses.value.length > 0 && outcomes.value.length > 0) {
+  if (!newLoading && !newError && courses.value.length > 0 && indicators.value.length > 0) {
     const summary = dataSummary.value;
     if (summary) {
       info(
         'Assessment schedule loaded',
-        `${summary.courseCount} courses, ${summary.outcomeCount} outcomes, ${summary.totalIndicators} indicators`
+        `${summary.courseCount} courses, ${summary.outcomeCount} outcomes, ${summary.indicatorCount} indicators`
       );
     }
   }
 });
 
 onMounted(() => {
-  if (props.programId) {
+  if (props.programId && props.semesterId) {
     loadData();
   }
 
@@ -399,12 +401,16 @@ onUnmounted(() => {
         <span class="summary-value">{{ dataSummary.outcomeCount }}</span>
       </div>
       <div class="summary-item">
+        <span class="summary-label">Indicators:</span>
+        <span class="summary-value">{{ dataSummary.indicatorCount }}</span>
+      </div>
+      <div class="summary-item">
         <span class="summary-label">Mapped Courses:</span>
         <span class="summary-value">{{ dataSummary.mappedCourses }} / {{ dataSummary.courseCount }}</span>
       </div>
       <div class="summary-item">
-        <span class="summary-label">Total Indicators:</span>
-        <span class="summary-value">{{ dataSummary.totalIndicators }}</span>
+        <span class="summary-label">Total Mappings:</span>
+        <span class="summary-value">{{ dataSummary.totalMappings }}</span>
       </div>
     </div>
 
@@ -412,7 +418,7 @@ onUnmounted(() => {
     <div v-if="loading" class="loading-state">
       <BaseSpinner size="lg" text="Loading assessment schedule..." />
       <p class="loading-details">
-        Fetching courses, outcomes, and indicator mappings...
+        Fetching courses, outcomes, and performance indicators...
       </p>
     </div>
 
@@ -432,7 +438,7 @@ onUnmounted(() => {
     </div>
 
     <!-- Empty State -->
-    <div v-else-if="courses.length === 0 || outcomes.length === 0" class="empty-state">
+    <div v-else-if="courses.length === 0 || indicators.length === 0" class="empty-state">
       <div class="empty-icon">📋</div>
       <h3>No Data Available</h3>
       <div v-if="courses.length === 0" class="empty-message">
@@ -440,8 +446,8 @@ onUnmounted(() => {
         <p class="empty-hint">Add courses to begin creating your assessment schedule.</p>
       </div>
       <div v-else class="empty-message">
-        <p>No student outcomes have been defined for this program yet.</p>
-        <p class="empty-hint">Define student outcomes to begin tracking assessments.</p>
+        <p>No performance indicators have been defined for this program yet.</p>
+        <p class="empty-hint">Define performance indicators to begin tracking assessments.</p>
       </div>
     </div>
 
@@ -450,14 +456,14 @@ onUnmounted(() => {
       <!-- Assessment Schedule Table -->
       <BaseCard class="schedule-section">
         <template #header>
-          <h2>Assessment Schedule</h2>
+          <h2>Assessment Schedule by Indicator</h2>
         </template>
 
         <div class="table-wrapper">
           <table class="schedule-table">
             <thead>
             <tr>
-              <th class="outcome-header">Outcome</th>
+              <th class="indicator-header">Performance Indicator</th>
               <th
                 v-for="year in academicYears"
                 :key="year"
@@ -471,16 +477,16 @@ onUnmounted(() => {
             <tbody>
             <tr
               v-for="row in scheduleData"
-              :key="row.outcomeId"
-              :class="{ 'row-selected': isRowSelected(row.outcomeId) }"
+              :key="row.indicatorId"
+              :class="{ 'row-selected': isRowSelected(row.indicatorId) }"
             >
               <td
-                class="outcome-cell"
-                :class="{ 'row-selected': isRowSelected(row.outcomeId), 'clickable': editable }"
-                @click="editable && toggleRowSelection(row.outcomeId)"
+                class="indicator-cell"
+                :class="{ 'row-selected': isRowSelected(row.indicatorId), 'clickable': editable }"
+                :title="getIndicatorTooltip(row.indicatorId)"
+                @click="editable && toggleRowSelection(row.indicatorId)"
               >
-                <div class="outcome-number">{{ row.outcomeNumber }}</div>
-                <div class="outcome-description">{{ row.outcomeDescription }}</div>
+                <div class="indicator-number">{{ row.outcomeNumber }}.{{ row.indicatorNumber }}</div>
               </td>
 
               <td
@@ -489,17 +495,17 @@ onUnmounted(() => {
                 class="data-cell"
                 :class="[
                   {
-                    'cell-selected': isCellSelected(row.outcomeId, year),
-                    'row-selected': isRowSelected(row.outcomeId),
+                    'cell-selected': isCellSelected(row.indicatorId, year),
+                    'row-selected': isRowSelected(row.indicatorId),
                     'clickable': editable
                   },
                   getCellClass(year)
                 ]"
-                :title="getCourseNamesForCell(row.outcomeId, year)"
-                @click="handleCellClick($event, row.outcomeId, year)"
-                @dblclick="handleCellDoubleClick(row.outcomeId, year)"
+                :title="getCourseNamesForCell(row.indicatorId, year)"
+                @click="handleCellClick($event, row.indicatorId, year)"
+                @dblclick="handleCellDoubleClick(row.indicatorId, year)"
               >
-                {{ getCourseCodesForCell(row.outcomeId, year) }}
+                {{ getCourseCodesForCell(row.indicatorId, year) }}
               </td>
             </tr>
             </tbody>
@@ -507,24 +513,10 @@ onUnmounted(() => {
         </div>
       </BaseCard>
 
-      <!-- Help Text (only for editable mode) -->
-      <div v-if="editable" class="help-text">
-        <p><strong>Keyboard shortcuts:</strong></p>
-        <ul>
-          <li><kbd>Double-click</kbd> a cell to edit course assignments</li>
-          <li><kbd>Click</kbd> row number to select entire row</li>
-          <li><kbd>Ctrl/Cmd + Click</kbd> to select multiple rows</li>
-          <li><kbd>Ctrl/Cmd + A</kbd> to select all rows</li>
-          <li><kbd>Ctrl/Cmd + C</kbd> to copy selection</li>
-          <li><kbd>Delete</kbd> or <kbd>Backspace</kbd> to clear selection</li>
-          <li><kbd>Esc</kbd> to clear selection</li>
-        </ul>
-      </div>
-
-      <!-- Course-Outcome Mapping Table -->
+      <!-- Course-Indicator Mapping Table -->
       <BaseCard class="schedule-section">
         <template #header>
-          <h2>Course-Outcome Mappings</h2>
+          <h2>Course-Indicator Mappings</h2>
         </template>
 
         <div class="table-wrapper">
@@ -533,98 +525,53 @@ onUnmounted(() => {
             <tr>
               <th class="course-header">Course</th>
               <th
-                v-for="outcome in outcomes"
-                :key="outcome.id"
-                class="outcome-number-header"
+                v-for="indicator in indicators"
+                :key="indicator.id"
+                class="indicator-number-header"
+                :title="getIndicatorTooltip(indicator.id)"
               >
-                {{ outcome.number ?? outcome.outNumber ?? outcome.out_number }}
+                {{ indicator.outcomeNumber }}.{{ indicator.indicatorNumber }}
               </th>
             </tr>
             </thead>
             <tbody>
-            <tr v-for="mapping in courseOutcomeMappings" :key="mapping.courseId">
+            <tr v-for="mapping in courseIndicatorMappings" :key="mapping.courseId">
               <td class="course-name-cell">
                 <div class="course-code-bold">{{ mapping.courseCode }}</div>
                 <div class="course-name-small">{{ mapping.courseName }}</div>
               </td>
               <td
-                v-for="outcome in outcomes"
-                :key="outcome.id"
-                class="indicator-cell"
+                v-for="indicator in indicators"
+                :key="indicator.id"
+                class="indicator-mapping-cell"
                 :class="{
-                  'has-indicators': mapping.outcomeMappings[outcome.number ?? outcome.outNumber ?? outcome.out_number ?? 0]?.length > 0
+                  'has-mapping': mapping.indicatorMappings[`${indicator.outcomeNumber}.${indicator.indicatorNumber}`]
                 }"
-                :title="mapping.outcomeMappings[outcome.number ?? outcome.outNumber ?? outcome.out_number ?? 0]?.length > 0
-                  ? `Performance Indicators: ${formatIndicatorList(mapping.outcomeMappings[outcome.number ?? outcome.outNumber ?? outcome.out_number ?? 0])}`
-                  : 'No indicators assigned'"
+                :title="mapping.indicatorMappings[`${indicator.outcomeNumber}.${indicator.indicatorNumber}`]
+                  ? `${indicator.outcomeNumber}.${indicator.indicatorNumber}: ${indicator.indicatorDescription}`
+                  : 'Not assessed in this course'"
               >
-                {{ formatIndicatorList(mapping.outcomeMappings[outcome.number ?? outcome.outNumber ?? outcome.out_number ?? 0] || []) }}
+                {{ mapping.indicatorMappings[`${indicator.outcomeNumber}.${indicator.indicatorNumber}`] ? '✓' : '' }}
               </td>
             </tr>
             </tbody>
           </table>
         </div>
       </BaseCard>
-
-      <!-- Legend -->
-      <BaseCard class="schedule-section">
-        <template #header>
-          <h3>Legend</h3>
-        </template>
-
-        <div class="legend-content">
-          <div class="legend-item">
-            <span class="legend-label">Assessment Schedule:</span>
-            <span class="legend-description">
-              Shows which courses assess each outcome in each academic year.
-              Numbers in parentheses are course numbers (e.g., (101, 201) = CS 101, CS 201).
-              <template v-if="editable">Double-click cells to edit assignments.</template>
-            </span>
-          </div>
-          <div class="legend-item">
-            <span class="legend-label">Course Mappings:</span>
-            <span class="legend-description">
-              Shows which performance indicators each course assesses for each outcome.
-              Numbers represent performance indicator numbers within each outcome.
-              This is built from your course-indicator assignments.
-            </span>
-          </div>
-          <div class="legend-item">
-            <span class="legend-box highlight-cell"></span>
-            <span class="legend-description">Current or upcoming academic year</span>
-          </div>
-          <div v-if="editable" class="legend-item">
-            <span class="legend-box cell-selected"></span>
-            <span class="legend-description">Selected cell</span>
-          </div>
-          <div v-if="editable" class="legend-item">
-            <span class="legend-box row-selected"></span>
-            <span class="legend-description">Selected row</span>
-          </div>
-          <div class="legend-item">
-            <span class="legend-box has-indicators"></span>
-            <span class="legend-description">Course has indicators for this outcome</span>
-          </div>
-        </div>
-      </BaseCard>
-
-      <!-- Outcomes Reference -->
-      <BaseCard class="schedule-section">
-        <template #header>
-          <h3>Student Outcomes</h3>
-        </template>
-
-        <div class="outcomes-reference">
-          <div
-            v-for="outcome in outcomes"
-            :key="outcome.id"
-            class="outcome-item"
-          >
-            <strong>{{ outcome.number ?? outcome.outNumber ?? outcome.out_number }}:</strong>
-            {{ outcome.description ?? outcome.outDescription ?? outcome.out_description }}
-          </div>
-        </div>
-      </BaseCard>
+      <!-- Help Text (only for editable mode) -->
+      <div v-if="editable" class="help-text">
+        <p><strong>Keyboard shortcuts:</strong></p>
+        <ul>
+          <li><kbd>Double-click</kbd> a cell to edit course assignments</li>
+          <li><kbd>Click</kbd> indicator row to select entire row</li>
+          <li><kbd>Ctrl/Cmd + Click</kbd> to select multiple rows</li>
+          <li><kbd>Ctrl/Cmd + A</kbd> to select all rows</li>
+          <li><kbd>Ctrl/Cmd + C</kbd> to copy selection</li>
+          <li><kbd>Delete</kbd> or <kbd>Backspace</kbd> to clear selection</li>
+          <li><kbd>Esc</kbd> to clear selection</li>
+          <li><kbd>Hover</kbd> over indicators to see full descriptions</li>
+        </ul>
+      </div>
     </div>
 
     <!-- Course Selector Modal (only for editable mode) -->
@@ -637,11 +584,13 @@ onUnmounted(() => {
     >
       <div class="course-selector">
         <div class="modal-info">
-          <p v-if="selectorOutcomeId && selectorYear">
-            <strong>Outcome {{
-                scheduleData.find(r => r.outcomeId === selectorOutcomeId)?.outcomeNumber
+          <p v-if="selectorIndicatorId && selectorYear">
+            <strong>Indicator {{
+                scheduleData.find(r => r.indicatorId === selectorIndicatorId)?.outcomeNumber
+              }}.{{
+                scheduleData.find(r => r.indicatorId === selectorIndicatorId)?.indicatorNumber
               }}:</strong>
-            {{ scheduleData.find(r => r.outcomeId === selectorOutcomeId)?.outcomeDescription }}
+            {{ scheduleData.find(r => r.indicatorId === selectorIndicatorId)?.indicatorDescription }}
           </p>
           <p><strong>Academic Year:</strong> {{ selectorYear }}</p>
         </div>
@@ -865,7 +814,7 @@ onUnmounted(() => {
   z-index: 10;
 }
 
-.outcome-header {
+.indicator-header {
   min-width: 300px;
   position: sticky;
   left: 0;
@@ -888,7 +837,7 @@ onUnmounted(() => {
   cursor: pointer;
 }
 
-.outcome-cell {
+.indicator-cell {
   position: sticky;
   left: 0;
   background: var(--color-bg-secondary);
@@ -896,18 +845,18 @@ onUnmounted(() => {
   border-right: 2px solid var(--color-border-dark);
 }
 
-.outcome-cell.clickable:hover {
+.indicator-cell.clickable:hover {
   background: var(--color-bg-tertiary);
 }
 
-.outcome-number {
+.indicator-number {
   font-weight: 700;
   color: var(--color-primary);
   font-size: 1.1rem;
   margin-bottom: 0.25rem;
 }
 
-.outcome-description {
+.indicator-description {
   font-size: 0.8rem;
   color: var(--color-text-secondary);
   line-height: 1.3;
@@ -947,6 +896,7 @@ onUnmounted(() => {
   border: 1px solid var(--color-border-light);
   border-radius: 0.5rem;
   font-size: 0.875rem;
+  text-align: left;
 }
 
 .help-text ul {
@@ -1004,9 +954,10 @@ onUnmounted(() => {
   min-width: 250px;
 }
 
-.outcome-number-header {
-  min-width: 80px;
-  font-size: 1rem;
+.indicator-number-header {
+  min-width: 60px;
+  font-size: 0.9rem;
+  cursor: help;
 }
 
 .course-name-cell {
@@ -1031,26 +982,28 @@ onUnmounted(() => {
   line-height: 1.2;
 }
 
-.indicator-cell {
+.indicator-mapping-cell {
   background: var(--color-bg-primary);
-  white-space: nowrap;
-  font-size: 0.85rem;
+  text-align: center;
+  font-size: 1.2rem;
+  color: var(--color-success);
+  cursor: help;
 }
 
-.has-indicators {
+.has-mapping {
   background: rgba(16, 185, 129, 0.1);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .mapping-table tbody tr:hover .course-name-cell {
   background: var(--color-bg-tertiary);
 }
 
-.mapping-table tbody tr:hover .indicator-cell {
+.mapping-table tbody tr:hover .indicator-mapping-cell {
   background: var(--color-bg-tertiary);
 }
 
-.mapping-table tbody tr:hover .has-indicators {
+.mapping-table tbody tr:hover .has-mapping {
   background: rgba(16, 185, 129, 0.2);
 }
 
@@ -1088,15 +1041,15 @@ onUnmounted(() => {
   flex-shrink: 0;
 }
 
-/* Outcomes Reference */
-.outcomes-reference {
+/* Indicators Reference */
+.indicators-reference {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
   padding: 0.5rem 0;
 }
 
-.outcome-item {
+.indicator-item {
   padding: 0.75rem;
   background: var(--color-bg-tertiary);
   border-radius: 0.375rem;
@@ -1105,7 +1058,7 @@ onUnmounted(() => {
   border-left: 3px solid var(--color-primary);
 }
 
-.outcome-item strong {
+.indicator-item strong {
   color: var(--color-primary);
   margin-right: 0.5rem;
   font-size: 1rem;
@@ -1206,7 +1159,7 @@ onUnmounted(() => {
     margin-left: 0;
   }
 
-  .outcome-header {
+  .indicator-header {
     min-width: 200px;
   }
 
@@ -1218,8 +1171,8 @@ onUnmounted(() => {
     min-width: 180px;
   }
 
-  .outcome-number-header {
-    min-width: 60px;
+  .indicator-number-header {
+    min-width: 50px;
   }
 
   .legend-item {

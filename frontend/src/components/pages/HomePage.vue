@@ -32,7 +32,6 @@ const hasRequiredSelections = computed(() => {
     <!-- Logged in -->
     <div v-else id="dashboards">
       <!-- Instructor Dashboard -->
-
       <template v-if="isInstructor && hasRequiredSelections">
         <InstructorDashboard
           :program-id="currentProgramId"

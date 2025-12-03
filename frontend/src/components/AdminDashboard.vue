@@ -5,6 +5,7 @@ import { useUserStore } from "@/stores/user-store";
 import CourseListing from "@/components/CourseListing.vue";
 import ProgramInstructorsPage from "@/components/pages/ProgramInstructorsPage.vue";
 import SummaryReport from "@/components/SummaryReport.vue";
+import AssessmentSchedule from "@/components/AssessmentSchedule.vue";
 
 const userStore = useUserStore();
 const { currentProgramId, currentSemesterId } = storeToRefs(userStore);
@@ -40,6 +41,14 @@ const { currentProgramId, currentSemesterId } = storeToRefs(userStore);
         :semester-id="currentSemesterId"
         :show-semester-selector="false"
         :show-export-button="true"
+      />
+    </section>
+
+    <section class="summary-section">
+      <h2>Assessment Scheduling</h2>
+      <AssessmentSchedule
+        :program-id="currentProgramId"
+        :semester-id="currentSemesterId"
       />
     </section>
 
