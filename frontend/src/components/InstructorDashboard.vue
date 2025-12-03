@@ -3,6 +3,8 @@ import { ref, onMounted, watch } from "vue";
 import { useUserStore } from "@/stores/user-store";
 import { storeToRefs } from "pinia";
 import api from "@/api";
+import MeasureListing from "@/components/MeasureListing.vue";
+import { BaseCard, BaseButton } from "@/components/ui";
 
 // ------------------------------
 // TYPES
@@ -19,19 +21,41 @@ interface RawCourse {
   courseCode: string;
 }
 
+interface Measure {
+  id: number;
+  courseIndicatorId: number;
+  description: string;
+  observation: string | null;
+  recommendedAction: string | null;
+  fcar: string | null;
+  studentsMet: number | null;
+  studentsExceeded: number | null;
+  studentsBelow: number | null;
+  createdAt: string;
+  active: boolean;
+  deleted: boolean;
+  deletedAt: string | null;
+  new: boolean;
+  status: string | null;
+  updatedAt: string | null;
+  version: number | null;
+}
+
 interface InstructorDashboardCourse {
   id: number;
   courseCode: string;
   instructorName: string;
   measuresCompleted: number;
   measuresTotal: number;
+  measures: Measure[];
+  expanded: boolean;
 }
 
 // ------------------------------
 // STORE REFERENCES
 // ------------------------------
 const userStore = useUserStore();
-const { currentProgramId: programId } = storeToRefs(userStore);
+const { currentProgramId: programId, currentSemesterId: semesterId } = storeToRefs(userStore);
 
 // ------------------------------
 // STATE
@@ -57,13 +81,29 @@ async function loadProgramUserId() {
 }
 
 // ------------------------------
+// LOAD MEASURES FOR A COURSE
+// ------------------------------
+async function loadCourseMeasures(courseId: number): Promise<Measure[]> {
+  try {
+    const res = await api.get(`/courses/${courseId}/measures`);
+    return res.data.data as Measure[];
+  } catch (err) {
+    console.error(`Failed to load measures for course ${courseId}:`, err);
+    return [];
+  }
+}
+
+// ------------------------------
 // LOAD INSTRUCTOR COURSE LIST
 // ------------------------------
 async function loadInstructorCourses() {
-  if (!programUserId.value) return;
+  if (!programUserId.value || !semesterId.value) return;
 
   const cRes = await api.get("/courses/instructor", {
-    params: { programUserId: programUserId.value },
+    params: {
+      programUserId: programUserId.value,
+      semesterId: semesterId.value
+    },
   });
 
   const rawCourses = cRes.data.data as RawCourse[];
@@ -80,6 +120,8 @@ async function loadInstructorCourses() {
       instructorName: `${userStore.user?.firstName} ${userStore.user?.lastName}`,
       measuresCompleted: comp.completedMeasures,
       measuresTotal: comp.totalMeasures,
+      measures: [],
+      expanded: false,
     });
   }
 
@@ -87,10 +129,38 @@ async function loadInstructorCourses() {
 }
 
 // ------------------------------
+// TOGGLE COURSE EXPANSION
+// ------------------------------
+async function toggleCourse(course: InstructorDashboardCourse) {
+  course.expanded = !course.expanded;
+
+  // Load measures if expanding and not already loaded
+  if (course.expanded && course.measures.length === 0) {
+    course.measures = await loadCourseMeasures(course.id);
+  }
+}
+
+// ------------------------------
+// REFRESH MEASURES FOR A COURSE
+// ------------------------------
+async function refreshCourseMeasures(courseId: number) {
+  const course = courses.value.find(c => c.id === courseId);
+  if (!course) return;
+
+  course.measures = await loadCourseMeasures(courseId);
+
+  // Refresh completeness
+  const completenessRes = await api.get(`/courses/${courseId}/completeness`);
+  const comp = completenessRes.data.data;
+  course.measuresCompleted = comp.completedMeasures;
+  course.measuresTotal = comp.totalMeasures;
+}
+
+// ------------------------------
 // COMBINED LOADER
 // ------------------------------
 async function reload() {
-  if (!programId.value) return;
+  if (!programId.value || !semesterId.value) return;
 
   isLoading.value = true;
   errorMessage.value = null;
@@ -108,12 +178,12 @@ async function reload() {
 
 onMounted(reload);
 
-// Reload when program ID changes
-watch(programId, reload);
+// Reload when program ID or semester ID changes
+watch([programId, semesterId], reload);
 </script>
 
 <template>
-  <section v-if="programId && !isLoading" class="instructor-dashboard">
+  <section v-if="programId && semesterId && !isLoading" class="instructor-dashboard">
     <h1>Instructor Dashboard</h1>
 
     <div v-if="errorMessage" class="error">
@@ -121,26 +191,42 @@ watch(programId, reload);
     </div>
 
     <div v-if="courses.length === 0">
-      <p>No courses assigned.</p>
+      <p>No courses assigned for the current semester.</p>
     </div>
 
-    <table v-else>
-      <thead>
-      <tr>
-        <th>Course</th>
-        <th>Instructor</th>
-        <th>Measures</th>
-      </tr>
-      </thead>
+    <div v-else class="courses-container">
+      <BaseCard
+        v-for="course in courses"
+        :key="course.id"
+        class="course-card"
+      >
+        <div class="course-header" @click="toggleCourse(course)">
+          <div class="course-info">
+            <h3>{{ course.courseCode }}</h3>
+          </div>
+          <div class="course-stats">
+            <span class="measures-count">
+              {{ course.measuresCompleted }} / {{ course.measuresTotal }} measures completed
+            </span>
+            <button class="expand-button" :class="{ expanded: course.expanded }">
+              {{ course.expanded ? '▼' : '▶' }}
+            </button>
+          </div>
+        </div>
 
-      <tbody>
-      <tr v-for="course in courses" :key="course.id">
-        <td>{{ course.courseCode }}</td>
-        <td>{{ course.instructorName }}</td>
-        <td>{{ course.measuresCompleted }}/{{ course.measuresTotal }}</td>
-      </tr>
-      </tbody>
-    </table>
+        <div v-if="course.expanded" class="measures-container">
+          <div v-if="course.measures.length === 0" class="no-measures">
+            No measures found for this course.
+          </div>
+          <MeasureListing
+            v-for="measure in course.measures"
+            :key="measure.id"
+            :measure_prop="measure"
+            @refresh="refreshCourseMeasures(course.id)"
+          />
+        </div>
+      </BaseCard>
+    </div>
   </section>
 
   <section v-else class="loading-screen">
@@ -149,6 +235,100 @@ watch(programId, reload);
 </template>
 
 <style scoped>
-.instructor-dashboard { margin: 2rem; }
-.error { color: red; margin-bottom: 1rem; }
+.instructor-dashboard {
+  margin: 2rem;
+}
+
+.error {
+  color: red;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background-color: #fee;
+  border-radius: 0.5rem;
+}
+
+.courses-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.course-card {
+  background-color: rgb(36, 36, 36);
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+
+.course-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.course-header:hover {
+  background-color: rgb(43, 43, 43);
+}
+
+.course-info h3 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1.125rem;
+  color: white;
+}
+
+.instructor-name {
+  margin: 0;
+  color: #9ca3af;
+  font-size: 0.8125rem;
+}
+
+.course-stats {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.measures-count {
+  color: #9ca3af;
+  font-size: 0.8125rem;
+}
+
+.expand-button {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: transform 0.2s;
+  padding: 0.25rem;
+}
+
+.expand-button.expanded {
+  transform: rotate(0deg);
+}
+
+.measures-container {
+  padding: 0 1rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.no-measures {
+  padding: 1.5rem;
+  text-align: center;
+  color: #9ca3af;
+  font-style: italic;
+}
+
+.loading-screen {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 50vh;
+  font-size: 1.25rem;
+  color: #9ca3af;
+}
 </style>

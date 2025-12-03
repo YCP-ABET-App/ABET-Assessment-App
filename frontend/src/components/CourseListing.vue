@@ -143,9 +143,25 @@ function selectCourse(course: Course) {
   gap: 1.25rem;
 }
 
+/* Make BaseCard fill the available height */
+.course-card :deep(.base-card) {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg-secondary);
+}
+
+/* Make card-body expand to fill available space */
+.course-card :deep(.card-body) {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
 .course-card {
   cursor: pointer;
   transition: all 0.2s ease;
+  height: 100%;
 }
 
 .course-card-content {
@@ -153,6 +169,7 @@ function selectCourse(course: Course) {
   flex-direction: row;
   gap: 0.5rem;
   align-items: center;
+  height: 100%;
 }
 
 .course-code {

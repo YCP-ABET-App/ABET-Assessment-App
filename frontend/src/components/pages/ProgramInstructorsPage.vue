@@ -92,7 +92,7 @@
                   <span class="field-value">{{ selectedInstructor.lastName }}</span>
                 </div>
               </div>
-              
+
               <div class="info-row">
                 <div class="info-field info-field-wide">
                   <span class="field-label">Email Address</span>
@@ -103,7 +103,7 @@
                   </span>
                 </div>
               </div>
-              
+
               <div class="info-row">
                 <div class="info-field">
                   <span class="field-label">Role</span>
@@ -181,13 +181,13 @@
 
         <!-- Courses -->
         <section class="detail-section">
-          <h3>Courses ({{ selectedInstructor.courses?.length || 0 }})</h3>
+          <h3>Courses ({{ currentSemesterCourses.length }})</h3>
 
           <div v-if="loadingMeasures" class="loading-measures">
             <p>Loading measures data...</p>
           </div>
 
-          <div v-else-if="selectedInstructor.courses?.length > 0">
+          <div v-else-if="currentSemesterCourses.length > 0">
             <table class="courses-table">
               <thead>
               <tr>
@@ -198,7 +198,7 @@
               </thead>
               <tbody>
               <tr
-                v-for="course in selectedInstructor.courses"
+                v-for="course in currentSemesterCourses"
                 :key="course.id"
                 class="course-row clickable"
                 @click="showCourseDetails(course)"
@@ -226,7 +226,7 @@
           </div>
 
           <p v-else class="no-courses">
-            No courses assigned to this instructor.
+            No courses assigned to this instructor for the current semester.
           </p>
         </section>
       </div>
@@ -295,15 +295,15 @@
               <div class="progress-label">Completion Rate</div>
               <div class="progress-value">
                 {{ selectedCourse.measuresTotal && selectedCourse.measuresTotal > 0
-                  ? Math.round(((selectedCourse.measuresCompleted || 0) / selectedCourse.measuresTotal) * 100)
-                  : 0 }}%
+                ? Math.round(((selectedCourse.measuresCompleted || 0) / selectedCourse.measuresTotal) * 100)
+                : 0 }}%
               </div>
             </div>
           </div>
 
           <!-- Progress Bar -->
           <div class="progress-bar-container">
-            <div 
+            <div
               class="progress-bar-fill"
               :style="{
                 width: selectedCourse.measuresTotal && selectedCourse.measuresTotal > 0
@@ -325,8 +325,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, reactive } from "vue";
+import { ref, watch, onMounted, reactive, computed } from "vue";
+import { storeToRefs } from "pinia";
 import api from "@/api";
+import { useUserStore } from "@/stores/user-store";
 import BaseCard from "@/components/ui/BaseCard.vue";
 import BaseModal from "@/components/ui/BaseModal.vue";
 import BaseInput from "@/components/ui/BaseInput.vue";
@@ -339,6 +341,10 @@ const toast = useToast() as {
   info?: (msg: string) => void;
 };
 
+// User store for semester filtering
+const userStore = useUserStore();
+const { currentSemesterId } = storeToRefs(userStore);
+
 interface Course {
   id: number;
   courseCode?: string;
@@ -349,6 +355,13 @@ interface Course {
   course_code?: string;
   course_name?: string;
   course_description?: string;
+
+  // Semester info
+  semesterId?: number;
+  semester?: {
+    id: number;
+    name?: string;
+  };
 
   // Measures progress fields
   measuresCompleted?: number;
@@ -418,6 +431,36 @@ const roleOptions = [
 ];
 
 /* -----------------------------
+ * Computed: Filter courses by current semester
+ * ----------------------------- */
+const currentSemesterCourses = computed(() => {
+  if (!selectedInstructor.value) {
+    return [];
+  }
+
+  if (!currentSemesterId.value) {
+    return selectedInstructor.value.courses || [];
+  }
+
+  const filtered = (selectedInstructor.value.courses || []).filter(course => {
+    const courseSemesterId = course.semesterId || course.semester?.id;
+    return courseSemesterId === currentSemesterId.value;
+  });
+
+  // Debug: Check for duplicates in filtered results
+  const courseIds = filtered.map(c => c.id);
+  const uniqueCourseIds = new Set(courseIds);
+  if (courseIds.length !== uniqueCourseIds.size) {
+    console.warn(
+      'Duplicate courses detected after filtering for current semester:',
+      filtered.filter((c, index) => courseIds.indexOf(c.id) !== index)
+    );
+  }
+
+  return filtered;
+});
+
+/* -----------------------------
  * Load measures for courses
  * ----------------------------- */
 async function loadMeasuresForCourses(courses: Course[]): Promise<Course[]> {
@@ -427,15 +470,15 @@ async function loadMeasuresForCourses(courses: Course[]): Promise<Course[]> {
         // Get measures for each indicator
         const measuresRes = await api.get(`/measure/byCourse/${course.id}`);
         const allMeasures = measuresRes.data.data ?? [];
-        
+
         // Count completed measures
         const measuresCompleted = allMeasures.filter((m: any) => {
           return (m.observation && m.observation.trim()) ||
-                 (m.recommendedAction && m.recommendedAction.trim()) ||
-                 (m.recommended_action && m.recommended_action.trim()) ||
-                 (m.fcar && m.fcar.trim());
+            (m.recommendedAction && m.recommendedAction.trim()) ||
+            (m.recommended_action && m.recommended_action.trim()) ||
+            (m.fcar && m.fcar.trim());
         }).length;
-        
+
         return {
           ...course,
           measuresTotal: allMeasures.length,
@@ -468,12 +511,34 @@ async function loadProgramInstructors() {
           const userRes = await api.get(`/users/${pu.userId}`);
           const user = userRes.data.data;
 
+          // Fetch all courses for this instructor (API doesn't support semester filter)
           const coursesRes = await api.get(`/courses/instructor`, {
             params: { programUserId: pu.id }
           });
 
-          const courses = coursesRes.data.data ?? [];
-          const coursesWithMeasures = await loadMeasuresForCourses(courses);
+          const allCourses = coursesRes.data.data ?? [];
+
+          // Debug: Log if there are duplicates
+          const courseIds = allCourses.map((c: Course) => c.id);
+          const uniqueCourseIds = new Set(courseIds);
+          if (courseIds.length !== uniqueCourseIds.size) {
+            console.warn(
+              `Instructor ${user.firstName} ${user.lastName} has duplicate courses from API:`,
+              allCourses.filter((c: Course, index: number) =>
+                courseIds.indexOf(c.id) !== index
+              )
+            );
+          }
+
+          const coursesWithMeasures = await loadMeasuresForCourses(allCourses);
+
+          // Count only courses from current semester
+          const currentSemesterCount = currentSemesterId.value
+            ? allCourses.filter((c: Course) => {
+              const courseSemesterId = c.semesterId || c.semester?.id;
+              return courseSemesterId === currentSemesterId.value;
+            }).length
+            : allCourses.length;
 
           return {
             programUserId: pu.id,
@@ -482,7 +547,7 @@ async function loadProgramInstructors() {
             lastName: user.lastName,
             email: user.email,
             role: pu.adminStatus ? "ADMIN" : "INSTRUCTOR",
-            courseCount: courses.length,
+            courseCount: currentSemesterCount,
             courses: coursesWithMeasures
           };
         } catch {
@@ -506,13 +571,13 @@ async function loadProgramInstructors() {
  * ----------------------------- */
 async function reloadMeasuresForInstructor(instructor: Instructor) {
   if (!instructor.courses || instructor.courses.length === 0) return;
-  
+
   loadingMeasures.value = true;
-  
+
   try {
     const updatedCourses = await loadMeasuresForCourses(instructor.courses);
     instructor.courses = updatedCourses;
-    
+
     const idx = instructors.value.findIndex(i => i.programUserId === instructor.programUserId);
     if (idx !== -1) {
       instructors.value[idx].courses = updatedCourses;
@@ -616,7 +681,12 @@ async function saveInstructorInfo() {
   }
 }
 
+// Watch for program or semester changes and reload
 watch(() => props.programId, () => {
+  loadProgramInstructors();
+});
+
+watch(currentSemesterId, () => {
   loadProgramInstructors();
 });
 

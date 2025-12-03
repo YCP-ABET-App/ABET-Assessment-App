@@ -4,6 +4,7 @@ import { storeToRefs } from "pinia";
 import { useUserStore } from "@/stores/user-store";
 import AdminDashboard from "@/components/AdminDashboard.vue";
 import InstructorDashboard from "@/components/InstructorDashboard.vue";
+import AssessmentSchedule from "@/components/AssessmentSchedule.vue";
 
 // Get user store values
 const userStore = useUserStore();
@@ -30,22 +31,22 @@ const hasRequiredSelections = computed(() => {
 
     <!-- Logged in -->
     <div v-else id="dashboards">
-      <!-- Admin Dashboard -->
-      <template v-if="isAdmin && hasRequiredSelections">
-        <AdminDashboard
-          :program-id="currentProgramId as number"
-          :semester-id="currentSemesterId as number"
+      <!-- Instructor Dashboard -->
+      <AssessmentSchedule/>
+      <template v-if="isInstructor && hasRequiredSelections">
+        <InstructorDashboard
+          :program-id="currentProgramId"
+          :semester-id="currentSemesterId"
         />
       </template>
 
       <hr v-if="isAdmin && isInstructor && hasRequiredSelections" class="section-divider" />
 
-      <!-- Instructor Dashboard -->
-      <template v-if="isInstructor && hasRequiredSelections">
-        <h2 v-if="!isAdmin">Instructor Dashboard</h2>
-        <InstructorDashboard
-          :program-id="currentProgramId"
-          :semester-id="currentSemesterId"
+      <!-- Admin Dashboard -->
+      <template v-if="isAdmin && hasRequiredSelections">
+        <AdminDashboard
+          :program-id="currentProgramId as number"
+          :semester-id="currentSemesterId as number"
         />
       </template>
 

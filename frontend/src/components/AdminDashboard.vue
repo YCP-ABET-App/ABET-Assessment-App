@@ -27,7 +27,6 @@ const { currentProgramId, currentSemesterId } = storeToRefs(userStore);
 
     <!-- PROGRAM INSTRUCTORS -->
     <section class="summary-section">
-      <h2>Program Instructors</h2>
       <ProgramInstructorsPage :program-id="currentProgramId" />
     </section>
 

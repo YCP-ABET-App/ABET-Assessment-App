@@ -18,7 +18,8 @@ const props = withDefaults(defineProps<Props>(), {
   showToolbar: true
 });
 
-const { success, error: showError, warning, info, toast } = useToast();
+const toast = useToast();
+const { success, error: showError, warning, info } = toast;
 
 // Use composable for shared data loading logic
 const {
@@ -34,6 +35,23 @@ const {
   getCourseNamesForCell,
   formatIndicatorList
 } = useAssessmentScheduleData(props);
+
+// Computed property to show data summary
+const dataSummary = computed(() => {
+  if (loading.value || error.value) return null;
+
+  return {
+    courseCount: courses.value.length,
+    outcomeCount: outcomes.value.length,
+    mappedCourses: courseOutcomeMappings.value.filter(m =>
+      Object.keys(m.outcomeMappings).length > 0
+    ).length,
+    totalIndicators: courseOutcomeMappings.value.reduce((sum, m) =>
+        sum + Object.values(m.outcomeMappings).reduce((s, indicators) => s + indicators.length, 0),
+      0
+    )
+  };
+});
 
 // Editing state (only needed when editable)
 const saving = ref(false);
@@ -151,7 +169,7 @@ function applyCourseSelection() {
   row.assignments.set(selectorYear.value, Array.from(selectedCourses.value));
 
   closeCourseSelector();
-  success('Course assignment updated', 'Changes not yet saved');
+  toast.success('Course assignment updated', 'Changes not yet saved');
 }
 
 function closeCourseSelector() {
@@ -171,12 +189,12 @@ function clearSelectedCells() {
         });
       }
     });
-    info('Cleared selected rows', 'Changes not yet saved');
+    toast.info('Cleared selected rows', 'Changes not yet saved');
   } else if (selectedCell.value) {
     const row = scheduleData.value.find(r => r.outcomeId === selectedCell.value!.outcomeId);
     if (row) {
       row.assignments.set(selectedCell.value.year, []);
-      info('Cleared cell', 'Changes not yet saved');
+      toast.info('Cleared cell', 'Changes not yet saved');
     }
   }
 }
@@ -204,10 +222,10 @@ function copySelection() {
 async function copyToClipboard(text: string) {
   try {
     await navigator.clipboard.writeText(text);
-    success('Copied to clipboard');
+    toast.success('Copied to clipboard');
   } catch (err) {
     console.error('Failed to copy:', err);
-    showError('Failed to copy to clipboard');
+    toast.error('Failed to copy to clipboard');
   }
 }
 
@@ -250,11 +268,11 @@ async function saveChanges() {
     // await api.post(`/program/${props.programId}/assessment-schedule`, payload);
 
     console.log('Would save:', payload);
-    success('Assessment schedule saved successfully');
+    toast.success('Assessment schedule saved successfully');
 
   } catch (err) {
     console.error('Error saving schedule:', err);
-    showError('Failed to save assessment schedule');
+    toast.error('Failed to save assessment schedule');
   } finally {
     saving.value = false;
   }
@@ -264,6 +282,19 @@ async function saveChanges() {
 watch(() => props.programId, () => {
   if (props.programId) {
     loadData();
+  }
+});
+
+// Track when data finishes loading successfully
+watch([loading, error], ([newLoading, newError]) => {
+  if (!newLoading && !newError && courses.value.length > 0 && outcomes.value.length > 0) {
+    const summary = dataSummary.value;
+    if (summary) {
+      info(
+        'Assessment schedule loaded',
+        `${summary.courseCount} courses, ${summary.outcomeCount} outcomes, ${summary.totalIndicators} indicators`
+      );
+    }
   }
 });
 
@@ -357,14 +388,61 @@ onUnmounted(() => {
       </div>
     </div>
 
+    <!-- Data Summary Info Banner -->
+    <div v-if="!loading && !error && dataSummary" class="data-summary">
+      <div class="summary-item">
+        <span class="summary-label">Courses:</span>
+        <span class="summary-value">{{ dataSummary.courseCount }}</span>
+      </div>
+      <div class="summary-item">
+        <span class="summary-label">Outcomes:</span>
+        <span class="summary-value">{{ dataSummary.outcomeCount }}</span>
+      </div>
+      <div class="summary-item">
+        <span class="summary-label">Mapped Courses:</span>
+        <span class="summary-value">{{ dataSummary.mappedCourses }} / {{ dataSummary.courseCount }}</span>
+      </div>
+      <div class="summary-item">
+        <span class="summary-label">Total Indicators:</span>
+        <span class="summary-value">{{ dataSummary.totalIndicators }}</span>
+      </div>
+    </div>
+
     <!-- Loading State -->
     <div v-if="loading" class="loading-state">
       <BaseSpinner size="lg" text="Loading assessment schedule..." />
+      <p class="loading-details">
+        Fetching courses, outcomes, and indicator mappings...
+      </p>
     </div>
 
     <!-- Error State -->
     <div v-else-if="error" class="error-state">
-      <p>{{ error }}</p>
+      <div class="error-icon">⚠️</div>
+      <h3>Unable to Load Assessment Schedule</h3>
+      <p class="error-message">{{ error }}</p>
+      <div class="error-actions">
+        <BaseButton
+          variant="primary"
+          @click="loadData"
+        >
+          Try Again
+        </BaseButton>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div v-else-if="courses.length === 0 || outcomes.length === 0" class="empty-state">
+      <div class="empty-icon">📋</div>
+      <h3>No Data Available</h3>
+      <div v-if="courses.length === 0" class="empty-message">
+        <p>No courses have been added to this program yet.</p>
+        <p class="empty-hint">Add courses to begin creating your assessment schedule.</p>
+      </div>
+      <div v-else class="empty-message">
+        <p>No student outcomes have been defined for this program yet.</p>
+        <p class="empty-hint">Define student outcomes to begin tracking assessments.</p>
+      </div>
     </div>
 
     <!-- Content -->
@@ -646,17 +724,119 @@ onUnmounted(() => {
   font-weight: 500;
 }
 
+/* Data Summary Banner */
+.data-summary {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  padding: 0.875rem 1.25rem;
+  background: linear-gradient(to right, rgba(59, 130, 246, 0.05), rgba(16, 185, 129, 0.05));
+  border: 1px solid var(--color-border-light);
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  flex-wrap: wrap;
+}
+
+.summary-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.summary-label {
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.summary-value {
+  color: var(--color-primary);
+  font-weight: 700;
+  font-size: 1rem;
+}
+
 /* Loading/Error States */
 .loading-state,
-.error-state {
+.error-state,
+.empty-state {
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
   min-height: 400px;
+  padding: 2rem;
+  text-align: center;
+}
+
+.loading-state {
+  gap: 1rem;
+}
+
+.loading-details {
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
 }
 
 .error-state {
+  gap: 1rem;
   color: var(--color-error);
+}
+
+.error-icon {
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
+}
+
+.error-state h3 {
+  color: var(--color-text-primary);
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.error-message {
+  color: var(--color-error);
+  font-size: 1rem;
+  max-width: 500px;
+  line-height: 1.5;
+}
+
+.error-actions {
+  margin-top: 1rem;
+}
+
+.empty-state {
+  gap: 1rem;
+}
+
+.empty-icon {
+  font-size: 4rem;
+  margin-bottom: 0.5rem;
+  opacity: 0.5;
+}
+
+.empty-state h3 {
+  color: var(--color-text-primary);
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.empty-message {
+  color: var(--color-text-secondary);
+  font-size: 1rem;
+  max-width: 500px;
+  line-height: 1.6;
+}
+
+.empty-message p {
+  margin: 0.5rem 0;
+}
+
+.empty-hint {
+  font-size: 0.875rem;
+  font-style: italic;
+  color: var(--color-text-tertiary);
 }
 
 /* Table */

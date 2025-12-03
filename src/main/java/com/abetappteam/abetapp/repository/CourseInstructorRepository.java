@@ -34,6 +34,9 @@ public interface CourseInstructorRepository extends JpaRepository<CourseInstruct
     // Check existence
     boolean existsByCourseIdAndProgramUserId(Long courseId, Long programUserId);
 
+    // Check if program user has any active courses
+    boolean existsByProgramUserIdAndIsActive(Long programUserId, Boolean isActive);
+
     boolean existsByCourseIdAndProgramUserIdAndIsActive(Long courseId, Long programUserId, Boolean isActive);
 
     // Count queries

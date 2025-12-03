@@ -8,8 +8,9 @@ export interface User {
   email: string;
   firstName?: string;
   lastName?: string;
-  role: "ADMIN" | "INSTRUCTOR" | "STUDENT" | "USER";
+  role: "ADMIN" | "INSTRUCTOR";
   currentProgramId?: number;
+  hasCourses?: boolean;
 }
 
 export interface ProgramAccess {
@@ -54,7 +55,7 @@ export const useUserStore = defineStore('user', () => {
   // -------------------------
   const isLoggedIn = computed(() => !!authToken.value && !!user.value);
   const isAdmin = computed(() => user.value?.role === "ADMIN");
-  const isInstructor = computed(() => user.value?.role === "INSTRUCTOR");
+  const isInstructor = computed(() => { return user.value?.hasCourses === true || user.value?.role === "INSTRUCTOR"; });
 
   const userId = computed(() => user.value?.id ?? 0);
 
@@ -76,7 +77,10 @@ export const useUserStore = defineStore('user', () => {
     try {
       const { data } = await api.post("/users/login", { email, password });
 
-      user.value = data.user;
+      user.value = {
+        ...data.user,
+        hasCourses: data.hasCourses
+      };
       authToken.value = data.authToken;
       programs.value = data.programs;
       currentProgramId.value = data.user.currentProgramId;
