@@ -5,6 +5,7 @@ import com.abetappteam.abetapp.config.TestSecurityConfig;
 import com.abetappteam.abetapp.dto.CourseDTO;
 import com.abetappteam.abetapp.entity.Course;
 import com.abetappteam.abetapp.entity.CourseIndicator;
+import com.abetappteam.abetapp.entity.Semester;
 import com.abetappteam.abetapp.service.CourseService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -286,16 +287,34 @@ class CourseControllerUnitTest extends BaseControllerTest {
 
     @Test
     void shouldGetCourseByCourseCode() throws Exception {
-        // Given
-        when(courseService.findByCourseCode("CS401")).thenReturn(testCourse);
+        // Arrange
+        String courseCode = "CS401";
+        Long semesterId = 1L;
 
-        // When/Then
-        mockMvc.perform(get("/api/courses/code/CS401"))
+        // Create properly populated mock course
+        Course mockCourse = new Course();
+        mockCourse.setId(1L);
+        mockCourse.setCourseCode(courseCode);
+        mockCourse.setCourseName("Advanced Computer Science");
+        mockCourse.setCourseDescription("Advanced topics in CS");
+        mockCourse.setSemesterId(semesterId);  // Use setSemesterId, not setSemester
+        mockCourse.setIsActive(true);
+
+        // Mock the service method with BOTH parameters
+        when(courseService.findByCourseCodeAndSemesterId(eq(courseCode), eq(semesterId)))
+                .thenReturn(mockCourse);
+
+        // Act & Assert - Add semesterId parameter
+        mockMvc.perform(get("/api/courses/code/{courseCode}", courseCode)
+                        .param("semesterId", semesterId.toString()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.courseCode").value("CS401"));
+                .andExpect(jsonPath("$.data").exists())
+                .andExpect(jsonPath("$.data.courseCode").value(courseCode))
+                .andExpect(jsonPath("$.data.courseName").value("Advanced Computer Science"));
 
-        verify(courseService, times(1)).findByCourseCode("CS401");
+        // Verify the service was called with correct parameters
+        verify(courseService, times(1)).findByCourseCodeAndSemesterId(courseCode, semesterId);
     }
 
     @Test

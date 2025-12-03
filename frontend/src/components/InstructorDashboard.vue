@@ -160,7 +160,15 @@ async function refreshCourseMeasures(courseId: number) {
 // COMBINED LOADER
 // ------------------------------
 async function reload() {
-  if (!programId.value || !semesterId.value) return;
+  if (!programId.value) {
+    errorMessage.value = "No program selected. Please select a program from the navigation menu.";
+    return;
+  }
+
+  if (!semesterId.value) {
+    errorMessage.value = "No semester selected. Please select a semester from the navigation menu.";
+    return;
+  }
 
   isLoading.value = true;
   errorMessage.value = null;
@@ -179,18 +187,28 @@ async function reload() {
 onMounted(reload);
 
 // Reload when program ID or semester ID changes
-watch([programId, semesterId], reload);
+watch([programId, semesterId], () => {
+  // Reset courses when semester changes to avoid showing stale data
+  courses.value = [];
+  reload();
+});
 </script>
 
 <template>
-  <section v-if="programId && semesterId && !isLoading" class="instructor-dashboard">
+  <section v-if="!isLoading" class="instructor-dashboard">
     <h1>Instructor Dashboard</h1>
 
     <div v-if="errorMessage" class="error">
       {{ errorMessage }}
     </div>
 
-    <div v-if="courses.length === 0">
+    <div v-else-if="!programId || !semesterId">
+      <p class="info-message">
+        Please select a program and semester from the navigation menu to view your courses.
+      </p>
+    </div>
+
+    <div v-else-if="courses.length === 0">
       <p>No courses assigned for the current semester.</p>
     </div>
 
@@ -245,6 +263,14 @@ watch([programId, semesterId], reload);
   padding: 1rem;
   background-color: #fee;
   border-radius: 0.5rem;
+}
+
+.info-message {
+  color: #9ca3af;
+  padding: 1rem;
+  background-color: rgb(36, 36, 36);
+  border-radius: 0.5rem;
+  text-align: center;
 }
 
 .courses-container {

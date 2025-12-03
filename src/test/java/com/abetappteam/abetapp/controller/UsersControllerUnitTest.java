@@ -4,6 +4,8 @@ import com.abetappteam.abetapp.config.TestSecurityConfig;
 import com.abetappteam.abetapp.dto.UpdateUsersDTO;
 import com.abetappteam.abetapp.entity.Users;
 import com.abetappteam.abetapp.dto.UsersDTO;
+import com.abetappteam.abetapp.service.CourseService;
+import com.abetappteam.abetapp.service.ProgramService;
 import com.abetappteam.abetapp.service.UsersService;
 import com.abetappteam.abetapp.exception.ResourceNotFoundException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -41,7 +43,10 @@ public class UsersControllerUnitTest {
 
     @MockitoBean
     private UsersService userService;
-    
+
+    @MockitoBean
+    private CourseService courseService;
+
     private Users testUser;
     private UsersDTO testDTO;
 

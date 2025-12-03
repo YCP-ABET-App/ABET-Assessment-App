@@ -316,6 +316,14 @@ public class CourseService extends BaseService<Course, Long, CourseRepository> {
         return courseInstructorRepository.existsByProgramUserIdAndIsActive(programUserId, true);
     }
 
+    @Transactional(readOnly = true)
+    public List<Course> getActiveCoursesByProgramUserIdAndSemester(Long programUserId, Long semesterId) {
+        logger.info("Getting active courses for program user ID: {} and semester ID: {}",
+                programUserId, semesterId);
+        return courseInstructorRepository.findActiveCoursesByProgramUserIdAndSemesterId(
+                programUserId, semesterId);
+    }
+
     // Helper methods for business logic
     private boolean hasMeasuresInReview(Long courseId) {
         return repository.countMeasuresInReviewByCourseId(courseId) > 0;

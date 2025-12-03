@@ -1,5 +1,6 @@
 package com.abetappteam.abetapp.repository;
 
+import com.abetappteam.abetapp.entity.Course;
 import com.abetappteam.abetapp.entity.CourseInstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -65,4 +66,20 @@ public interface CourseInstructorRepository extends JpaRepository<CourseInstruct
     // Custom query to get all courses for a specific instructor
     @Query("SELECT ci FROM CourseInstructor ci WHERE ci.programUserId = :programUserId AND ci.isActive = true")
     List<CourseInstructor> findActiveCoursesByProgramUserId(@Param("programUserId") Long programUserId);
+
+    @Query(value = """
+    SELECT c.* FROM course c
+    INNER JOIN course_instructor ci ON c.id = ci.course_id
+    WHERE ci.program_user_id = :programUserId
+    AND c.semester_id = :semesterId
+    AND ci.is_active = true
+    AND ci.deleted = false
+    AND c.is_active = true
+    AND c.deleted = false
+    ORDER BY c.course_code ASC
+    """, nativeQuery = true)
+    List<Course> findActiveCoursesByProgramUserIdAndSemesterId(
+            @Param("programUserId") Long programUserId,
+            @Param("semesterId") Long semesterId
+    );
 }

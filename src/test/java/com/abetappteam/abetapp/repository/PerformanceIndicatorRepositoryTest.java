@@ -31,9 +31,6 @@ class PerformanceIndicatorRepositoryTest {
     @Test
     @DisplayName("Should find indicators by description containing text (case-insensitive)")
     void shouldFindByDescriptionContainingIgnoreCase() {
-        // Existing test failure: expected 2 but got 1
-        // Fix: Make sure we actually save *two* matching descriptions
-
         newIndicator("Ability to COMMUNICATE effectively", 1, 1L);
         newIndicator("Students must COMMUNICATE clearly", 2, 1L);
         newIndicator("Unrelated skill", 3, 1L); // Should NOT match

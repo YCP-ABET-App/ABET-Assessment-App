@@ -21,7 +21,6 @@ import java.util.Optional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-
 /**
  * Controller for course entity operations
  * Manages courses and measure completeness
@@ -35,11 +34,23 @@ public class CourseController extends BaseController {
 
     @GetMapping("/instructor")
     public ResponseEntity<ApiResponse<List<Course>>> getCoursesByInstructor(
-            @RequestParam Long programUserId) {
+            @RequestParam Long programUserId ) {
 
         logger.info("Fetching courses for instructor with program user ID: {}", programUserId);
         validateId(programUserId);
         List<Course> courses = courseService.getActiveCoursesByProgramUserId(programUserId);
+        return success(courses, "Courses retrieved successfully for instructor");
+    }
+
+    @GetMapping("/instructor/semester")
+    public ResponseEntity<ApiResponse<List<Course>>> getCoursesByInstructor(
+            @RequestParam Long programUserId,
+            @RequestParam Long semesterId) {
+
+        logger.info("Fetching courses for instructor with program user ID: {} and semester ID: {}", programUserId, semesterId);
+        validateId(programUserId);
+        validateId(semesterId);
+        List<Course> courses = courseService.getActiveCoursesByProgramUserIdAndSemester(programUserId, semesterId);
         return success(courses, "Courses retrieved successfully for instructor");
     }
 
