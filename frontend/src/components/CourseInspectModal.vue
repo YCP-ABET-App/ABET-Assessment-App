@@ -4,6 +4,7 @@ import api from "@/api";
 import BaseModal from "@/components/ui/BaseModal.vue";
 import BaseCard from "@/components/ui/BaseCard.vue";
 import BaseSpinner from "@/components/ui/BaseSpinner.vue";
+import {BaseButton} from "@/components/ui";
 
 interface Course {
   id: number;
@@ -166,7 +167,13 @@ function calculatePercentage(met: number, exceeded: number, total: number): numb
     <!-- HEADER CONTENT (inline, not a slot) -->
     <div class="modal-header-content">
       <h2>{{ course?.courseName }}</h2>
-      <p class="course-code">{{ course?.courseCode }}</p>
+      <BaseButton
+        variant="primary"
+        size="sm"
+        @click="$router.push(`/course/${course?.id}`)"
+      >
+        {{ course?.courseCode }}
+      </BaseButton>
     </div>
 
     <!-- BODY CONTENT (default slot instead of #body) -->

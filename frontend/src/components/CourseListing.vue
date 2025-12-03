@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, watch, onMounted } from "vue";
+import { useRouter } from "vue-router";
 import api from "@/api";
 import BaseCard from "@/components/ui/BaseCard.vue";
-import CourseInspectModal from "@/components/CourseInspectModal.vue";
 
 interface Course {
   id: number
@@ -17,12 +17,11 @@ const props = defineProps<{
   semesterId: number | null
 }>();
 
-const emit = defineEmits(["select"]);
+const router = useRouter();
 
 const loading = ref(false);
 const error = ref<string | null>(null);
 const courses = ref<Course[]>([]);
-const selectedCourse = ref<Course | null>(null);
 
 
 /* -----------------------------------------------------------
@@ -80,15 +79,10 @@ onMounted(loadCourses);
 
 
 /* -----------------------------------------------------------
- * Course selection
+ * Course navigation
  * ----------------------------------------------------------- */
 function selectCourse(course: Course) {
-  selectedCourse.value = course;
-  emit("select", course);
-}
-
-function closeInspectModal() {
-  selectedCourse.value = null;
+  router.push(`/course/${course.id}`);
 }
 </script>
 
@@ -132,12 +126,6 @@ function closeInspectModal() {
       </BaseCard>
     </div>
   </section>
-
-  <!-- Course Inspect Modal -->
-  <CourseInspectModal
-    :course="selectedCourse"
-    @close="closeInspectModal"
-  />
 </template>
 
 <style scoped>

@@ -1,25 +1,26 @@
 <script setup lang="ts">
-import { defineProps } from "vue";
+import { storeToRefs } from "pinia";
+import { useUserStore } from "@/stores/user-store";
+
 import CourseListing from "@/components/CourseListing.vue";
 import ProgramInstructorsPage from "@/components/pages/ProgramInstructorsPage.vue";
 import SummaryReport from "@/components/SummaryReport.vue";
 
-/**
- * AdminDashboard receives BOTH programId and semesterId from HomePage
- * which get them from the GlobalSelectors via the user store
- */
-const props = defineProps<{
-  programId: number;
-  semesterId: number;
-}>();
+const userStore = useUserStore();
+const { currentProgramId, currentSemesterId } = storeToRefs(userStore);
 </script>
 
 <template>
-  <section class="admin-dashboard">
+  <section v-if="currentProgramId && currentSemesterId" class="admin-dashboard">
+
+    <header>
+      <h1>Administrator Dashboard</h1>
+    </header>
+
     <!-- COURSE LISTING -->
     <CourseListing
-      :program-id="programId"
-      :semester-id="semesterId"
+      :program-id="currentProgramId"
+      :semester-id="currentSemesterId"
     />
 
     <hr class="divider" />
@@ -27,25 +28,32 @@ const props = defineProps<{
     <!-- PROGRAM INSTRUCTORS -->
     <section class="summary-section">
       <h2>Program Instructors</h2>
-      <ProgramInstructorsPage :program-id="programId" />
+      <ProgramInstructorsPage :program-id="currentProgramId" />
     </section>
+
+    <hr class="divider" />
 
     <!-- ASSESSMENT SUMMARY REPORT -->
     <section class="summary-section">
       <h2>Assessment Summary Report</h2>
       <SummaryReport
-        :program-id="programId"
-        :semester-id="semesterId"
+        :program-id="currentProgramId"
+        :semester-id="currentSemesterId"
         :show-semester-selector="false"
         :show-export-button="true"
       />
     </section>
+
+  </section>
+
+  <section v-else class="loading-screen">
+    <p>Loading program and semester information...</p>
   </section>
 </template>
 
 <style scoped>
 .admin-dashboard {
-  margin: 0;
+  margin: 2rem;
 }
 
 .divider {
@@ -60,5 +68,8 @@ const props = defineProps<{
 
 .summary-section h2 {
   margin-bottom: 1rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
 }
 </style>
