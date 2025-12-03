@@ -3,7 +3,9 @@
 
     <!-- MAIN LINE -->
     <div class="measure-main">
-      <span class="measure-description">{{ measure.description }}</span>
+      <router-link v-if="measure.measureId" :to="{ name: 'FCAR', params: { measure_id: measure.measureId } }" class="fcar-link">
+        <span class="measure-description">{{ measure.description }}</span>
+      </router-link>
 
       <div class="measure-status-group">
         <span class="measure-status" :class="statusClass">
@@ -185,6 +187,15 @@ function emitUpdate() {
   background: var(--color-bg-tertiary);
   border-radius: .25rem;
   font-style: italic;
+}
+
+.fcar-link{
+  text-decoration: none;
+  color: white;
+}
+
+.fcar-link:hover{
+  color: green;
 }
 
 .status-met-comfortably { color: var(--color-success-dark); }
