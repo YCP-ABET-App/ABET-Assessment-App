@@ -65,7 +65,7 @@ const props = withDefaults(defineProps<SelectProps>(), {
 })
 
 const emit = defineEmits<{
-  'update:modelValue': [value: string | number]
+  'update:modelValue': [value: string | number | null]
 }>()
 
 const handleChange = (event: Event) => {
