@@ -69,26 +69,14 @@ const emit = defineEmits<{
 }>()
 
 const handleChange = (event: Event) => {
-  const el = event.target as HTMLSelectElement
-  const raw = el.value
-
-  if (raw === "") {
-    emit("update:modelValue", null)
-    return
-  }
-
-  // if this is a number-like string, convert it
-  const num = Number(raw)
-  if (!isNaN(num) && raw.trim() !== "") {
-    emit("update:modelValue", num)
-    return
-  }
-
-  // otherwise emit raw string as-is
-  emit("update:modelValue", raw)
+  const target = event.target as HTMLSelectElement
+  emit('update:modelValue', target.value)
 }
 
-const getOptionValue = (option: SelectOption | string | number): string | number => {
+const getOptionValue = (option: SelectOption | string | number | null): string | number => {
+  if (option === null || option === undefined) {
+    return ''
+  }
   if (typeof option === 'object') {
     return option.value
   }
