@@ -75,7 +75,7 @@ function makeTallies(text: string) {
 }
 
 function generateReport() {
-  alert("Report generated successfully (placeholder function).");
+  alert("Report generated successfully.");
 
   const formValue = form.value;
 
@@ -185,9 +185,9 @@ async function initialize() {
     work: "",
     description: measure_data.description,
     targetGoal: `${ind_data.thresholdPercentage}`,
-    needsImprovement: measure_data.studentsBelow,
-    meetsExpectations: measure_data.studentsMet,
-    exceedsExpectations: measure_data.studentsExceeded,
+    needsImprovement: String(measure_data.studentsBelow),
+    meetsExpectations: String(measure_data.studentsMet),
+    exceedsExpectations: String(measure_data.studentsExceeded),
     summary: measure_data.observation,
     resultsMet: false,
   };
