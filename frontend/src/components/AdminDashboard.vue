@@ -43,15 +43,6 @@ const { currentProgramId, currentSemesterId } = storeToRefs(userStore);
         :show-export-button="true"
       />
     </section>
-
-    <section class="summary-section">
-      <h2>Assessment Scheduling</h2>
-      <AssessmentSchedule
-        :program-id="currentProgramId"
-        :semester-id="currentSemesterId"
-      />
-    </section>
-
   </section>
 
   <section v-else class="loading-screen">
