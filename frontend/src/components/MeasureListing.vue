@@ -17,12 +17,34 @@ const completing = ref(false)
 const editing = ref(false)
 const deleting = ref(false)
 const rec_action = ref(false)
+const viewing = ref(false)
 
 function open_complete_form(){
   completing.value = true
   editing.value = false
   deleting.value = false
   rec_action.value = false
+  viewing.value = false
+}
+
+interface Measure {
+  id: number
+  courseIndicatorId: number
+  description: string
+  observation: string | null
+  recommendedAction: string | null
+  fcar: string | null
+  studentsMet: number | null
+  studentsExceeded: number | null
+  studentsBelow: number | null
+  createdAt: string
+  active: boolean
+  deleted: boolean | null
+  deletedAt: string | null
+  new: boolean | null
+  status: "InProgress" | "InReview" | "Completed" | null
+  updatedAt: string | null
+  version: number | null
 }
 
 const complete_form_data = ref({
@@ -104,6 +126,7 @@ function open_edit_form(){
   editing.value = true
   deleting.value = false
   rec_action.value = false
+  viewing.value = false
 }
 
 const edit_form_data = ref({
@@ -167,6 +190,7 @@ function open_delete_form(){
   editing.value = false
   deleting.value = true
   rec_action.value = false
+  viewing.value = false
 }
 
 async function delete_measure(){
@@ -193,6 +217,7 @@ function open_ra_form(){
   editing.value = false
   deleting.value = false
   rec_action.value = true
+  viewing.value = false
 }
 
 const ra_form_data = ref({
@@ -256,6 +281,79 @@ function close_forms(){
   editing.value = false
   deleting.value = false
   rec_action.value = false
+  viewing.value = false
+}
+
+function open_view(){
+  completing.value = false
+  editing.value = false
+  deleting.value = false
+  rec_action.value = false
+  viewing.value = true
+}
+
+async function mark_complete(){
+  const new_measure = {
+    id: measure_obj.value.id,
+    courseIndicatorId: measure_obj.value.course_indicator_id,
+    description: measure_obj.value.measure_description,
+    observation: measure_obj.value.observation,
+    recommendedAction: measure_obj.value.recommended_action,
+    fcar: measure_obj.value.fcar,
+    studentsMet: measure_obj.value.met,
+    studentsExceeded: measure_obj.value.exceeded,
+    studentsBelow: measure_obj.value.below,
+    createdAt: measure_obj.value.created_at,
+    active: measure_obj.value.is_active,
+    deleted: measure_obj.value.deleted,
+    deletedAt: measure_obj.value.deleted_at,
+    new: measure_obj.value.new,
+    status: "Completed",
+    updatedAt: measure_obj.value.updated_at,
+    version: measure_obj.value.version
+  }
+
+  try {
+    const { data } = await api.put(`/measure/${measure_obj.value.id}`, new_measure);
+    console.log("Marked as complete: ", data)
+    measure_obj.value.status = "Completed"
+    set_status()
+    emits('refresh')
+  } catch (error) {
+    console.error('Error marking measure as complete:', error);
+  }
+}
+
+async function mark_needs_review(){
+  const new_measure = {
+    id: measure_obj.value.id,
+    courseIndicatorId: measure_obj.value.course_indicator_id,
+    description: measure_obj.value.measure_description,
+    observation: measure_obj.value.observation,
+    recommendedAction: measure_obj.value.recommended_action,
+    fcar: measure_obj.value.fcar,
+    studentsMet: measure_obj.value.met,
+    studentsExceeded: measure_obj.value.exceeded,
+    studentsBelow: measure_obj.value.below,
+    createdAt: measure_obj.value.created_at,
+    active: measure_obj.value.is_active,
+    deleted: measure_obj.value.deleted,
+    deletedAt: measure_obj.value.deleted_at,
+    new: measure_obj.value.new,
+    status: "InReview",
+    updatedAt: measure_obj.value.updated_at,
+    version: measure_obj.value.version
+  }
+
+  try {
+    const { data } = await api.put(`/measure/${measure_obj.value.id}`, new_measure);
+    console.log("Marked as needs review: ", data)
+    measure_obj.value.status = "InReview"
+    set_status()
+    emits('refresh')
+  } catch (error) {
+    console.error('Error marking measure as needs review:', error);
+  }
 }
 
 function set_status(){
@@ -275,21 +373,39 @@ function set_status(){
 }
 
 
-const measure_obj = ref({
+const measure_obj = ref<{
+  id: number
+  course_indicator_id: number
+  measure_description: string
+  observation: string | null
+  recommended_action: string | null
+  fcar: string | null
+  met: number | null
+  exceeded: number | null
+  below: number | null
+  created_at: string
+  is_active: boolean
+  deleted: boolean | null
+  deleted_at: string | null
+  new: boolean | null
+  status: "InProgress" | "InReview" | "Completed" | null
+  updated_at: string | null
+  version: number | null
+}>({
   id: NaN,
   course_indicator_id: NaN,
   measure_description: '',
-  observation: '',
-  recommended_action: '',
-  fcar: '',
-  met: NaN,
-  exceeded: NaN,
-  below: NaN,
+  observation: null,
+  recommended_action: null,
+  fcar: null,
+  met: null,
+  exceeded: null,
+  below: null,
   created_at: '',
   is_active: false,
-  deleted: false,
+  deleted: null,
   deleted_at: null,
-  new: false,
+  new: null,
   status: null,
   updated_at: null,
   version: null
@@ -347,38 +463,61 @@ initialize()
   <div id="m-listing-body">
     <div id="measure-box">
       <div id="description">{{ measure_obj.measure_description }}</div>
-      <div v-if="status==0" class="complete-status status-in-progress">In Progress</div>
-      <div v-else-if="status==1" class="complete-status status-in-review">In Review</div>
-      <div v-else-if="status==2" class="complete-status status-completed">Completed</div>
-      <div v-else class="complete-status status-submitted">Submitted</div>
-      <div id="buttons">
-        <BaseButton
-          v-if="status==0 && !isAdmin"
-          variant="primary"
-          size="sm"
-          @click="open_complete_form">
-          Complete
-        </BaseButton>
-        <BaseButton
-          v-if="status==0 && !isAdmin"
-          variant="primary"
-          size="sm"
-          @click="open_edit_form">
-          Edit
-        </BaseButton>
-        <BaseButton
-          v-if="status==1 && isAdmin"
-          variant="primary"
-          size="sm"
-          @click="open_ra_form">
-          Recommend Action
-        </BaseButton>
-        <BaseButton
-          variant="primary"
-          size="sm"
-          @click="open_delete_form">
-          Delete
-        </BaseButton>
+      <div id="status-and-buttons">
+        <div v-if="status==0" class="complete-status status-in-progress">In Progress</div>
+        <div v-else-if="status==1" class="complete-status status-in-review">In Review</div>
+        <div v-else class="complete-status status-completed">Completed</div>
+        <div id="buttons">
+          <BaseButton
+            v-if="status==0 && !isAdmin"
+            variant="primary"
+            size="sm"
+            @click="open_complete_form">
+            Complete
+          </BaseButton>
+          <BaseButton
+            v-if="status==0 && !isAdmin"
+            variant="primary"
+            size="sm"
+            @click="open_edit_form">
+            Edit
+          </BaseButton>
+          <BaseButton
+            v-if="status==1 && isAdmin"
+            variant="primary"
+            size="sm"
+            @click="open_ra_form">
+            Recommend Action
+          </BaseButton>
+          <BaseButton
+            v-if="isAdmin && status < 2"
+            variant="success"
+            size="sm"
+            @click="mark_complete">
+            Mark Complete
+          </BaseButton>
+          <BaseButton
+            v-if="isAdmin && status < 2"
+            variant="secondary"
+            size="sm"
+            @click="mark_needs_review">
+            Needs Review
+          </BaseButton>
+          <BaseButton
+            v-if="isAdmin"
+            variant="secondary"
+            size="sm"
+            @click="open_view">
+            View
+          </BaseButton>
+          <BaseButton
+            v-if="isAdmin"
+            variant="primary"
+            size="sm"
+            @click="open_delete_form">
+            Delete
+          </BaseButton>
+        </div>
       </div>
     </div>
 
@@ -424,8 +563,7 @@ initialize()
     </BaseModal>
 
     <BaseModal v-model:isOpen="deleting" title="Delete Measure" size="md" class="form" id="complete-form">
-      <h4>Delete Measure</h4>
-      Are you sure you want to delete measure?
+      <div>Are you sure you want to delete measure?</div>
       <BaseButton variant="danger" class="submit-button" @click="delete_measure">Delete</BaseButton>
     </BaseModal>
 
@@ -439,6 +577,83 @@ initialize()
         />
       </div>
       <BaseButton variant="primary" class="submit-button" @click="ra_form_submit">Submit</BaseButton>
+    </BaseModal>
+
+    <BaseModal v-model:isOpen="viewing" title="View Measure Details" size="lg" class="form" id="view-form">
+      <div class="view-content">
+        <div class="view-section">
+          <h4>Measure Information</h4>
+          <div class="view-field">
+            <span class="field-label">ID:</span>
+            <span class="field-value">{{ measure_obj.id }}</span>
+          </div>
+          <div class="view-field">
+            <span class="field-label">Description:</span>
+            <span class="field-value">{{ measure_obj.measure_description }}</span>
+          </div>
+          <div class="view-field">
+            <span class="field-label">Status:</span>
+            <span v-if="status==0" class="field-value status-badge status-in-progress">In Progress</span>
+            <span v-else-if="status==1" class="field-value status-badge status-in-review">In Review</span>
+            <span v-else class="field-value status-badge status-completed">Completed</span>
+          </div>
+        </div>
+
+        <div class="view-section">
+          <h4>Assessment Results</h4>
+          <div class="view-field">
+            <span class="field-label">Students Met:</span>
+            <span class="field-value">{{ measure_obj.met ?? 'N/A' }}</span>
+          </div>
+          <div class="view-field">
+            <span class="field-label">Students Exceeded:</span>
+            <span class="field-value">{{ measure_obj.exceeded ?? 'N/A' }}</span>
+          </div>
+          <div class="view-field">
+            <span class="field-label">Students Below:</span>
+            <span class="field-value">{{ measure_obj.below ?? 'N/A' }}</span>
+          </div>
+          <div class="view-field" v-if="measure_obj.met !== null && measure_obj.exceeded !== null && measure_obj.below !== null">
+            <span class="field-label">Total Students:</span>
+            <span class="field-value">{{ (measure_obj.met || 0) + (measure_obj.exceeded || 0) + (measure_obj.below || 0) }}</span>
+          </div>
+        </div>
+
+        <div class="view-section" v-if="measure_obj.observation">
+          <h4>Observation</h4>
+          <div class="view-field full-width">
+            <p class="observation-text">{{ measure_obj.observation }}</p>
+          </div>
+        </div>
+
+        <div class="view-section" v-if="measure_obj.recommended_action">
+          <h4>Recommended Action</h4>
+          <div class="view-field full-width">
+            <p class="observation-text">{{ measure_obj.recommended_action }}</p>
+          </div>
+        </div>
+
+        <div class="view-section">
+          <h4>Additional Details</h4>
+          <div class="view-field">
+            <span class="field-label">Course Indicator ID:</span>
+            <span class="field-value">{{ measure_obj.course_indicator_id }}</span>
+          </div>
+          <div class="view-field">
+            <span class="field-label">Created At:</span>
+            <span class="field-value">{{ measure_obj.created_at ? new Date(measure_obj.created_at).toLocaleString() : 'N/A' }}</span>
+          </div>
+          <div class="view-field">
+            <span class="field-label">Updated At:</span>
+            <span class="field-value">{{ measure_obj.updated_at ? new Date(measure_obj.updated_at).toLocaleString() : 'N/A' }}</span>
+          </div>
+          <div class="view-field">
+            <span class="field-label">Version:</span>
+            <span class="field-value">{{ measure_obj.version ?? 'N/A' }}</span>
+          </div>
+        </div>
+      </div>
+      <BaseButton variant="secondary" class="submit-button" @click="close_forms">Close</BaseButton>
     </BaseModal>
   </div>
 
@@ -459,10 +674,19 @@ initialize()
 #measure-box{
   display: flex;
   align-items: center;
+  gap: 1rem;
 }
 
 #description{
-  flex: 1;
+  flex: 0 0 auto;
+  text-align: left;
+}
+
+#status-and-buttons{
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
 #buttons{
@@ -471,33 +695,11 @@ initialize()
 }
 
 .complete-status{
-  margin-left: auto;
-  margin-right: 1rem;
   padding: 0.375rem 0.875rem;
   border-radius: 0.5rem;
   font-size: 0.875rem;
   font-weight: 500;
   white-space: nowrap;
-}
-
-.status-in-progress {
-  background-color: #3b82f6;
-  color: white;
-}
-
-.status-in-review {
-  background-color: #f59e0b;
-  color: white;
-}
-
-.status-completed {
-  background-color: #10b981;
-  color: white;
-}
-
-.status-submitted {
-  background-color: #6b7280;
-  color: white;
 }
 
 .form{
@@ -521,5 +723,83 @@ initialize()
 
 #delete-form BaseButton{
   margin-left: 6rem;
+}
+
+/* View Modal Styles */
+.view-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.view-section {
+  background-color: rgb(50, 50, 50);
+  padding: 1rem;
+  border-radius: 0.5rem;
+}
+
+.view-section h4 {
+  margin: 0 0 1rem 0;
+  color: #60a5fa;
+  font-size: 1.1rem;
+}
+
+.view-field {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+  gap: 0.5rem;
+}
+
+.view-field.full-width {
+  flex-direction: column;
+}
+
+.view-field:last-child {
+  margin-bottom: 0;
+}
+
+.field-label {
+  font-weight: 600;
+  color: #9ca3af;
+  min-width: 180px;
+  flex-shrink: 0;
+}
+
+.field-value {
+  color: #e5e7eb;
+  flex: 1;
+}
+
+.observation-text {
+  margin: 0;
+  padding: 0.75rem;
+  background-color: rgb(60, 60, 60);
+  border-radius: 0.375rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.status-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  display: inline-block;
+}
+
+.status-in-progress {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.status-in-review {
+  background-color: #f59e0b;
+  color: white;
+}
+
+.status-completed {
+  background-color: #10b981;
+  color: white;
 }
 </style>

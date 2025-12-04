@@ -85,7 +85,7 @@ async function loadProgramUserId() {
 // ------------------------------
 async function loadCourseMeasures(courseId: number): Promise<Measure[]> {
   try {
-    const res = await api.get(`/courses/${courseId}/measures`);
+    const res = await api.get(`/measure/byCourse/${courseId}`);
     return res.data.data as Measure[];
   } catch (err) {
     console.error(`Failed to load measures for course ${courseId}:`, err);

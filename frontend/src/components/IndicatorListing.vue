@@ -1,187 +1,266 @@
 <script lang="ts" setup>
-    import { ref } from 'vue';
-    import api from '@/api';
-    import MeasureListing from '@/components/MeasureListing.vue'
-    import BaseButton from '@/components/ui/BaseButton.vue';
-    import BaseModal from './ui/BaseModal.vue';
-    import BaseInput from './ui/BaseInput.vue';
+import { ref } from 'vue';
+import { useUserStore } from '@/stores/user-store';
+import { storeToRefs } from 'pinia';
+import { useToast } from '@/composables/use-toast';
+import api from '@/api';
+import MeasureListing from '@/components/MeasureListing.vue'
+import BaseButton from '@/components/ui/BaseButton.vue';
+import BaseModal from './ui/BaseModal.vue';
+import BaseInput from './ui/BaseInput.vue';
 
-    const props = defineProps({piid: Number, course_id: Number})
+// User store for role checking
+const userStore = useUserStore();
+const { isAdmin } = storeToRefs(userStore);
 
-    const indicator_obj = ref({
-        id: NaN,
-        ind_number: NaN,
-        ind_value: NaN,
-        ind_description: '',
-        evaluation: '',
-        student_outcome_id: NaN,
-        threshold_percentage: NaN,
-        created_at: '',
-        is_active: false
-    })
-    const measures = ref([])
+// Toast notifications
+const toast = useToast();
 
-    function close_forms(){
-        adding_measure.value = false
+const props = defineProps({piid: Number, course_id: Number})
+
+const indicator_obj = ref({
+  id: NaN,
+  ind_number: NaN,
+  ind_value: NaN,
+  ind_description: '',
+  evaluation: '',
+  student_outcome_id: NaN,
+  threshold_percentage: NaN,
+  created_at: '',
+  is_active: false
+})
+const measures = ref<any[]>([])
+
+function close_forms(){
+  editing_indicator.value = false
+  adding_measure.value = false
+}
+
+// Edit indicator modal (admin only)
+const editing_indicator = ref(false)
+const edit_form_data = ref({
+  ind_description: '',
+  threshold_percentage: 0
+})
+
+// Add measure modal
+const adding_measure = ref(false)
+const new_measure_form_data = ref({
+  description: ''
+})
+
+function open_edit_form() {
+  edit_form_data.value = {
+    ind_description: indicator_obj.value.ind_description,
+    threshold_percentage: indicator_obj.value.threshold_percentage
+  }
+  editing_indicator.value = true
+}
+
+async function edit_form_submit() {
+  try {
+    const updatePayload = {
+      description: edit_form_data.value.ind_description,
+      thresholdPercentage: edit_form_data.value.threshold_percentage
     }
 
-    const adding_measure = ref(false)
+    await api.put(`/performance-indicators/${props.piid}`, updatePayload);
 
-    function open_add_form(){
-        adding_measure.value = true
+    // Update local state
+    indicator_obj.value.ind_description = edit_form_data.value.ind_description
+    indicator_obj.value.threshold_percentage = edit_form_data.value.threshold_percentage
+
+    toast.success('Performance indicator updated successfully');
+    close_forms()
+  } catch (error) {
+    console.error('Error updating performance indicator:', error);
+    toast.error('Failed to update performance indicator');
+  }
+}
+
+async function fetch_measures(){
+  try {
+    const { data } = await api.get(`/measure/byIndicator/${props.piid}`);
+    console.log(data)
+    measures.value = data.data;
+  } catch (error) {
+    console.error('Error fetching or parsing indicator data:', error);
+  }
+}
+
+async function add_measure(){
+  new_measure_form_data.value.description = ''
+  adding_measure.value = true
+}
+
+async function add_measure_submit(){
+  if (!new_measure_form_data.value.description.trim()) {
+    toast.error('Description is required');
+    return;
+  }
+
+  let ciid
+
+  //Get course indicator id
+  try {
+    const { data } = await api.get(`courses/courseIndicator/${props.course_id}/${props.piid}`)
+    console.log(data)
+    ciid = data.data.id
+  } catch(error) {
+    console.error('Error fetching course/indicator joint ID: ', error)
+    toast.error('Failed to create measure');
+    return
+  }
+
+  //Define new measure object with description from form
+  const new_measure = ref({
+    id: null,
+    courseIndicatorId: ciid,
+    description: new_measure_form_data.value.description,
+    observation: null,
+    recommendedAction: null,
+    fcar: null,
+    studentsMet: null,
+    studentsExceeded: null,
+    studentsBelow: null,
+    createdAt: null,
+    active: true,
+    deleted: null,
+    deletedAt: null,
+    new: null,
+    status: "InProgress",
+    updatedAt: null,
+    version: null
+  })
+  console.log("New Measure: ")
+  console.log(new_measure)
+
+  //POST request to server
+  try {
+    await api.post(`/measure`, new_measure.value);
+    toast.success('Measure created successfully');
+
+    //Close modal and refresh measures
+    close_forms()
+    fetch_measures()
+  } catch (error) {
+    console.error('Error creating measure:', error);
+    toast.error('Failed to create measure');
+  }
+}
+
+async function initialize(){
+  //Fetch indicator object
+  try {
+    const { data } = await api.get(`/performance-indicators/${props.piid}`);
+    indicator_obj.value = {
+      id: data.data.id,
+      ind_number: data.data.indicatorNumber,
+      ind_value: data.data.indicatorValue,
+      ind_description: data.data.description,
+      evaluation: data.data.evaluation,
+      student_outcome_id: data.data.studentOutcomeId,
+      threshold_percentage: data.data.thresholdPercentage,
+      created_at: data.data.createdAt,
+      is_active: data.data.isActive
     }
+  } catch (error) {
+    console.error('Error fetching or parsing indicator data:', error);
+  }
 
-    const add_form_data = ref({
-        description: ''
-    })
+  //Fetch measures
+  fetch_measures();
+}
 
-    async function fetch_measures(){
-        try {
-            const { data } = await api.get(`/measure/byIndicator/${props.piid}`);
-            console.log(data)
-            measures.value = data.data;
-        } catch (error) {
-            console.error('Error fetching or parsing indicator data:', error);
-        }
-    }
-
-    async function add_form_submit(){
-        let ciid
-
-        //Get course indicator id
-        try {
-            const { data } = await api.get(`courses/courseIndicator/${props.course_id}/${props.piid}`)
-            console.log(data)
-            ciid = data.data.id
-        } catch(error) {
-            console.error('Error fetching course/indicator joint ID: ', error)
-            return
-        }
-
-        //Check that met, exceeded, below are all ints
-        let newDescVal = add_form_data.value.description
-        
-        //Define new measure object
-        const new_measure = ref({
-            id: null,
-            courseIndicatorId: ciid,
-            description: newDescVal,
-            observation: null,
-            recommendedAction: null,
-            fcar: null,
-            studentsMet: null,
-            studentsExceeded: null,
-            studentsBelow: null,
-            createdAt: null,
-            active: true,
-            deleted: null,
-            deletedAt: null,
-            new: null,
-            status: "InProgress",
-            updatedAt: null,
-            version: null
-        })
-        console.log("New Measure: ")
-        console.log(new_measure)
-
-        //POST request to server
-        try {
-            const { data } = await api.post(`/measure`, new_measure.value);
-        } catch (error) {
-            console.error('Error editing measure:', error);
-        }
-
-        //Reset form data
-        add_form_data.value = {
-            description: ''
-        }
-
-        //Close forms
-        close_forms()
-
-        //Refresh measures
-        fetch_measures()
-    }
-
-    //-----TEST DATA-----
-    /*
-    const indicator_obj = ref({
-        id: 1,
-        ind_number: 1,
-        ind_value: null,
-        ind_description: 'Identify and formulate computing problems',
-        evaluation: null,
-        student_outcome_id: 1,
-        threshold_percentage: 75.00,
-        created_at: '2025-11-06 12:06:00.872447	',
-        is_active: true
-    })
-    const measures = ref([1,2])
-    */
-    //-------------------
-
-    async function initialize(){
-        //Fetch indicator object
-        try {
-            const { data } = await api.get(`/performance-indicators/${props.piid}`);
-            indicator_obj.value = {
-                id: data.data.id,
-                ind_number: data.data.indicatorNumber,
-                ind_value: data.data.indicatorValue,
-                ind_description: data.data.description,
-                evaluation: data.data.evaluation,
-                student_outcome_id: data.data.studentOutcomeId,
-                threshold_percentage: data.data.thresholdPercentage,
-                created_at: data.data.createdAt,
-                is_active: data.data.isActive
-            }
-        } catch (error) {
-            console.error('Error fetching or parsing indicator data:', error);
-        }
-        
-        //Fetch measures
-        fetch_measures();
-    }
-
-    initialize()
+initialize()
 </script>
 
 <template>
-    <div id="indicator-box">
-        <div id="title"><span id="pi-label">Performance Indicator: </span>{{ indicator_obj.ind_description }}</div>
-        <div id="threshold-percent-title">Threshold: <span id="threshold-percent">{{ indicator_obj.threshold_percentage }}%</span></div>
-        <MeasureListing v-for="measure_obj in measures" :key="measure_obj" :measure_prop="measure_obj" @refresh="fetch_measures"></MeasureListing>
-        <BaseButton variant="primary" @click="open_add_form">Add Measure</BaseButton>
+  <div id="indicator-box">
+    <div id="title">
+      <span id="pi-label">Performance Indicator: </span>{{ indicator_obj.ind_description }}
     </div>
+    <div id="threshold-percent-title">Threshold: <span id="threshold-percent">{{ indicator_obj.threshold_percentage }}%</span></div>
+    <MeasureListing
+      v-for="measure_obj in measures"
+      :key="measure_obj.id"
+      :measure_prop="measure_obj"
+      :is-admin="isAdmin"
+      @refresh="fetch_measures"
+    />
+    <BaseButton variant="primary" @click="add_measure">Add Measure</BaseButton>
+  </div>
 
-    <BaseModal v-model:isOpen="adding_measure" title="Add Measure" size="md" class="form" id="complete-form">
-        <div class="input-grid">
-            <BaseInput
-                v-model="add_form_data.description"
-                label="Description: "
-                placeholder=""
-                required
-            />
-        </div>
-        <BaseButton variant="primary" class="submit-button" @click="add_form_submit">Submit</BaseButton>
-    </BaseModal>
+  <!-- Edit Indicator Modal (Admin Only) -->
+  <BaseModal v-model:isOpen="editing_indicator" title="Edit Performance Indicator" size="md" class="form" id="edit-indicator-form">
+    <div class="input-grid">
+      <BaseInput
+        v-model="edit_form_data.ind_description"
+        label="Description"
+        placeholder="Enter indicator description"
+        required
+      />
+      <BaseInput
+        v-model.number="edit_form_data.threshold_percentage"
+        label="Threshold Percentage"
+        type="number"
+        placeholder="Enter threshold percentage"
+        required
+        min="0"
+        max="100"
+      />
+    </div>
+    <div class="modal-actions">
+      <BaseButton variant="secondary" @click="close_forms">Cancel</BaseButton>
+      <BaseButton variant="primary" @click="edit_form_submit">Save Changes</BaseButton>
+    </div>
+  </BaseModal>
+
+  <!-- Add Measure Modal -->
+  <BaseModal v-model:isOpen="adding_measure" title="Add New Measure" size="md" class="form" id="add-measure-form">
+    <div class="input-grid">
+      <BaseInput
+        v-model="new_measure_form_data.description"
+        label="Measure Description"
+        placeholder="Enter measure description"
+        required
+      />
+    </div>
+    <div class="modal-actions">
+      <BaseButton variant="secondary" @click="close_forms">Cancel</BaseButton>
+      <BaseButton variant="primary" @click="add_measure_submit">Create Measure</BaseButton>
+    </div>
+  </BaseModal>
 </template>
 
-<style>
-    #title{
-        font-size: 24px;
-    }
+<style scoped>
+#title {
+  font-size: 24px;
+}
 
-    #pi-label{
-        color: green;
-    }
+#pi-label {
+  color: green;
+}
 
-    #threshold-percent-title{
-        color: lightgray;
-        margin-bottom: 1rem;
-    }
+#threshold-percent-title {
+  color: lightgray;
+  margin-bottom: 1rem;
+}
 
-    #indicator-box{
-        text-align: left;
-    }
+#indicator-box {
+  text-align: left;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
+.input-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
 </style>

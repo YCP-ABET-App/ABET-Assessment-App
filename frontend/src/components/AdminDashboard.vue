@@ -44,7 +44,6 @@ const { currentProgramId, currentSemesterId } = storeToRefs(userStore);
       />
     </section>
   </section>
-
   <section v-else class="loading-screen">
     <p>Loading program and semester information...</p>
   </section>
