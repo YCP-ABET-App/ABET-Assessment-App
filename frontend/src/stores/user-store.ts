@@ -50,6 +50,7 @@ export const useUserStore = defineStore('user', () => {
     applyThemeToDocument(newTheme)
   }
 
+
   // -------------------------
   // GETTERS
   // -------------------------

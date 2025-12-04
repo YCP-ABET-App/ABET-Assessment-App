@@ -168,3 +168,32 @@ body {
 .bg-error { background-color: var(--color-error); }
 .bg-warning { background-color: var(--color-warning); }
 .bg-info { background-color: var(--color-info); }
+
+:root[data-theme='light'] {
+
+  --color-bg-primary: #ffffff;
+  --color-bg-secondary: #f5f5f5;
+  --color-bg-tertiary: #ebebeb;
+
+
+  --color-text-primary: #1f1f1f;
+  --color-text-secondary: #444444;
+  --color-text-tertiary: #666666;
+
+
+  --color-border-light: #ffffff;
+  --color-border-medium: #bcbcbc;
+  --color-border-dark: #a0a0a0;
+
+
+  --navbar-bg: var(--color-primary);
+  --navbar-text: #ffffff;
+}
+
+.fcar-link {
+  color: var(--color-text-primary);
+}
+
+:root[data-theme='light'] .fcar-link {
+  color: var(--color-text-primary) !important;
+}
