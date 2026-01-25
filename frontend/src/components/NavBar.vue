@@ -36,7 +36,6 @@ const emit = defineEmits(["logout"])
             </div>
             <div class="user-details">
               <span class="user-name">{{ username }}</span>
-              <span class="user-role">System Admin</span>
             </div>
           </div>
 
@@ -178,22 +177,24 @@ const emit = defineEmits(["logout"])
 
 .user-profile-chip {
   display: flex;
+  flex-direction: column; /* Stacks the circle on top of the name */
   align-items: center;
-  gap: 10px;
+  justify-content: center;
+  gap: 2px;               /* gap between circle and name */
   padding: 0 var(--navbar-item-padding-x);
   height: 100%;
 }
 
 .user-avatar {
-  width: 32px;
-  height: 32px;
+  width: 28px;          
+  height: 28px;
   background-color: var(--color-primary-dark, #3498db);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: bold;
-  font-size: 14px;
+  font-size: 12px;
   color: white;
   flex-shrink: 0;
 }
@@ -206,10 +207,11 @@ const emit = defineEmits(["logout"])
 }
 
 .user-name {
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 10px;       
+  font-weight: 500;
   color: var(--navbar-text, white);
   white-space: nowrap;
+  opacity: 0.9;
 }
 
 .user-role {
