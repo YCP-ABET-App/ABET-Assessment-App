@@ -97,14 +97,30 @@ tasks.register('devWithBuiltInFrontend') {
     group = 'abet-dev'
     description = 'Run with built frontend locally'
     dependsOn 'copyFrontend'
+
     doFirst {
         tasks.bootRun.configure {
             args = ['--spring.profiles.active=dev-builtin']
         }
     }
 
-    finalizedBy 'bootRun'
+    finalizedBy 'bootRun', 'openWebsite'
 }
+
+tasks.register('openWebsite') {
+    doLast {
+        def url = 'http://localhost:8080'
+        println "Opening $url in default browser..."
+        if (System.properties['os.name'].contains('Windows')) {
+            exec { commandLine 'cmd', '/c', "start $url" }
+        } else if (System.properties['os.name'].contains('Mac')) {
+            exec { commandLine 'open', url }
+        } else {
+            exec { commandLine 'xdg-open', url }
+        }
+    }
+}
+
 
 // FRONTEND BUILD TASKS
 // Cleans and then installs the dependencies
