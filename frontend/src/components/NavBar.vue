@@ -29,19 +29,19 @@ const emit = defineEmits(["logout"])
         <div class="nav-divider"></div>
 
         <!-- When logged in -->
-        <template v-if="loggedIn">
-          <!-- Username displayed separately -->
-          <div class="username-display">
-            {{ username }}
+            <template v-if="loggedIn">
+          <div class="user-profile-chip">
+            <div class="user-avatar">
+              {{ username ? username[0].toUpperCase() : 'U' }}
+            </div>
+            <div class="user-details">
+              <span class="user-name">{{ username }}</span>
+            </div>
           </div>
 
           <div class="nav-divider"></div>
 
-          <!-- Stand-alone logout button -->
-          <button
-            class="nav_button auth-button logout-btn"
-            @click="$emit('logout')"
-          >
+          <button class="nav_button auth-button logout-btn" @click="$emit('logout')">
             Log Out
           </button>
         </template>
@@ -142,16 +142,6 @@ const emit = defineEmits(["logout"])
   opacity: 0.6;
 }
 
-.username-display {
-  display: flex;
-  align-items: center;
-  padding: 0 var(--navbar-item-padding-x);
-  font-weight: var(--font-weight-bold);
-  border-radius: var(--radius-md);
-  color: white;
-  white-space: nowrap;
-}
-
 .logout-btn {
   background: none;
   color: var(--navbar-text);
@@ -183,6 +173,52 @@ const emit = defineEmits(["logout"])
     padding: 0 var(--spacing-md);
     font-size: var(--font-size-sm);
   }
+}
+
+.user-profile-chip {
+  display: flex;
+  flex-direction: column; /* Stacks the circle on top of the name */
+  align-items: center;
+  justify-content: center;
+  gap: 2px;               /* gap between circle and name */
+  padding: 0 var(--navbar-item-padding-x);
+  height: 100%;
+}
+
+.user-avatar {
+  width: 28px;          
+  height: 28px;
+  background-color: var(--color-primary-dark, #3498db);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 12px;
+  color: white;
+  flex-shrink: 0;
+}
+
+.user-details {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  line-height: 1.2;
+}
+
+.user-name {
+  font-size: 10px;       
+  font-weight: 500;
+  color: var(--navbar-text, white);
+  white-space: nowrap;
+  opacity: 0.9;
+}
+
+.user-role {
+  font-size: 10px;
+  color: var(--navbar-text, white);
+  opacity: 0.7;
+  text-transform: uppercase;
 }
 
 @media (max-width: 768px) {
@@ -227,8 +263,5 @@ const emit = defineEmits(["logout"])
     height: auto;
   }
 
-  .user-info {
-    font-size: var(--font-size-xs);
-  }
 }
 </style>
