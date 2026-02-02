@@ -1,14 +1,22 @@
 <script setup lang="ts">
 import { storeToRefs } from "pinia";
 import { useUserStore } from "@/stores/user-store";
+import { useRouter } from "vue-router";
 
 import CourseListing from "@/components/CourseListing.vue";
 import ProgramInstructorsPage from "@/components/pages/ProgramInstructorsPage.vue";
 import SummaryReport from "@/components/SummaryReport.vue";
 import AssessmentSchedule from "@/components/AssessmentSchedule.vue";
+import BaseButton from "@/components/ui/BaseButton.vue";
+
+const router = useRouter();
 
 const userStore = useUserStore();
 const { currentProgramId, currentSemesterId } = storeToRefs(userStore);
+
+function navigateToSummary(){
+  router.push(`/${currentProgramId.value}/${currentSemesterId.value}/summary`)
+}
 </script>
 
 <template>
@@ -34,15 +42,7 @@ const { currentProgramId, currentSemesterId } = storeToRefs(userStore);
     <hr class="divider" />
 
     <!-- ASSESSMENT SUMMARY REPORT -->
-    <section class="summary-section">
-      <h2>Assessment Summary Report</h2>
-      <SummaryReport
-        :program-id="currentProgramId"
-        :semester-id="currentSemesterId"
-        :show-semester-selector="false"
-        :show-export-button="true"
-      />
-    </section>
+    <BaseButton @click="navigateToSummary()">View 1-Year Summary Report</BaseButton>
   </section>
   <section v-else class="loading-screen">
     <p>Loading program and semester information...</p>

@@ -37,7 +37,7 @@ const routes = [
     component: AboutPage
   },
   {
-    path: '/:program_id/summary/',
+    path: '/:program_id/:semester_id/summary/',
     name: 'Summary',
     component: SummaryPage,
     meta: { requiresAuth: true }
