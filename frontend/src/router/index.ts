@@ -14,6 +14,7 @@ import AdminDashboard from '@/components/AdminDashboard.vue'
 import ExamplePage from "@/components/pages/ExamplePage.vue";
 import AboutPage from '@/components/pages/AboutPage.vue'
 import ManagementPage from "@/components/ManagementPage.vue";
+import AdminDashboardPage from "@/components/pages/AdminDashboardPage.vue";
 
 const routes = [
   {
@@ -24,6 +25,12 @@ const routes = [
     path: '/test-connection',
     name: 'ConnectionTest',
     component: ConnectionTest,
+  },
+{
+    path: '/admin-dashboard',
+    name: 'Admin Dashboard',
+    component: () => import('@/components/pages/AdminDashboardPage.vue'), 
+    meta: { requiresAuth: true, requiresAdmin: true }
   },
   {
     path: '/dashboard',
