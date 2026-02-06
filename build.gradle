@@ -104,6 +104,20 @@ tasks.register('devWithBuiltInFrontend') {
         }
     }
 
+    finalizedBy 'bootRun'
+}
+
+tasks.register('devWithBrowser') {
+    group = 'abet-dev'
+    description = 'Run with built frontend locally'
+    dependsOn 'copyFrontend'
+
+    doFirst {
+        tasks.bootRun.configure {
+            args = ['--spring.profiles.active=dev-builtin']
+        }
+    }
+
     finalizedBy 'bootRun', 'openWebsite'
 }
 
