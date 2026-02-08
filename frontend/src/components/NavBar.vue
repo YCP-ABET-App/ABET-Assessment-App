@@ -12,16 +12,19 @@ const emit = defineEmits(["logout"])
     <div class="navbar-container">
       <div id="logo">ABET Assessment App</div>
 
-      <div class="navbar-links">
+<div class="navbar-links">
         <router-link to="/" class="nav_button">Home</router-link>
+        
         <div class="nav-divider"></div>
         <router-link to="/about" class="nav_button">About</router-link>
 
         <template v-if="loggedIn">
           <div class="nav-divider"></div>
+          <router-link to="/admin-dashboard" class="nav_button">Admin</router-link>
+          
+          <div class="nav-divider"></div>
           <router-link to="/settings" class="nav_button">Settings</router-link>
         </template>
-
       </div>
 
       <!-- USER + LOGIN/LOGOUT SECTION -->

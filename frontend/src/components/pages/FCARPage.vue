@@ -247,7 +247,6 @@ input, textarea, select {
   border-radius: 4px;
   cursor: pointer;
   width: 100%;
-  margin-top: 2rem;
 }
 
 .generate-btn:hover {
