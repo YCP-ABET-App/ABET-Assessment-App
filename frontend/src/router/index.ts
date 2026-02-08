@@ -90,12 +90,6 @@ const routes = [
     component: SignUpPage,
   },
   {
-    path: '/admin-dashboard',
-    name: 'Admin Dashboard',
-    component: AdminDashboard,
-    meta: { requiresAuth: true, requiresAdmin: true }
-  },
-  {
     path: '/setup',
     name: 'Setup',
     component: ManagementPage,

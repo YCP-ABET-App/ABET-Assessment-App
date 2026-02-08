@@ -2,93 +2,76 @@
   <section class="fcar-page">
     <h1>Edit and Export FCAR</h1>
 
-    <label>Student Outcome #:</label>
-    <input v-model="form.outcome" type="text" placeholder="e.g., 1.1" />
+    <div class="form-group">
+      <label>Student Outcome #:</label>
+      <input v-model="form.outcome" type="text" placeholder="e.g., 1.1" />
 
-    <label>Outcome Description:</label>
-    <input
-      v-model="form.outcomeDescription"
-      type="text"
-      placeholder="Describe the outcome..."
-    />
+      <label>Outcome Description:</label>
+      <input v-model="form.outcomeDescription" type="text" placeholder="Describe the outcome..." />
 
-    <label>Course:</label>
-    <input
-      v-model="form.course"
-      type="text"
-      placeholder="CS 101 - Fundamentals of Computer Science I"
-    />
+      <label>Course:</label>
+      <input v-model="form.course" type="text" />
 
-    <label>Work Used:</label>
-    <input
-      v-model="form.work"
-      type="text"
-      placeholder="Assessment 1, Question 5"
-    />
+      <label>Work Used:</label>
+      <input v-model="form.work" type="text" placeholder="e.g., Exam 2, Question 3" />
 
-    <label>Description:</label>
-    <textarea
-      v-model="form.description"
-      placeholder="Briefly describe the assignment or activity used for assessment..."
-    ></textarea>
+      <label>Description:</label>
+      <textarea v-model="form.description" placeholder="Briefly describe the activity..."></textarea>
+    </div>
 
     <div class="divider"></div>
 
-    <label>Target Goal %:</label>
-    <input
-      v-model="form.targetGoal"
-      type="text"
-      placeholder="70"
-    />
+    <div class="stats-section">
+      <label>Target Goal %:</label>
+      <input v-model="form.targetGoal" type="text" placeholder="70" />
 
-    <div class="row">
-      <div>
-        <label>Needs Improvement:</label>
-        <input
-          v-model="form.needsImprovement"
-          type="text"
-          placeholder="e.g., 5"
-        />
-      </div>
-
-      <div>
-        <label>Meets Expectations:</label>
-        <input
-          v-model="form.meetsExpectations"
-          type="text"
-          placeholder="10"
-        />
-      </div>
-
-      <div>
-        <label>Exceeds Expectations:</label>
-        <input
-          v-model="form.exceedsExpectations"
-          type="text"
-          placeholder="5"
-        />
+      <div class="row">
+        <div>
+          <label>Needs Improvement:</label>
+          <input v-model="form.needsImprovement" type="text" />
+        </div>
+        <div>
+          <label>Meets Expectations:</label>
+          <input v-model="form.meetsExpectations" type="text" />
+        </div>
+        <div>
+          <label>Exceeds Expectations:</label>
+          <input v-model="form.exceedsExpectations" type="text" />
+        </div>
       </div>
     </div>
 
     <div class="divider"></div>
 
-    <label>Summary & Observations:</label>
-    <textarea
-      v-model="form.summary"
-      placeholder="Summarize findings, trends, and recommendations..."
-    ></textarea>
+    <div class="evaluation-card">
+      <label>Outcome Evaluation (Manual Selection):</label>
+      <select v-model="form.outcomeEvaluation" class="eval-select">
+        <option value="" disabled>-- Select Evaluation --</option>
+        <option value="Not Met">Not Met</option>
+        <option value="Barely Not Met">Barely Not Met</option>
+        <option value="Met">Met</option>
+        <option value="Met Comfortably">Met Comfortably</option>
+      </select>
+      
+      <p v-if="suggestedEvaluation" class="suggestion-text">
+        Calculation Suggestion: <strong>{{ suggestedEvaluation }}</strong>
+      </p>
+    </div>
 
-    <button @click="generateReport">Generate Report</button>
+    <label>Summary & Observations:</label>
+    <textarea v-model="form.summary" placeholder="Summarize findings, trends, and recommendations..."></textarea>
+
+    <button class="generate-btn" @click="generateReport">Generate Report</button>
   </section>
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import { useRoute } from "vue-router";
 import api from "@/api";
 
-const measureId = ref(NaN);
 const route = useRoute();
+const measureId = ref(NaN);
 
 const form = ref({
   outcome: "",
@@ -102,33 +85,40 @@ const form = ref({
   meetsExpectations: "",
   exceedsExpectations: "",
   summary: "",
-  resultsMet: false,
+  outcomeEvaluation: "", // Manual choice
 });
 
-function makeTallies(text: string) {
-  const match = text.match(/^(\d+)/);
-  if (!match) return "";
-  const n = parseInt(match[1]);
-  return "1".repeat(Math.min(n, 15));
-}
+// Logic to suggest an evaluation based on the Target Goal vs Actual Data
+const suggestedEvaluation = computed(() => {
+  const ni = parseInt(form.value.needsImprovement || "0");
+  const me = parseInt(form.value.meetsExpectations || "0");
+  const ee = parseInt(form.value.exceedsExpectations || "0");
+  const total = ni + me + ee;
+  const target = parseFloat(form.value.targetGoal || "0");
+
+  if (total === 0 || isNaN(target)) return null;
+  
+  const achievedPct = ((me + ee) / total) * 100;
+
+  if (achievedPct >= target + 15) return "Met Comfortably";
+  if (achievedPct >= target) return "Met";
+  if (achievedPct >= target - 5) return "Barely Not Met";
+  return "Not Met";
+});
+
 function generateReport() {
-  alert("Report generated successfully.");
+  if (!form.value.outcomeEvaluation) {
+    alert("Please select an Outcome Evaluation from the dropdown before generating the report.");
+    return;
+  }
 
   const f = form.value;
   const lines = [];
 
-  lines.push(`(${f.outcome}) ${f.outcomeDescription}`);
-  lines.push("");
-
-  if (f.course) lines.push(`Course: ${f.course}`);
-  if (f.work) lines.push(`Work used: ${f.work}`);
-  lines.push("");
-
-  lines.push("Description");
-  lines.push(f.description || "");
-  lines.push("");
-
-  lines.push(`Target goal: ${f.targetGoal}%`);
+  lines.push(`FCAR REPORT - ${f.course}`);
+  lines.push(`Outcome: (${f.outcome}) ${f.outcomeDescription}`);
+  lines.push(`Work Used: ${f.work}`);
+  lines.push(`Description: ${f.description}`);
   lines.push("");
 
   const ni = parseInt(f.needsImprovement || "0");
@@ -140,80 +130,55 @@ function generateReport() {
   const pctME = total ? ((me / total) * 100).toFixed(1) : "0.0";
   const pctEE = total ? ((ee / total) * 100).toFixed(1) : "0.0";
 
-  lines.push(`Needs improvement: ${ni}/${total} (${pctNI}%) : [${"1".repeat(ni)}]`);
-  lines.push(`Meets expectations: ${me}/${total} (${pctME}%) : [${"1".repeat(me)}]`);
-  lines.push(`Exceeds expectations: ${ee}/${total} (${pctEE}%) : [${"1".repeat(ee)}]`);
+  lines.push(`Target Goal: ${f.targetGoal}%`);
+  lines.push(`Actual Performance:`);
+  lines.push(`- Needs Improvement: ${ni}/${total} (${pctNI}%)`);
+  lines.push(`- Meets Expectations: ${me}/${total} (${pctME}%)`);
+  lines.push(`- Exceeds Expectations: ${ee}/${total} (${pctEE}%)`);
   lines.push("");
 
-  const achieved = total ? (me + ee) / total * 100 >= parseFloat(f.targetGoal) : false;
-  const resultText = achieved ? "achieved." : "not achieved.";
-  lines.push(`Results: The target of ${f.targetGoal}% meeting or exceeding expectations was ${resultText}`);
-  lines.push("");
-
-  lines.push(`Summary/Observations: ${f.summary || ""}`);
-  lines.push("");
+  lines.push(`FINAL EVALUATION: ${f.outcomeEvaluation}`);
+  lines.push(`OBSERVATIONS: ${f.summary || "None"}`);
 
   const reportText = lines.join("\n");
-
-  const blob = new Blob([reportText], { type: "text/plain;charset=utf-8" });
+  const blob = new Blob([reportText], { type: "text/plain" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-
-  const safeCourse = (f.course || "FCAR_Report").replace(/[^\w\-]+/g, "_");
   a.href = url;
-  a.download = `${safeCourse}.txt`;
-
-  document.body.appendChild(a);
+  a.download = `FCAR_${f.outcome.replace(/\./g, '_')}.txt`;
   a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
 }
-
 
 async function initialize() {
   measureId.value = parseInt(route.params.measure_id as string, 10);
-  let measure_data;
-
+  
   try {
-    const { data } = await api.get(`/measure/${measureId.value}`);
-    measure_data = data.data;
-  } catch (error) {}
+    const { data: mRes } = await api.get(`/measure/${measureId.value}`);
+    const measure_data = mRes.data;
 
-  let course_id, ind_id;
-  try {
-    const { data } = await api.get(
-      `/courses/courseIndicator/getIds/${measure_data.courseIndicatorId}`
-    );
-    course_id = data.data[0];
-    ind_id = data.data[1];
-  } catch (error) {}
+    const { data: idRes } = await api.get(`/courses/courseIndicator/getIds/${measure_data.courseIndicatorId}`);
+    const [course_id, ind_id] = idRes.data;
 
-  let course_data;
-  try {
-    const { data } = await api.get(`/courses/${course_id}`);
-    course_data = data.data;
-  } catch (error) {}
+    const { data: cRes } = await api.get(`/courses/${course_id}`);
+    const { data: iRes } = await api.get(`/performance-indicators/${ind_id}`);
 
-  let ind_data;
-  try {
-    const { data } = await api.get(`/performance-indicators/${ind_id}`);
-    ind_data = data.data;
-  } catch (error) {}
-
-  form.value = {
-    outcome: `${ind_data.studentOutcomeId}.${ind_data.id}`,
-    outcomeDescription: ind_data.outcomeDescription || ind_data.description || "",
-    indicatorDescription: ind_data.lvlDescription || "",
-    course: course_data.courseName,
-    work: "",
-    description: measure_data.description,
-    targetGoal: `${ind_data.thresholdPercentage}`,
-    needsImprovement: String(measure_data.studentsBelow),
-    meetsExpectations: String(measure_data.studentsMet),
-    exceedsExpectations: String(measure_data.studentsExceeded),
-    summary: measure_data.observation,
-    resultsMet: false,
-  };
+    form.value = {
+      outcome: `${iRes.data.studentOutcomeId}.${iRes.data.id}`,
+      outcomeDescription: iRes.data.outcomeDescription || iRes.data.description || "",
+      indicatorDescription: iRes.data.lvlDescription || "",
+      course: cRes.data.courseName,
+      work: "",
+      description: measure_data.description,
+      targetGoal: `${iRes.data.thresholdPercentage}`,
+      needsImprovement: String(measure_data.studentsBelow),
+      meetsExpectations: String(measure_data.studentsMet),
+      exceedsExpectations: String(measure_data.studentsExceeded),
+      summary: measure_data.observation,
+      outcomeEvaluation: "", // Forced manual selection
+    };
+  } catch (error) {
+    console.error("Failed to load FCAR data", error);
+  }
 }
 
 initialize();
@@ -221,58 +186,71 @@ initialize();
 
 <style scoped>
 .fcar-page {
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial,
-    sans-serif;
-  max-width: 750px;
-  margin: auto;
-  padding: 1.5rem;
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
 }
 
 label {
-  margin-top: 1rem;
   display: block;
-  font-weight: 600;
+  font-weight: 700;
+  margin-top: 1.2rem;
+  color: #333;
 }
 
-input,
-textarea,
-select {
+input, textarea, select {
   width: 100%;
-  margin-top: 0.25rem;
-  padding: 0.5rem;
-  border: 1px solid #bbb;
-  border-radius: 6px;
-  font-size: 1rem;
-}
-
-textarea {
-  min-height: 80px;
+  padding: 0.6rem;
+  margin-top: 0.4rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
 }
 
 .row {
   display: flex;
   gap: 1rem;
-  margin-top: 1rem;
 }
 
 .divider {
-  height: 2px;
-  background: #ddd;
-  margin: 1.5rem 0;
+  height: 1px;
+  background: #eee;
+  margin: 2rem 0;
 }
 
-button {
-  margin-top: 1.5rem;
-  padding: 0.75rem 1.25rem;
+.evaluation-card {
+  background: #f4f7f4;
+  padding: 1.5rem;
+  border-left: 5px solid #1b5e20;
+  margin-bottom: 1.5rem;
+}
+
+.eval-select {
+  border: 2px solid #1b5e20;
+  font-weight: 600;
+}
+
+.suggestion-text {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.generate-btn {
   background: #1b5e20;
   color: white;
-  font-size: 1rem;
   border: none;
-  border-radius: 6px;
+  padding: 1rem 2rem;
+  font-size: 1.1rem;
+  border-radius: 4px;
   cursor: pointer;
+  width: 100%;
+  margin-top: 2rem;
 }
 
-button:hover {
+.generate-btn:hover {
   background: #14451a;
 }
 </style>
