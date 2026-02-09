@@ -5,9 +5,6 @@ import com.abetappteam.abetapp.dto.SemesterDTO;
 import com.abetappteam.abetapp.entity.Semester;
 import com.abetappteam.abetapp.entity.Semester.SemesterStatus;
 import com.abetappteam.abetapp.entity.Semester.SemesterType;
-import com.abetappteam.abetapp.exception.BusinessException;
-import com.abetappteam.abetapp.exception.ConflictException;
-import com.abetappteam.abetapp.exception.ResourceNotFoundException;
 import com.abetappteam.abetapp.repository.SemesterRepository;
 import com.abetappteam.abetapp.util.TestDataBuilder;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,7 +21,6 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 

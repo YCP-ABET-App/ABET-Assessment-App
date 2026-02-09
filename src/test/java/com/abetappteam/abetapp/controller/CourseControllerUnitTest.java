@@ -5,7 +5,6 @@ import com.abetappteam.abetapp.config.TestSecurityConfig;
 import com.abetappteam.abetapp.dto.CourseDTO;
 import com.abetappteam.abetapp.entity.Course;
 import com.abetappteam.abetapp.entity.CourseIndicator;
-import com.abetappteam.abetapp.entity.Semester;
 import com.abetappteam.abetapp.service.CourseService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -85,9 +84,9 @@ class CourseControllerUnitTest extends BaseControllerTest {
 
         // When/Then
         mockMvc.perform(get("/api/courses")
-                        .param("semesterId", "1")
-                        .param("page", "0")
-                        .param("size", "20"))
+                .param("semesterId", "1")
+                .param("page", "0")
+                .param("size", "20"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isArray())
                 .andExpect(jsonPath("$.content.length()").value(1))
@@ -119,8 +118,8 @@ class CourseControllerUnitTest extends BaseControllerTest {
 
         // When/Then
         mockMvc.perform(post("/api/courses")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(testCourseDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(testCourseDTO)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Resource created successfully"))
@@ -140,8 +139,8 @@ class CourseControllerUnitTest extends BaseControllerTest {
 
         // When/Then
         mockMvc.perform(post("/api/courses")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(invalidDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(invalidDTO)))
                 .andExpect(status().isBadRequest());
 
         verify(courseService, never()).createCourse(any(CourseDTO.class));
@@ -154,8 +153,8 @@ class CourseControllerUnitTest extends BaseControllerTest {
 
         // When/Then
         mockMvc.perform(put("/api/courses/1")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(testCourseDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(testCourseDTO)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Course updated successfully"))
@@ -172,8 +171,8 @@ class CourseControllerUnitTest extends BaseControllerTest {
 
         // When/Then
         mockMvc.perform(put("/api/courses/1/student-count")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"studentCount\": 32}"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"studentCount\": 32}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.studentCount").value(32));
@@ -255,9 +254,9 @@ class CourseControllerUnitTest extends BaseControllerTest {
 
         // When/Then
         mockMvc.perform(get("/api/courses/active")
-                        .param("semesterId", "1")
-                        .param("page", "0")
-                        .param("size", "20"))
+                .param("semesterId", "1")
+                .param("page", "0")
+                .param("size", "20"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isArray())
                 .andExpect(jsonPath("$.content.length()").value(1));
@@ -275,9 +274,9 @@ class CourseControllerUnitTest extends BaseControllerTest {
 
         // When/Then
         mockMvc.perform(get("/api/courses/search")
-                        .param("searchTerm", "Software")
-                        .param("page", "0")
-                        .param("size", "20"))
+                .param("searchTerm", "Software")
+                .param("page", "0")
+                .param("size", "20"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isArray())
                 .andExpect(jsonPath("$.content.length()").value(1));
@@ -297,7 +296,7 @@ class CourseControllerUnitTest extends BaseControllerTest {
         mockCourse.setCourseCode(courseCode);
         mockCourse.setCourseName("Advanced Computer Science");
         mockCourse.setCourseDescription("Advanced topics in CS");
-        mockCourse.setSemesterId(semesterId);  // Use setSemesterId, not setSemester
+        mockCourse.setSemesterId(semesterId); // Use setSemesterId, not setSemester
         mockCourse.setIsActive(true);
 
         // Mock the service method with BOTH parameters
@@ -306,7 +305,7 @@ class CourseControllerUnitTest extends BaseControllerTest {
 
         // Act & Assert - Add semesterId parameter
         mockMvc.perform(get("/api/courses/code/{courseCode}", courseCode)
-                        .param("semesterId", semesterId.toString()))
+                .param("semesterId", semesterId.toString()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data").exists())
@@ -338,7 +337,7 @@ class CourseControllerUnitTest extends BaseControllerTest {
 
         // When/Then
         mockMvc.perform(get("/api/courses/count")
-                        .param("semesterId", "1"))
+                .param("semesterId", "1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data").value(5));
@@ -353,7 +352,7 @@ class CourseControllerUnitTest extends BaseControllerTest {
 
         // When/Then
         mockMvc.perform(get("/api/courses/count/active")
-                        .param("semesterId", "1"))
+                .param("semesterId", "1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data").value(3));
@@ -436,9 +435,9 @@ class CourseControllerUnitTest extends BaseControllerTest {
         when(courseService.getCourseIndicatorByCourseIdAndIndicatorId(1l, 1l)).thenReturn(Optional.of(testCI));
 
         mockMvc.perform(get("/api/courses/courseIndicator/1/1"))
-            .andExpect(status().isOk())
-            .andDo(MockMvcResultHandlers.print())
-            .andExpect(jsonPath("$.data.id").value(1));
+                .andExpect(status().isOk())
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(jsonPath("$.data.id").value(1));
 
         verify(courseService).getCourseIndicatorByCourseIdAndIndicatorId(1l, 1l);
     }
@@ -448,9 +447,9 @@ class CourseControllerUnitTest extends BaseControllerTest {
         when(courseService.getCourseIndicatorById(1l)).thenReturn(Optional.of(testCI));
 
         mockMvc.perform(get("/api/courses/courseIndicator/1"))
-            .andExpect(status().isOk())
-            .andDo(MockMvcResultHandlers.print())
-            .andExpect(jsonPath("$.data.id").value(1));
+                .andExpect(status().isOk())
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(jsonPath("$.data.id").value(1));
 
         verify(courseService).getCourseIndicatorById(1l);
     }
@@ -460,10 +459,10 @@ class CourseControllerUnitTest extends BaseControllerTest {
         when(courseService.getCourseIndicatorById(1l)).thenReturn(Optional.of(testCI));
 
         mockMvc.perform(get("/api/courses/courseIndicator/getIds/1"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.[0]").value(1))
-            .andExpect(jsonPath("$.data.[1]").value(1));
-        
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.[0]").value(1))
+                .andExpect(jsonPath("$.data.[1]").value(1));
+
         verify(courseService).getCourseIndicatorById(1l);
     }
 
