@@ -83,17 +83,19 @@ function navigateToSummary() {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  background-color: var(--color-background-base);
 }
 
 .content-area {
   flex: 1;
-  background-color: var(--color-background-soft, #f9f9f9);
+  background-color: var(--color-background-soft);
 }
 
 .admin-dashboard {
   max-width: 1200px;
   margin: 2rem auto;
   padding: 0 2rem;
+  color: var(--color-text-primary);
 }
 
 header h1 {
@@ -106,7 +108,8 @@ header h1 {
 .divider {
   margin: 3rem 0;
   border: none;
-  border-top: 1px solid var(--color-border-dark, #ddd);
+  border-top: 1px solid var(--color-border);
+  opacity: 0.3;
 }
 
 .summary-section {

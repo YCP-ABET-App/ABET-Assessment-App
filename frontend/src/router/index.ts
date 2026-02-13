@@ -10,11 +10,9 @@ import ProgramCoursesPage from '@/components/pages/ProgramCoursesPage.vue'
 import ProgramInstructorsPage from '@/components/pages/ProgramInstructorsPage.vue'
 import LogInPage from '@/components/pages/LogIn.vue'
 import SignUpPage from '@/components/pages/SignUp.vue'
-import AdminDashboard from '@/components/AdminDashboard.vue'
 import ExamplePage from "@/components/pages/ExamplePage.vue";
 import AboutPage from '@/components/pages/AboutPage.vue'
 import ManagementPage from "@/components/ManagementPage.vue";
-import AdminDashboardPage from "@/components/pages/AdminDashboardPage.vue";
 
 const routes = [
   {
