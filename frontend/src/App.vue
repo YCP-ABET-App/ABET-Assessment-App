@@ -29,6 +29,7 @@ function handleLogout() {
       <NavBar
         :loggedIn="userStore.isLoggedIn"
         :username="userStore.userFullName"
+        :is-admin="userStore.isAdmin"
         @logout="handleLogout"
       />
 
