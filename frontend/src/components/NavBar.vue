@@ -2,6 +2,7 @@
 const props = defineProps({
   loggedIn: Boolean,
   username: String,
+  isInstructor: Boolean,
   isAdmin: Boolean,
 })
 

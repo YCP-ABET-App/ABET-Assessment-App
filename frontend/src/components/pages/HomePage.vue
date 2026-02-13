@@ -42,7 +42,7 @@ const hasRequiredSelections = computed(() => {
       <hr v-if="isAdmin && isInstructor && hasRequiredSelections" class="section-divider" />
 
       <!-- Admin Dashboard -->
-      <template v-if="isAdmin && hasRequiredSelections">
+      <template v-if="isAdmin && !isInstructor && hasRequiredSelections">
         <AdminDashboard
           :program-id="currentProgramId as number"
           :semester-id="currentSemesterId as number"
