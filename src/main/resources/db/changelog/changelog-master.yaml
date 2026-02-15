@@ -6,3 +6,7 @@ databaseChangeLog:
       file: db/changelog/02062026AddSectionTable.yaml
   - include:
       file: db/changelog/02062026AddSectionProgramTable.yaml
+  - include:
+      file: db/changelog/02152026RemoveResultsFromMeasureTable.yaml
+  - include:
+      file: db/changelog/02152026AddDescriptionsToMeasures.yaml
