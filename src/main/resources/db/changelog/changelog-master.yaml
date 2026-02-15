@@ -1,0 +1,8 @@
+# elarson - 2/6/2026
+# Whenever adding a new changeset file, be sure to include a reference to it here
+
+databaseChangeLog:
+  - include: 
+      file: db/changelog/02062026AddSectionTable.yaml
+  - include:
+      file: db/changelog/02062026AddSectionProgramTable.yaml
