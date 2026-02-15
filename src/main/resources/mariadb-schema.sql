@@ -69,7 +69,7 @@ CREATE TABLE program_user (
 CREATE TABLE semester (
                           id BIGINT AUTO_INCREMENT PRIMARY KEY,
                           name VARCHAR(50) NOT NULL,
-                          code VARCHAR(20) UNIQUE NOT NULL,
+                          code VARCHAR(20) UNIQUE NOT NULL, 
                           type VARCHAR(10) NOT NULL,
                           status VARCHAR(15) NOT NULL DEFAULT 'UPCOMING',
                           start_date DATE NULL,
@@ -87,6 +87,20 @@ CREATE TABLE semester (
                           FOREIGN KEY (program_id) REFERENCES program(id) ON DELETE CASCADE,
                           INDEX idx_semester_program (program_id),
                           INDEX idx_semester_code (code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE section (
+                          id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                          name VARCHAR(50) NOT NULL,
+                          course_id BIGINT NOT NULL,
+                          instructor_id BIGINT NOT NULL,
+                          semester_id BIGINT NOT NULL,
+    -- From BaseEntity
+                          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+                          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,
+                          version BIGINT DEFAULT 0,
+                          deleted BOOLEAN DEFAULT FALSE NOT NULL,
+                          deleted_at TIMESTAMP NULL,
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Student outcomes table
@@ -151,25 +165,27 @@ CREATE TABLE course (
                         INDEX idx_course_code (course_code)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+
+
 -- CourseInstructor table
-CREATE TABLE course_instructor (
-                                   id BIGINT AUTO_INCREMENT PRIMARY KEY,
-                                   program_user_id BIGINT NOT NULL,
-                                   course_id BIGINT NOT NULL,
-    -- From BaseEntity
-                                   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-                                   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,
-                                   version BIGINT DEFAULT 0,
-                                   deleted BOOLEAN DEFAULT FALSE NOT NULL,
-                                   deleted_at TIMESTAMP NULL,
-    -- CourseInstructor-specific
-                                   is_active BOOLEAN DEFAULT TRUE NOT NULL,
-                                   FOREIGN KEY (program_user_id) REFERENCES program_user(id) ON DELETE CASCADE,
-                                   FOREIGN KEY (course_id) REFERENCES course(id) ON DELETE CASCADE,
-                                   INDEX idx_instructor_program_user (program_user_id),
-                                   INDEX idx_instructor_course (course_id),
-                                   UNIQUE KEY unique_instructor_course (program_user_id, course_id, is_active)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+-- CREATE TABLE course_instructor (
+--                                    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+--                                    program_user_id BIGINT NOT NULL,
+--                                    course_id BIGINT NOT NULL,
+--     -- From BaseEntity
+--                                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+--                                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,
+--                                    version BIGINT DEFAULT 0,
+--                                    deleted BOOLEAN DEFAULT FALSE NOT NULL,
+--                                    deleted_at TIMESTAMP NULL,
+--     -- CourseInstructor-specific
+--                                    is_active BOOLEAN DEFAULT TRUE NOT NULL,
+--                                    FOREIGN KEY (program_user_id) REFERENCES program_user(id) ON DELETE CASCADE,
+--                                    FOREIGN KEY (course_id) REFERENCES course(id) ON DELETE CASCADE,
+--                                    INDEX idx_instructor_program_user (program_user_id),
+--                                    INDEX idx_instructor_course (course_id),
+--                                    UNIQUE KEY unique_instructor_course (program_user_id, course_id, is_active)
+-- ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- CourseIndicator table
 CREATE TABLE course_indicator (
