@@ -8,3 +8,9 @@ databaseChangeLog:
       file: db/changelog/02062026AddSectionProgramTable.yaml
   - include:
       file: db/changelog/02152026AddMeasureResultsTable.yaml
+  - include:
+      file: db/changelog/02152026AddThresholdToCourse.yaml
+  - include:
+      file: db/changelog/02152026RemoveThresholdFromPI.yaml
+  - include:
+      file: db/changelog/02152026RemoveSemesterFromCourseTable.yaml
