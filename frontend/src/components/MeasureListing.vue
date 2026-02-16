@@ -1,6 +1,5 @@
 <script lang="ts" setup>
 import { ref } from 'vue'
-import { defineEmits } from 'vue'
 import { useUserStore } from '@/stores/user-store.ts'
 import { BaseButton } from '@/components/ui'
 import { BaseInput } from '@/components/ui'
@@ -8,16 +7,22 @@ import { BaseModal } from '@/components/ui'
 import api from '@/api';
 
 const userStore = useUserStore()
-const props = defineProps({measure_prop: {type: Object, required:true}})
+const props = defineProps({measure_prop: {type: Object, required:true}, instructor_id: Number})
 const emits = defineEmits(["refresh"])
 
 const isAdmin = userStore.isAdmin
+const userId = userStore.userId
+const isInstructor = ref(false)
 
 const completing = ref(false)
 const editing = ref(false)
 const deleting = ref(false)
 const rec_action = ref(false)
 const viewing = ref(false)
+
+const has_chart_data = ref(false)
+const below_percent = ref(NaN)
+const met_percent = ref(NaN)
 
 function open_complete_form(){
   completing.value = true
@@ -42,7 +47,7 @@ interface Measure {
   deleted: boolean | null
   deletedAt: string | null
   new: boolean | null
-  status: "InProgress" | "InReview" | "Completed" | null
+  status: "InProgress" | "Complete" | null
   updatedAt: string | null
   version: number | null
 }
@@ -83,24 +88,21 @@ async function complete_form_submit(){
     deleted: measure_obj.value.deleted,
     deletedAt: measure_obj.value.deleted_at,
     new: measure_obj.value.new,
-    status: "InReview",
+    status: "Complete",
     updatedAt: measure_obj.value.updated_at,
     version: measure_obj.value.version
   })
-  console.log("New Measure: ")
-  console.log(new_measure)
 
   //PUT request to server
   try {
     const { data } = await api.put(`/measure/${measure_obj.value.id}`, new_measure.value);
-    console.log("Response data: ")
-    console.log(data)
 
     //Update measure object
     measure_obj.value.observation = complete_form_data.value.observation
     measure_obj.value.met = newMetVal as number
     measure_obj.value.exceeded = newExceededVal as number
     measure_obj.value.below = newBelowVal as number
+    measure_obj.value.status = "Complete"
   } catch (error) {
     console.error('Error editing measure:', error);
   }
@@ -118,6 +120,7 @@ async function complete_form_submit(){
 
   //Refresh measures
   set_status()
+  calculate_chart_data()
   emits('refresh')
 }
 
@@ -146,8 +149,8 @@ async function edit_form_submit(){
     recommendedAction: measure_obj.value.recommended_action,
     fcar: measure_obj.value.fcar,
     studentsMet: measure_obj.value.met,
-    studentsExceeded: measure_obj.value.met,
-    studentsBelow: measure_obj.value.met,
+    studentsExceeded: measure_obj.value.exceeded,
+    studentsBelow: measure_obj.value.below,
     createdAt: measure_obj.value.created_at,
     active: measure_obj.value.is_active,
     deleted: measure_obj.value.deleted,
@@ -157,14 +160,10 @@ async function edit_form_submit(){
     updatedAt: measure_obj.value.updated_at,
     version: measure_obj.value.version
   })
-  console.log("New Measure: ")
-  console.log(new_measure)
 
   //PUT request to server
   try {
     const { data } = await api.put(`/measure/${measure_obj.value.id}`, new_measure.value);
-    console.log("Response data: ")
-    console.log(data)
 
     //Update measure object
     measure_obj.value.measure_description = edit_form_data.value.description
@@ -197,8 +196,6 @@ async function delete_measure(){
   //DELETE request to server
   try {
     const { data } = await api.delete(`/measure/${measure_obj.value.id}`);
-    console.log("Response data: ")
-    console.log(data)
 
     //Update measure object
     measure_obj.value.recommended_action = ra_form_data.value.recommended_action
@@ -237,25 +234,21 @@ async function ra_form_submit(){
     recommendedAction: newRAVal,
     fcar: measure_obj.value.fcar,
     studentsMet: measure_obj.value.met,
-    studentsExceeded: measure_obj.value.met,
-    studentsBelow: measure_obj.value.met,
+    studentsExceeded: measure_obj.value.exceeded,
+    studentsBelow: measure_obj.value.below,
     createdAt: measure_obj.value.created_at,
     active: measure_obj.value.is_active,
     deleted: measure_obj.value.deleted,
     deletedAt: measure_obj.value.deleted_at,
     new: measure_obj.value.new,
-    status: "Completed",
+    status: "Complete",
     updatedAt: measure_obj.value.updated_at,
     version: measure_obj.value.version
   })
-  console.log("New Measure: ")
-  console.log(new_measure)
 
   //PUT request to server
   try {
     const { data } = await api.put(`/measure/${measure_obj.value.id}`, new_measure.value);
-    console.log("Response data: ")
-    console.log(data)
 
     //Update measure object
     measure_obj.value.recommended_action = ra_form_data.value.recommended_action
@@ -308,70 +301,33 @@ async function mark_complete(){
     deleted: measure_obj.value.deleted,
     deletedAt: measure_obj.value.deleted_at,
     new: measure_obj.value.new,
-    status: "Completed",
+    status: "Complete",
     updatedAt: measure_obj.value.updated_at,
     version: measure_obj.value.version
   }
 
   try {
     const { data } = await api.put(`/measure/${measure_obj.value.id}`, new_measure);
-    console.log("Marked as complete: ", data)
-    measure_obj.value.status = "Completed"
+    measure_obj.value.status = "Complete"
     set_status()
+    calculate_chart_data()
     emits('refresh')
   } catch (error) {
     console.error('Error marking measure as complete:', error);
   }
 }
 
-async function mark_needs_review(){
-  const new_measure = {
-    id: measure_obj.value.id,
-    courseIndicatorId: measure_obj.value.course_indicator_id,
-    description: measure_obj.value.measure_description,
-    observation: measure_obj.value.observation,
-    recommendedAction: measure_obj.value.recommended_action,
-    fcar: measure_obj.value.fcar,
-    studentsMet: measure_obj.value.met,
-    studentsExceeded: measure_obj.value.exceeded,
-    studentsBelow: measure_obj.value.below,
-    createdAt: measure_obj.value.created_at,
-    active: measure_obj.value.is_active,
-    deleted: measure_obj.value.deleted,
-    deletedAt: measure_obj.value.deleted_at,
-    new: measure_obj.value.new,
-    status: "InReview",
-    updatedAt: measure_obj.value.updated_at,
-    version: measure_obj.value.version
-  }
-
-  try {
-    const { data } = await api.put(`/measure/${measure_obj.value.id}`, new_measure);
-    console.log("Marked as needs review: ", data)
-    measure_obj.value.status = "InReview"
-    set_status()
-    emits('refresh')
-  } catch (error) {
-    console.error('Error marking measure as needs review:', error);
-  }
-}
-
 function set_status(){
-  console.log("Measure " + measure_obj.value.id + " Status: " + measure_obj.value.status)
   if(measure_obj.value.status==="InProgress"){
     status.value = 0
   }
-  else if(measure_obj.value.status==="InReview"){
+  else if(measure_obj.value.status==="Complete"){
     status.value = 1
   }
-  else if(measure_obj.value.status==="Completed"){
+  else{
     status.value = 2
   }
-  else{
-    status.value = 3
-  }
 }
-
 
 const measure_obj = ref<{
   id: number
@@ -388,7 +344,7 @@ const measure_obj = ref<{
   deleted: boolean | null
   deleted_at: string | null
   new: boolean | null
-  status: "InProgress" | "InReview" | "Completed" | null
+  status: "InProgress" | "Complete" | null
   updated_at: string | null
   version: number | null
 }>({
@@ -412,6 +368,18 @@ const measure_obj = ref<{
 })
 
 const status = ref(NaN)
+
+function calculate_chart_data(){
+  if (measure_obj.value.below == null){
+    has_chart_data.value = false;
+  }
+  else{
+    has_chart_data.value = true;
+    let total_students = (measure_obj.value.met || 0) + (measure_obj.value.exceeded || 0) + (measure_obj.value.below || 0)
+    below_percent.value = ((measure_obj.value.below || 0) / total_students * 100)
+    met_percent.value = (((measure_obj.value.met || 0) + (measure_obj.value.below || 0)) / total_students * 100)
+  }
+}
 
 //-----TEST DATA-----
 /*
@@ -453,71 +421,68 @@ async function initialize(){
   }
 
   set_status()
-  console.log("Status: " + status.value)
+  
+  //Check if the logged in user is the instructor for the section
+  if (userId == props.instructor_id){
+    isInstructor.value = true
+  }
+  else{
+    isInstructor.value = false
+  }
 }
 
 initialize()
+calculate_chart_data()
 </script>
 
 <template>
   <div id="m-listing-body">
     <div id="measure-box">
-      <div id="description">{{ measure_obj.measure_description }}</div>
-      <div id="status-and-buttons">
+      <div id="description-and-status" @click="open_view">
+        <div id="description">{{ measure_obj.measure_description }}</div>
         <div v-if="status==0" class="complete-status status-in-progress">In Progress</div>
-        <div v-else-if="status==1" class="complete-status status-in-review">In Review</div>
-        <div v-else class="complete-status status-completed">Completed</div>
-        <div id="buttons">
-          <BaseButton
-            v-if="status==0 && !isAdmin"
-            variant="primary"
-            size="sm"
-            @click="open_complete_form">
-            Complete
-          </BaseButton>
-          <BaseButton
-            v-if="status==0 && !isAdmin"
-            variant="primary"
-            size="sm"
-            @click="open_edit_form">
-            Edit
-          </BaseButton>
-          <BaseButton
-            v-if="status==1 && isAdmin"
-            variant="primary"
-            size="sm"
-            @click="open_ra_form">
-            Recommend Action
-          </BaseButton>
-          <BaseButton
-            v-if="isAdmin && status < 2"
-            variant="success"
-            size="sm"
-            @click="mark_complete">
-            Mark Complete
-          </BaseButton>
-          <BaseButton
-            v-if="isAdmin && status < 2"
-            variant="secondary"
-            size="sm"
-            @click="mark_needs_review">
-            Needs Review
-          </BaseButton>
-          <BaseButton
-            v-if="isAdmin"
-            variant="secondary"
-            size="sm"
-            @click="open_view">
-            View
-          </BaseButton>
-          <BaseButton
-            v-if="isAdmin"
-            variant="primary"
-            size="sm"
-            @click="open_delete_form">
-            Delete
-          </BaseButton>
-        </div>
+        <div v-else-if="status==1" class="complete-status status-completed">Complete</div>
+        <div v-else class="complete-status status-error">Error</div>
+
+        <div v-if="status==1 && has_chart_data" id="chart"></div>
+        <div v-else id="blank-chart"></div>
+      </div>
+      <div id="buttons">
+        <BaseButton
+          v-if="status==0 && isInstructor"
+          variant="primary"
+          size="sm"
+          @click="open_complete_form">
+          Complete
+        </BaseButton>
+        <BaseButton
+          v-if="status==0 && isInstructor"
+          variant="primary"
+          size="sm"
+          @click="open_edit_form">
+          Edit
+        </BaseButton>
+        <BaseButton
+          v-if="status==1 && isAdmin"
+          variant="danger"
+          size="sm"
+          @click="open_ra_form">
+          Reject Measure
+        </BaseButton>
+        <BaseButton
+          v-if="isAdmin && status == 0"
+          variant="success"
+          size="sm"
+          @click="mark_complete">
+          Mark Complete
+        </BaseButton>
+        <BaseButton
+          v-if="isAdmin || isInstructor"
+          variant="danger"
+          size="sm"
+          @click="open_delete_form">
+          Delete
+        </BaseButton>
       </div>
     </div>
 
@@ -595,7 +560,7 @@ initialize()
             <span class="field-label">Status:</span>
             <span v-if="status==0" class="field-value status-badge status-in-progress">In Progress</span>
             <span v-else-if="status==1" class="field-value status-badge status-in-review">In Review</span>
-            <span v-else class="field-value status-badge status-completed">Completed</span>
+            <span v-else class="field-value status-badge status-completed">Complete</span>
           </div>
         </div>
 
@@ -660,8 +625,18 @@ initialize()
 </template>
 
 <style>
-#m-listing-body{
-  background-color: rgb(43, 43, 43);
+#measure-box{
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+#description-and-status{
+  display: flex;
+  gap: 1rem;
+  flex-grow: 1;
+  min-width: 0;
+  background-color: var(--color-bg-primary);
   padding-left: 1rem;
   padding-right: 1rem;
   padding-bottom: 0.5rem;
@@ -671,39 +646,63 @@ initialize()
   text-decoration: none;
 }
 
-#measure-box{
-  display: flex;
-  align-items: center;
-  gap: 1rem;
+#description-and-status:hover{
+  background-color: var(--color-bg-tertiary);
+  cursor: pointer;
 }
 
-#description{
-  flex: 0 0 auto;
+#description {
+  flex: 1 1 auto;
+  min-width: 0;
   text-align: left;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
-#status-and-buttons{
+#chart,
+#blank-chart {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  flex: 0 0 1.5rem;
+}
+
+#blank-chart{
+  background: conic-gradient(
+    rgb(94, 94, 94) 0% 100%
+  );
+}
+
+#chart{
+  background: conic-gradient(
+    #ef4444 0% v-bind(below_percent + '%'),
+    #3b82f6 v-bind(below_percent + '%') v-bind(met_percent + '%'),
+    #10b981 v-bind(met_percent + '%') 100%
+  );
+}
+
+#buttons{
   margin-left: auto;
   display: flex;
   align-items: center;
   gap: 1rem;
-}
-
-#buttons{
+  z-index: 2;
   display: flex;
   gap: 0.5rem;
+  flex-shrink: 0;
 }
 
 .complete-status{
-  padding: 0.375rem 0.875rem;
+  padding: 0.275rem 0.675rem;
   border-radius: 0.5rem;
-  font-size: 0.875rem;
+  font-size: 0.65rem;
   font-weight: 500;
   white-space: nowrap;
 }
 
 .form{
-  background-color: rgb(36, 36, 36);
+  background-color: var(--color-bg-primary);
   padding-left: 1rem;
   padding-right: 1rem;
   padding-bottom: 0.5rem;
@@ -733,7 +732,7 @@ initialize()
 }
 
 .view-section {
-  background-color: rgb(50, 50, 50);
+  background-color: var(--color-bg-secondary);
   padding: 1rem;
   border-radius: 0.5rem;
 }
@@ -761,20 +760,20 @@ initialize()
 
 .field-label {
   font-weight: 600;
-  color: #9ca3af;
+  color: var(--color-text-primary);
   min-width: 180px;
   flex-shrink: 0;
 }
 
 .field-value {
-  color: #e5e7eb;
+  color: var(--color-text-secondary);
   flex: 1;
 }
 
 .observation-text {
   margin: 0;
   padding: 0.75rem;
-  background-color: rgb(60, 60, 60);
+  background-color: var(--color-bg-tertiary);
   border-radius: 0.375rem;
   line-height: 1.6;
   white-space: pre-wrap;
@@ -793,7 +792,7 @@ initialize()
   color: white;
 }
 
-.status-in-review {
+.status-error {
   background-color: #f59e0b;
   color: white;
 }

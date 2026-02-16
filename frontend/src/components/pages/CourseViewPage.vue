@@ -210,7 +210,7 @@ initialize();
 
       <div class="indicator-list">
         <BaseCard v-for="piid in indicator_ids" :key="piid" variant="default" class="indicator-card">
-          <IndicatorListing :piid="piid" :course_id="course_id"/>
+          <IndicatorListing :piid="piid" :course_id="course_id" :instructor_id="instructors[0].id"/>
         </BaseCard>
       </div>
     </section>
