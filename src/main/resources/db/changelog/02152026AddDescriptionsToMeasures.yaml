@@ -1,0 +1,49 @@
+databaseChangeLog:
+    - changeSet:
+        id: add-met-description-to-measures
+        author: elarson
+        preConditions:
+            - onFail: MARK_RAN
+              not:
+                  columnExists:
+                      columnName: met_description
+                      tableName: measure
+        changes:
+            - addColumn:
+                tableName: measure
+                columns:
+                    - column:
+                        name: met_description
+                        type: VARCHAR(255)
+    - changeSet:
+          id: add-below-description-to-measures
+          author: elarson
+          preConditions:
+              - onFail: MARK_RAN
+                not:
+                    columnExists:
+                        columnName: below_description
+                        tableName: measure
+          changes:
+              - addColumn:
+                    tableName: measure
+                    columns:
+                        - column:
+                              name: below_description
+                              type: VARCHAR(255)
+    - changeSet:
+          id: add-exceeded-description-to-measures
+          author: elarson
+          preConditions:
+              - onFail: MARK_RAN
+                not:
+                    columnExists:
+                        columnName: exceeded_description
+                        tableName: measure
+          changes:
+              - addColumn:
+                    tableName: measure
+                    columns:
+                        - column:
+                              name: exceeded_description
+                              type: VARCHAR(255)

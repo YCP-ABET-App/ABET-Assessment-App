@@ -1,0 +1,61 @@
+databaseChangeLog:
+  - changeSet:
+      id: drop-below-column-from-measure
+      author: elarson
+      preConditions:
+        - onFail: MARK_RAN
+          columnExists:
+              columnName: below
+              tableName: measure
+      changes:
+        - dropColumn:
+            columnName: below
+            tableName: measure
+  - changeSet:
+      id: drop-met-column-from-measure
+      author: elarson
+      preConditions:
+        - onFail: MARK_RAN
+          columnExists:
+              columnName: met
+              tableName: measure
+      changes:
+        - dropColumn:
+            columnName: met
+            tableName: measure
+  - changeSet:
+      id: drop-exceeded-column-from-measure
+      author: elarson
+      preConditions:
+        - onFail: MARK_RAN
+          columnExists:
+              columnName: exceeded
+              tableName: measure
+      changes:
+        - dropColumn:
+            columnName: exceeded
+            tableName: measure
+  - changeSet:
+      id: drop-observation-column-from-measure
+      author: elarson
+      preConditions:
+        - onFail: MARK_RAN
+          columnExists:
+              columnName: observation
+              tableName: measure
+      changes:
+        - dropColumn:
+            columnName: observation
+            tableName: measure
+  - changeSet:
+      id: drop-m_status-column-from-measure
+      author: elarson
+      preConditions:
+        - onFail: MARK_RAN
+          columnExists:
+              columnName: m_status
+              tableName: measure
+      changes:
+        - dropColumn:
+            columnName: m_status
+            tableName: measure
