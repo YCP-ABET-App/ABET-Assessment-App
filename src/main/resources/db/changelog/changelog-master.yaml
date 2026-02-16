@@ -14,3 +14,5 @@ databaseChangeLog:
       file: db/changelog/02152026RemoveThresholdFromPI.yaml
   - include:
       file: db/changelog/02152026RemoveSemesterFromCourseTable.yaml
+  - include:
+      file: db/changelog/02162026RemoveCourseInstructorTable.yaml
