@@ -20,3 +20,5 @@ databaseChangeLog:
       file: db/changelog/02162026AddRecommendedActionsTable.yaml
   - include:
       file: db/changelog/02162026AddSectionUserTable.yaml
+  - include:
+      file: db/changelog/02162026AddRecommendedActionToCO.yaml
