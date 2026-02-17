@@ -10,3 +10,5 @@ databaseChangeLog:
       file: db/changelog/02152026RemoveResultsFromMeasureTable.yaml
   - include:
       file: db/changelog/02152026AddDescriptionsToMeasures.yaml
+  - include:
+      file: db/changelog/02162026RemoveInstructorFromSection.yaml
