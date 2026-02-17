@@ -24,12 +24,11 @@ public class Course extends BaseEntity {
     @Column(name = "course_description", nullable = false, columnDefinition = "TEXT")
     private String courseDescription;
 
-    @NotNull(message = "Semester ID is required")
-    @Column(name = "semester_id", nullable = false)
-    private Long semesterId;
-
     @Column(name = "student_count")
     private Integer studentCount;
+
+    @Column(name = "threshold")   //should not be hard-coded, it can be different for different courses
+    private Double threshold = 70.00;
 
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
@@ -42,7 +41,6 @@ public class Course extends BaseEntity {
         this.courseCode = courseCode;
         this.courseName = courseName;
         this.courseDescription = courseDescription;
-        this.semesterId = semesterId;
         this.studentCount = null;
         this.isActive = true;
     }
@@ -72,14 +70,6 @@ public class Course extends BaseEntity {
         this.courseDescription = courseDescription;
     }
 
-    public Long getSemesterId() {
-        return semesterId;
-    }
-
-    public void setSemesterId(Long semesterId) {
-        this.semesterId = semesterId;
-    }
-
     public Integer getStudentCount() {
         return studentCount;
     }
@@ -96,6 +86,14 @@ public class Course extends BaseEntity {
         this.isActive = isActive;
     }
 
+    public Double getThreshold() {
+        return threshold;
+    }
+
+    public void setThreshold(Double threshold) {
+        this.threshold = threshold;
+    }
+
     @Override
     public String toString() {
         return "Course{" +
@@ -103,8 +101,8 @@ public class Course extends BaseEntity {
                 ", courseCode='" + courseCode + '\'' +
                 ", courseName='" + courseName + '\'' +
                 ", courseDescription='" + courseDescription + '\'' +
-                ", semesterId=" + semesterId +
                 ", studentCount=" + studentCount +
+                ", threshold=" + threshold +
                 ", isActive=" + isActive +
                 ", createdAt=" + getCreatedAt() +
                 ", updatedAt=" + getUpdatedAt() +
