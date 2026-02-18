@@ -40,13 +40,9 @@ public class MeasureService extends BaseService<Measure, Long, MeasureRepository
         measure.setId(dto.getId());
         measure.setCourseIndicatorId(dto.getCourseIndicatorId());
         measure.setDescription(dto.getDescription());
-        measure.setObservation(dto.getObservation());
         measure.setFcar(dto.getFCar());
         measure.setRecommendedAction(dto.getRecommendedAction());
         measure.setStatus(dto.getStatus());
-        measure.setStudentsMet(dto.getStudentsMet());
-        measure.setStudentsExceeded(dto.getStudentsExceeded());
-        measure.setStudentsBelow(dto.getStudentsBelow());
         measure.setActive(dto.getActive());
 
         logger.info("Creating new measure: {}", dto.getId());
@@ -61,13 +57,9 @@ public class MeasureService extends BaseService<Measure, Long, MeasureRepository
         measure.setId(dto.getId());
         measure.setCourseIndicatorId(dto.getCourseIndicatorId());
         measure.setDescription(dto.getDescription());
-        measure.setObservation(dto.getObservation());
         measure.setFcar(dto.getFCar());
         measure.setRecommendedAction(dto.getRecommendedAction());
         measure.setStatus(dto.getStatus());
-        measure.setStudentsMet(dto.getStudentsMet());
-        measure.setStudentsExceeded(dto.getStudentsExceeded());
-        measure.setStudentsBelow(dto.getStudentsBelow());
         if(dto.getActive() != null){
             measure.setActive(dto.getActive());
         }

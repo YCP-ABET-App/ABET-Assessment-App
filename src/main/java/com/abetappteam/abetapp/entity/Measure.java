@@ -18,9 +18,6 @@ public class Measure extends BaseEntity {
     @Column(name = "measure_description", nullable = false, length = 3000)
     private String description;
 
-    // Optional fields
-    @Column(name = "observation", length = 3000)
-    private String observation;
 
     @Column(name = "recommended_action", length = 3000)
     private String recommendedAction;
@@ -28,15 +25,6 @@ public class Measure extends BaseEntity {
     @Column(name = "fcar", length = 3000)
     private String fcar;
 
-    // Student performance counts
-    @Column(name = "met")
-    private Integer studentsMet;
-
-    @Column(name = "exceeded")
-    private Integer studentsExceeded;
-
-    @Column(name = "below")
-    private Integer studentsBelow;
 
     /*
      * Each measure has a status:
@@ -72,12 +60,8 @@ public class Measure extends BaseEntity {
     ) {
         this.courseIndicatorId = courseIndicatorId;
         this.description = description;
-        this.observation = observation;
         this.recommendedAction = recommendedAction;
         this.fcar = fcar;
-        this.studentsMet = studentsMet;
-        this.studentsExceeded = studentsExceeded;
-        this.studentsBelow = studentsBelow;
         this.status = status;
         this.active = active;
     }
@@ -102,14 +86,6 @@ public class Measure extends BaseEntity {
         this.description = description;
     }
 
-    public String getObservation() {
-        return observation;
-    }
-
-    public void setObservation(String observation) {
-        this.observation = observation;
-    }
-
     public String getRecommendedAction() {
         return recommendedAction;
     }
@@ -124,30 +100,6 @@ public class Measure extends BaseEntity {
 
     public void setFcar(String fcar) {
         this.fcar = fcar;
-    }
-
-    public Integer getStudentsMet() {
-        return studentsMet;
-    }
-
-    public void setStudentsMet(Integer studentsMet) {
-        this.studentsMet = studentsMet;
-    }
-
-    public Integer getStudentsExceeded() {
-        return studentsExceeded;
-    }
-
-    public void setStudentsExceeded(Integer studentsExceeded) {
-        this.studentsExceeded = studentsExceeded;
-    }
-
-    public Integer getStudentsBelow() {
-        return studentsBelow;
-    }
-
-    public void setStudentsBelow(Integer studentsBelow) {
-        this.studentsBelow = studentsBelow;
     }
 
     public String getStatus() {
@@ -176,12 +128,8 @@ public class Measure extends BaseEntity {
                 "id=" + getId() +
                 ", courseIndicatorId=" + courseIndicatorId +
                 ", description='" + description + '\'' +
-                ", observation='" + observation + '\'' +
                 ", recommendedAction='" + recommendedAction + '\'' +
                 ", fcar='" + fcar + '\'' +
-                ", studentsMet=" + studentsMet +
-                ", studentsExceeded=" + studentsExceeded +
-                ", studentsBelow=" + studentsBelow +
                 ", status='" + status + '\'' +
                 ", active=" + active +
                 ", createdAt=" + getCreatedAt() +
