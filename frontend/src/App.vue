@@ -24,12 +24,12 @@ function handleLogout() {
 <template>
   <div id="app">
 
-    <!-- FIXED TOP TOOLBAR -->
     <div id="fixed-top">
       <NavBar
         :loggedIn="userStore.isLoggedIn"
         :username="userStore.userFullName"
         :is-admin="userStore.isAdmin"
+        :is-instructor="userStore.isInstructor"
         @logout="handleLogout"
       />
 
