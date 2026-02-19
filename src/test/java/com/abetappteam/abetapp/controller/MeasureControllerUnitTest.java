@@ -55,12 +55,8 @@ public class MeasureControllerUnitTest {
         testMeasure = new Measure();
         testMeasure.setId(1l);
         testMeasure.setDescription("Test Description");
-        testMeasure.setObservation("Test Observation");
         testMeasure.setRecommendedAction("Test Action");
         testMeasure.setFcar("Test Fcar");
-        testMeasure.setStudentsMet(1);
-        testMeasure.setStudentsExceeded(2);
-        testMeasure.setStudentsBelow(3);
         testMeasure.setCourseIndicatorId(1l);
         testMeasure.setStatus("InProgress");
         testMeasure.setActive(true);
@@ -83,7 +79,6 @@ public class MeasureControllerUnitTest {
         testCourse.setCourseCode("CS400");
         testCourse.setCourseDescription("Test for Measures");
         testCourse.setIsActive(true);
-        testCourse.setSemesterId(1l);
     }
 
     @Test

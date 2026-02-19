@@ -57,7 +57,6 @@ class CourseControllerUnitTest extends BaseControllerTest {
         testCourse.setCourseCode("CS401");
         testCourse.setCourseName("Software Engineering");
         testCourse.setCourseDescription("An introduction to software engineering principles");
-        testCourse.setSemesterId(1L);
         testCourse.setStudentCount(28);
         testCourse.setIsActive(true);
 
@@ -297,7 +296,6 @@ class CourseControllerUnitTest extends BaseControllerTest {
         mockCourse.setCourseCode(courseCode);
         mockCourse.setCourseName("Advanced Computer Science");
         mockCourse.setCourseDescription("Advanced topics in CS");
-        mockCourse.setSemesterId(semesterId);  // Use setSemesterId, not setSemester
         mockCourse.setIsActive(true);
 
         // Mock the service method with BOTH parameters

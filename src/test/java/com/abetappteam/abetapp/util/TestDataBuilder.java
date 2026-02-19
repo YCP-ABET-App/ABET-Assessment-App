@@ -53,7 +53,6 @@ public class TestDataBuilder {
         course.setCourseCode(courseCode);
         course.setCourseName(courseName);
         course.setCourseDescription(courseDescription);
-        course.setSemesterId(semesterId);
         course.setIsActive(true);
         course.setCreatedAt(LocalDateTime.now());
         course.setUpdatedAt(LocalDateTime.now());
@@ -434,12 +433,8 @@ public class TestDataBuilder {
         Measure measure = new Measure();
         measure.setCourseIndicatorId(courseIndicatorId);
         measure.setDescription(description);
-        measure.setObservation(observation);
         measure.setRecommendedAction(recAction);
         measure.setFcar(fcar);
-        measure.setStudentsMet(met);
-        measure.setStudentsExceeded(exceeded);
-        measure.setStudentsBelow(below);
         measure.setStatus(status);
         measure.setActive(active);
         return measure;
@@ -466,12 +461,8 @@ public class TestDataBuilder {
         measureDTO.setId(id);
         measureDTO.setCourseIndicatorId(courseIndicatorId);
         measureDTO.setDescription(description);
-        measureDTO.setObservation(observation);
         measureDTO.setRecommendedAction(recAction);
         measureDTO.setFCar(fcar);
-        measureDTO.setStudentsMet(met);
-        measureDTO.setStudentsExceeded(exceeded);
-        measureDTO.setStudentsBelow(below);
         measureDTO.setStatus(status);
         measureDTO.setActive(active);
         return measureDTO;

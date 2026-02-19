@@ -80,7 +80,7 @@ class CourseServiceTest extends BaseServiceTest {
     @Test
     void shouldCreateCourse() {
         // Given
-        when(courseRepository.existsByCourseCodeAndSemesterId("CS102", 1L)).thenReturn(false);
+        when(courseRepository.existsByCourseCodeIgnoreCase("CS102")).thenReturn(false);
         when(courseRepository.save(any(Course.class))).thenReturn(testCourse);
 
         // When
@@ -88,14 +88,14 @@ class CourseServiceTest extends BaseServiceTest {
 
         // Then
         assertThat(created).isNotNull();
-        verify(courseRepository).existsByCourseCodeAndSemesterId("CS102", 1L);
+        verify(courseRepository).existsByCourseCodeIgnoreCase("CS102");
         verify(courseRepository).save(any(Course.class));
     }
 
     @Test
     void shouldThrowConflictWhenCreatingDuplicate() {
         // Given
-        when(courseRepository.existsByCourseCodeAndSemesterId("CS102", 1L)).thenReturn(true);
+        when(courseRepository.existsByCourseCodeIgnoreCase("CS102")).thenReturn(true);
 
         // When/Then
         assertThatThrownBy(() -> courseService.createCourse(testCourseDTO))
@@ -108,7 +108,7 @@ class CourseServiceTest extends BaseServiceTest {
     void shouldUpdateCourse() {
         // Given
         when(courseRepository.findById(1L)).thenReturn(Optional.of(testCourse));
-        when(courseRepository.existsByCourseCodeAndSemesterId("CS102", 1L)).thenReturn(false);
+        when(courseRepository.existsByCourseCodeIgnoreCase("CS102")).thenReturn(false);
         when(courseRepository.save(any(Course.class))).thenReturn(testCourse);
 
         // When
@@ -152,7 +152,7 @@ class CourseServiceTest extends BaseServiceTest {
         // Then
         assertThat(updated).isNotNull();
         verify(courseRepository).findById(1L);
-        verify(courseRepository, never()).existsByCourseCodeAndSemesterId(anyString(), anyLong());
+        verify(courseRepository, never()).existsByCourseCodeIgnoreCase(anyString());
         verify(courseRepository).save(any(Course.class));
     }
 
@@ -160,7 +160,7 @@ class CourseServiceTest extends BaseServiceTest {
     void shouldThrowConflictWhenUpdatingWithDuplicateCourseCode() {
         // Given
         when(courseRepository.findById(1L)).thenReturn(Optional.of(testCourse));
-        when(courseRepository.existsByCourseCodeAndSemesterId("CS102", 1L)).thenReturn(true);
+        when(courseRepository.existsByCourseCodeIgnoreCase("CS102")).thenReturn(true);
 
         // When/Then
         assertThatThrownBy(() -> courseService.updateCourse(1L, testCourseDTO))
