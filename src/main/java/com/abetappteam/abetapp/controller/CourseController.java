@@ -32,50 +32,7 @@ public class CourseController extends BaseController {
     @Autowired
     private CourseService courseService;
 
-    @GetMapping("/instructor")
-    public ResponseEntity<ApiResponse<List<Course>>> getCoursesByInstructor(
-            @RequestParam Long programUserId ) {
 
-        logger.info("Fetching courses for instructor with program user ID: {}", programUserId);
-        validateId(programUserId);
-        List<Course> courses = courseService.getActiveCoursesByProgramUserId(programUserId);
-        return success(courses, "Courses retrieved successfully for instructor");
-    }
-
-    @GetMapping("/instructor/semester")
-    public ResponseEntity<ApiResponse<List<Course>>> getCoursesByInstructor(
-            @RequestParam Long programUserId,
-            @RequestParam Long semesterId) {
-
-        logger.info("Fetching courses for instructor with program user ID: {} and semester ID: {}", programUserId, semesterId);
-        validateId(programUserId);
-        validateId(semesterId);
-        List<Course> courses = courseService.getActiveCoursesByProgramUserIdAndSemester(programUserId, semesterId);
-        return success(courses, "Courses retrieved successfully for instructor");
-    }
-
-    /**
-     * Get a specific course by ID
-     */
-    @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<Course>> getCourse(@PathVariable Long id) {
-        logger.info("Fetching course with ID: {}", id);
-        validateId(id);
-        Course course = courseService.findById(id);
-        return success(course, "Course retrieved successfully");
-    }
-
-
-
-    /**
-     * Get all active courses
-     */
-    @GetMapping("/active/all")
-    public ResponseEntity<ApiResponse<List<Course>>> getAllActiveCourses() {
-        logger.info("Fetching ALL active courses (no semester filter)");
-        List<Course> courses = courseService.getAllActiveCourses();
-        return success(courses, "Active courses retrieved successfully");
-    }
 
     /**
      * Create a new course
@@ -157,54 +114,6 @@ public class CourseController extends BaseController {
         return success(course, "Course activated successfully");
     }
 
-    /**
-     * Get measure completeness status for a course
-     */
-    @GetMapping("/{courseId}/completeness")
-    public ResponseEntity<ApiResponse<CourseService.MeasureCompletenessResponse>> measureCompleteness(
-            @PathVariable Long courseId) {
-
-        logger.info("Checking measure completeness for course ID: {}", courseId);
-        validateId(courseId);
-        CourseService.MeasureCompletenessResponse completeness = courseService.calculateMeasureCompleteness(courseId);
-        return success(completeness, "Measure completeness retrieved successfully");
-    }
-
-
-    /**
-     * Search courses by name or course code
-     */
-    @GetMapping("/search")
-    public ResponseEntity<PagedResponse<Course>> searchCourses(
-            @RequestParam String searchTerm,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
-
-        logger.info("Searching courses with term: {}", searchTerm);
-        Pageable pageable = createPageable(page, size, "courseName", "asc");
-        Page<Course> courses = courseService.searchByNameOrCourseCode(searchTerm, pageable);
-        return pagedSuccess(courses);
-    }
-
-    @GetMapping("/code/{courseCode}")
-    public ResponseEntity<ApiResponse<Course>> getCourseByCourseCode(
-            @PathVariable String courseCode) {
-
-        logger.info("Fetching course {} for semester {}", courseCode);
-        Course course = courseService.findByCourseCode(courseCode);
-        return success(course, "Course retrieved successfully");
-    }
-
-    /**
-     * Check if course code exists
-     */
-    @GetMapping("/code/{courseCode}/exists")
-    public ResponseEntity<ApiResponse<Boolean>> checkCourseCodeExists(@PathVariable String courseCode) {
-        logger.info("Checking if course code exists: {}", courseCode);
-        boolean exists = courseService.existsByCourseCode(courseCode);
-        return success(exists, "Course code existence checked successfully");
-    }
-
 
     // Instructor assignments
     @PostMapping("/{courseId}/instructors/{programUserId}")
@@ -223,11 +132,6 @@ public class CourseController extends BaseController {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/{courseId}/instructors")
-    public ResponseEntity<List<Long>> getInstructors(@PathVariable Long courseId) {
-        return ResponseEntity.ok(courseService.getInstructorIds(courseId));
-    }
-
     // Indicator assignments
     @PostMapping("/{courseId}/indicators/{indicatorId}")
     public ResponseEntity<Void> assignIndicator(
@@ -243,36 +147,6 @@ public class CourseController extends BaseController {
             @PathVariable Long indicatorId) {
         courseService.removeIndicator(courseId, indicatorId);
         return ResponseEntity.ok().build();
-    }
-
-    @GetMapping("/{courseId}/indicators")
-    public ResponseEntity<List<Long>> getIndicators(@PathVariable Long courseId) {
-        return ResponseEntity.ok(courseService.getIndicatorIds(courseId));
-    }
-
-    //Get Course Indicator
-    @GetMapping("/courseIndicator/{courseId}/{indicatorId}")
-    public ResponseEntity<ApiResponse<Optional<CourseIndicator>>> getCourseIndicatorByCourseIdAndIndicatorId(
-        @PathVariable Long courseId, @PathVariable Long indicatorId){
-            Optional<CourseIndicator> data = courseService.getCourseIndicatorByCourseIdAndIndicatorId(
-                courseId, indicatorId);
-            return success(data, "courseIndicator successfully found");
-        }
-    
-    @GetMapping("/courseIndicator/{id}")
-    public ResponseEntity<ApiResponse<Optional<CourseIndicator>>> getCourseIndicatorById(@PathVariable Long id){
-        Optional<CourseIndicator> data = courseService.getCourseIndicatorById(id);
-        return success(data, "courseIndicator successfully found");
-    }
-
-
-    @GetMapping("/courseIndicator/getIds/{id}")
-    public ResponseEntity<ApiResponse<List<Long>>> getCourseIdAndIndicatorId(@PathVariable Long id){
-        List<Long> data = new ArrayList<>();
-        Optional<CourseIndicator> ci = courseService.getCourseIndicatorById(id);
-        data.add(ci.get().getCourseId());
-        data.add(ci.get().getIndicatorId());
-        return success(data, "course id and indicator id successfully found");
     }
 
     /**
