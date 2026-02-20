@@ -180,13 +180,11 @@ public class ImporterService {
      */
     private Course getOrCreateCourse(String code, Long semesterId) {
         // Try to find an existing course in this semester
-        List<Course> semesterCourses = courseService.getCoursesBySemester(semesterId);
+        Course course = courseService.findByCourseCode(code);
 
-        for (Course course : semesterCourses) {
-            if (course.getCourseCode() != null &&
-                    course.getCourseCode().equalsIgnoreCase(code)) {
-                return course;
-            }
+        if (course.getCourseCode() != null &&
+                course.getCourseCode().equalsIgnoreCase(code)) {
+            return course;
         }
 
         // Create new course

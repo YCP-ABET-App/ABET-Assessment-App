@@ -74,26 +74,7 @@ class CourseControllerUnitTest extends BaseControllerTest {
         testCI.setIsActive(true);
     }
 
-    @Test
-    void shouldGetAllCoursesBySemester() throws Exception {
-        // Given
-        List<Course> courses = List.of(testCourse);
-        Page<Course> page = new PageImpl<>(courses, PageRequest.of(0, 20), 1);
 
-        when(courseService.getCoursesBySemester(eq(1L), any(PageRequest.class))).thenReturn(page);
-
-        // When/Then
-        mockMvc.perform(get("/api/courses")
-                        .param("semesterId", "1")
-                        .param("page", "0")
-                        .param("size", "20"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content").isArray())
-                .andExpect(jsonPath("$.content.length()").value(1))
-                .andExpect(jsonPath("$.totalElements").value(1));
-
-        verify(courseService, times(1)).getCoursesBySemester(eq(1L), any(PageRequest.class));
-    }
 
     @Test
     void shouldGetCourseById() throws Exception {
@@ -245,26 +226,6 @@ class CourseControllerUnitTest extends BaseControllerTest {
     }
 
     @Test
-    void shouldGetActiveCourses() throws Exception {
-        // Given
-        List<Course> courses = List.of(testCourse);
-        Page<Course> page = new PageImpl<>(courses, PageRequest.of(0, 20), 1);
-
-        when(courseService.getActiveCoursesBySemester(eq(1L), any(PageRequest.class))).thenReturn(page);
-
-        // When/Then
-        mockMvc.perform(get("/api/courses/active")
-                        .param("semesterId", "1")
-                        .param("page", "0")
-                        .param("size", "20"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content").isArray())
-                .andExpect(jsonPath("$.content.length()").value(1));
-
-        verify(courseService, times(1)).getActiveCoursesBySemester(eq(1L), any(PageRequest.class));
-    }
-
-    @Test
     void shouldSearchCourses() throws Exception {
         // Given
         List<Course> courses = List.of(testCourse);
@@ -299,7 +260,7 @@ class CourseControllerUnitTest extends BaseControllerTest {
         mockCourse.setIsActive(true);
 
         // Mock the service method with BOTH parameters
-        when(courseService.findByCourseCodeAndSemesterId(eq(courseCode), eq(semesterId)))
+        when(courseService.findByCourseCode(eq(courseCode)))
                 .thenReturn(mockCourse);
 
         // Act & Assert - Add semesterId parameter
@@ -312,7 +273,7 @@ class CourseControllerUnitTest extends BaseControllerTest {
                 .andExpect(jsonPath("$.data.courseName").value("Advanced Computer Science"));
 
         // Verify the service was called with correct parameters
-        verify(courseService, times(1)).findByCourseCodeAndSemesterId(courseCode, semesterId);
+        verify(courseService, times(1)).findByCourseCode(courseCode);
     }
 
     @Test
@@ -327,36 +288,6 @@ class CourseControllerUnitTest extends BaseControllerTest {
                 .andExpect(jsonPath("$.data").value(true));
 
         verify(courseService, times(1)).existsByCourseCode("CS401");
-    }
-
-    @Test
-    void shouldCountCoursesBySemester() throws Exception {
-        // Given
-        when(courseService.countBySemester(1L)).thenReturn(5L);
-
-        // When/Then
-        mockMvc.perform(get("/api/courses/count")
-                        .param("semesterId", "1"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data").value(5));
-
-        verify(courseService, times(1)).countBySemester(1L);
-    }
-
-    @Test
-    void shouldCountActiveCoursesBySemester() throws Exception {
-        // Given
-        when(courseService.countActiveBySemester(1L)).thenReturn(3L);
-
-        // When/Then
-        mockMvc.perform(get("/api/courses/count/active")
-                        .param("semesterId", "1"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data").value(3));
-
-        verify(courseService, times(1)).countActiveBySemester(1L);
     }
 
     @Test

@@ -136,30 +136,6 @@ public class CourseService extends BaseService<Course, Long, CourseRepository> {
     }
 
     @Transactional(readOnly = true)
-    public Page<Course> getCoursesBySemester(Long semesterId, Pageable pageable) {
-        logger.debug("Fetching courses for semester ID: {}", semesterId);
-        return repository.findBySemesterId(semesterId, pageable);
-    }
-
-    @Transactional(readOnly = true)
-    public List<Course> getCoursesBySemester(Long semesterId) {
-        logger.debug("Fetching courses for semester ID: {}", semesterId);
-        return repository.findBySemesterId(semesterId);
-    }
-
-    @Transactional(readOnly = true)
-    public Page<Course> getActiveCoursesBySemester(Long semesterId, Pageable pageable) {
-        logger.debug("Fetching active courses for semester ID: {}", semesterId);
-        return repository.findBySemesterIdAndIsActive(semesterId, true, pageable);
-    }
-
-    @Transactional(readOnly = true)
-    public List<Course> getActiveCoursesBySemester(Long semesterId) {
-        logger.debug("Fetching active courses for semester ID: {}", semesterId);
-        return repository.findBySemesterIdAndIsActive(semesterId, true);
-    }
-
-    @Transactional(readOnly = true)
     public List<Course> getActiveCoursesByProgramUserId(Long programUserId) {
         logger.debug("Fetching active courses for program user ID: {}", programUserId);
         return repository.findActiveCoursesByProgramUserId(programUserId);
@@ -194,13 +170,6 @@ public class CourseService extends BaseService<Course, Long, CourseRepository> {
     }
 
     @Transactional(readOnly = true)
-    public Course findByCourseCodeAndSemesterId(String courseCode, Long semesterId) {
-        return repository.findByCourseCodeIgnoreCaseAndSemesterId(courseCode, semesterId)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Course not found with code: " + courseCode + " for semester " + semesterId));
-    }
-
-    @Transactional(readOnly = true)
     public boolean existsByCourseCode(String courseCode) {
         return repository.existsByCourseCodeIgnoreCase(courseCode);
     }
@@ -215,16 +184,6 @@ public class CourseService extends BaseService<Course, Long, CourseRepository> {
     public Page<Course> searchByNameOrCourseCode(String searchTerm, Pageable pageable) {
         logger.debug("Searching courses with term: {}", searchTerm);
         return repository.searchByNameOrCourseCode(searchTerm, pageable);
-    }
-
-    @Transactional(readOnly = true)
-    public long countBySemester(Long semesterId) {
-        return repository.countBySemesterId(semesterId);
-    }
-
-    @Transactional(readOnly = true)
-    public long countActiveBySemester(Long semesterId) {
-        return repository.countBySemesterIdAndIsActive(semesterId, true);
     }
 
     @Transactional

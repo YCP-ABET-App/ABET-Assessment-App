@@ -288,20 +288,6 @@ class SemesterControllerUnitTest extends BaseControllerTest {
     }
 
     @Test
-    void shouldCountCoursesBySemester() throws Exception {
-        // Given
-        when(semesterService.countCoursesBySemester(1L)).thenReturn(5L);
-
-        // When/Then
-        mockMvc.perform(get("/api/semesters/1/course-count"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data").value(5));
-
-        verify(semesterService, times(1)).countCoursesBySemester(1L);
-    }
-
-    @Test
     void shouldReturnBadRequestForInvalidSemesterId() throws Exception {
         // Test invalid ID in path
         mockMvc.perform(get("/api/semesters/0"))
@@ -321,17 +307,6 @@ class SemesterControllerUnitTest extends BaseControllerTest {
                 .andExpect(jsonPath("$.data[1]").value(2025));
 
         verify(semesterService).getDistinctAcademicYearsByProgram(1L);
-    }
-
-    @Test
-    void shouldCheckIfSemesterHasCourses() throws Exception {
-        when(semesterService.hasCourses(1L)).thenReturn(true);
-
-        mockMvc.perform(get("/api/semesters/1/has-courses"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data").value(true));
-
-        verify(semesterService).hasCourses(1L);
     }
 
     @Test

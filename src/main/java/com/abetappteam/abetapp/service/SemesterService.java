@@ -154,14 +154,10 @@ public class SemesterService extends BaseService<Semester, Long, SemesterReposit
                 dto.getIsCurrent());
     }
 
+    // TODO: Add checks to prevent deletion if the semester has associated measures or sections
     @Transactional
     public void removeSemester(Long semesterId) {
         Semester semester = findById(semesterId);
-
-        // Check if semester has courses
-        if (repository.hasCourses(semesterId)) {
-            throw new BusinessException("Cannot delete semester that has courses assigned");
-        }
 
         logger.info("Removing semester: {} - {}", semester.getCode(), semester.getName());
         repository.delete(semester);
@@ -308,16 +304,6 @@ public class SemesterService extends BaseService<Semester, Long, SemesterReposit
     public void clearCurrentSemesterFlag(Long programId) {
         logger.info("Clearing current semester flag for program: {}", programId);
         repository.clearCurrentSemesterFlag(programId);
-    }
-
-    @Transactional(readOnly = true)
-    public boolean hasCourses(Long semesterId) {
-        return repository.hasCourses(semesterId);
-    }
-
-    @Transactional(readOnly = true)
-    public long countCoursesBySemester(Long semesterId) {
-        return repository.countCoursesBySemesterId(semesterId);
     }
 
     // Helper methods for business logic

@@ -154,9 +154,9 @@ public class MeasureServiceTest extends BaseServiceTest{
     void shouldFindAllActive() {
         // Given
         List<Measure> active = List.of(
-                TestDataBuilder.createMeasure(1l, "Active 1", null, null, null, null, null, null, 
+                TestDataBuilder.createMeasure(1l, "Active 1", null, null,
                 "InProgress", true),
-                TestDataBuilder.createMeasure(2l, "Active 2", null, null, null, null, null, null, 
+                TestDataBuilder.createMeasure(2l, "Active 2", null, null,
                 "InProgress", true)
         );
         when(measureRepository.findByActiveTrue()).thenReturn(active);
@@ -173,9 +173,9 @@ public class MeasureServiceTest extends BaseServiceTest{
     void shouldFindAllInactive() {
         // Given
         List<Measure> inactive = List.of(
-                TestDataBuilder.createMeasure(1l, "Inactive 1", null, null, null, null, null, null, 
+                TestDataBuilder.createMeasure(1l, "Inactive 1", null, null,
                 "InProgress", false),
-                TestDataBuilder.createMeasure(2l, "Inactive 2", null, null, null, null, null, null, 
+                TestDataBuilder.createMeasure(2l, "Inactive 2", null, null,
                 "InProgress", false)
         );
         when(measureRepository.findByActiveFalse()).thenReturn(inactive);
@@ -218,46 +218,12 @@ public class MeasureServiceTest extends BaseServiceTest{
     }
 
     @Test
-    void shouldReturnAllActiveMeasuresByStatusAndSemesterId(){
-        //Given
-        List<Course> courses = List.of(
-            TestDataBuilder.createCourseWithId(1l, "CS400", "Course 1", "Course", 1l),
-            TestDataBuilder.createCourseWithId(2l, "CS401", "Course 2", "Course", 1l)
-        );
-        List<Measure> measures = List.of(
-            TestDataBuilder.createMeasure(1l, "Measure 1", null, null, null, null, null, null, 
-            "InProgress", true),
-            TestDataBuilder.createMeasure(2l, "Measure 2", null, null, null, null, null, null, 
-            "InProgress", true)
-        );
-        List<CourseIndicator> courseIndicators = List.of(
-            TestDataBuilder.createCourseIndicator(1l, 1l, 1l, true),
-            TestDataBuilder.createCourseIndicator(2l, 2l, 2l, true)
-        );
-        when(courseRepository.findBySemesterIdAndIsActive(1l, true)).thenReturn(courses);
-
-        when(courseIndicatorRepository.findByCourseIdAndIsActive(1l, true)).thenReturn(List.of(courseIndicators.get(0)));
-        when(courseIndicatorRepository.findByCourseIdAndIsActive(2l, true)).thenReturn(List.of(courseIndicators.get(1)));
-
-        when(measureRepository.findActiveMeasuresByCourseIndicatorIdAndStatus(1l, "InProgress")).thenReturn(List.of(measures.get(0)));
-        when(measureRepository.findActiveMeasuresByCourseIndicatorIdAndStatus(2l, "InProgress")).thenReturn(List.of(measures.get(1)));
-
-        //When
-        List<Measure> found = measureService.findAllActiveMeasuresByStatusAndSemester("InProgress", 1l);
-
-        //Then
-        assertThat(found).hasSize(2);
-        assertThat(found).extracting(Measure::getActive).containsExactly(true, true);
-        assertThat(found).extracting(Measure::getStatus).containsExactly("InProgress", "InProgress");
-    }
-
-    @Test
     void shouldReturnAllActiveMeasuresByCourseId(){
         //Given
         List<Measure> measures = List.of(
-            TestDataBuilder.createMeasure(1l, "Measure 1", null, null, null, null, null, null, 
+            TestDataBuilder.createMeasure(1l, "Measure 1", null, null,
             "InProgress", true),
-            TestDataBuilder.createMeasure(2l, "Measure 2", null, null, null, null, null, null, 
+            TestDataBuilder.createMeasure(2l, "Measure 2", null, null,
             "InProgress", true)
         );
         List<CourseIndicator> courseIndicators = List.of(
@@ -281,9 +247,9 @@ public class MeasureServiceTest extends BaseServiceTest{
     void shouldReturnAllInactiveMeasuresByCourseId(){
         //Given
         List<Measure> measures = List.of(
-            TestDataBuilder.createMeasure(1l, "Measure 1", null, null, null, null, null, null, 
+            TestDataBuilder.createMeasure(1l, "Measure 1", null, null,
             "InProgress", false),
-            TestDataBuilder.createMeasure(2l, "Measure 2", null, null, null, null, null, null, 
+            TestDataBuilder.createMeasure(2l, "Measure 2", null, null,
             "InProgress", false)
         );
         List<CourseIndicator> courseIndicators = List.of(
@@ -307,9 +273,9 @@ public class MeasureServiceTest extends BaseServiceTest{
     void shouldReturnAllMeasuresByCourseId(){
         //Given
         List<Measure> measures = List.of(
-            TestDataBuilder.createMeasure(1l, "Measure 1", null, null, null, null, null, null, 
+            TestDataBuilder.createMeasure(1l, "Measure 1", null, null,
             "InProgress", true),
-            TestDataBuilder.createMeasure(2l, "Measure 2", null, null, null, null, null, null, 
+            TestDataBuilder.createMeasure(2l, "Measure 2", null, null,
             "InProgress", false)
         );
         List<CourseIndicator> courseIndicators = List.of(
@@ -333,9 +299,9 @@ public class MeasureServiceTest extends BaseServiceTest{
     void shouldReturnAllActiveMeasuresByIndicatorId(){
         //Given
         List<Measure> measures = List.of(
-            TestDataBuilder.createMeasure(1l, "Measure 1", null, null, null, null, null, null, 
+            TestDataBuilder.createMeasure(1l, "Measure 1", null, null,
             "InProgress", true),
-            TestDataBuilder.createMeasure(2l, "Measure 2", null, null, null, null, null, null, 
+            TestDataBuilder.createMeasure(2l, "Measure 2", null, null,
             "InProgress", true)
         );
         List<CourseIndicator> courseIndicators = List.of(
@@ -359,9 +325,9 @@ public class MeasureServiceTest extends BaseServiceTest{
     void shouldReturnAllInactiveMeasuresByIndicatorId(){
         //Given
         List<Measure> measures = List.of(
-            TestDataBuilder.createMeasure(1l, "Measure 1", null, null, null, null, null, null, 
+            TestDataBuilder.createMeasure(1l, "Measure 1", null, null,
             "InProgress", false),
-            TestDataBuilder.createMeasure(2l, "Measure 2", null, null, null, null, null, null, 
+            TestDataBuilder.createMeasure(2l, "Measure 2", null, null,
             "InProgress", false)
         );
         List<CourseIndicator> courseIndicators = List.of(
@@ -385,9 +351,9 @@ public class MeasureServiceTest extends BaseServiceTest{
     void shouldReturnAllMeasuresByIndicatorId(){
         //Given
         List<Measure> measures = List.of(
-            TestDataBuilder.createMeasure(1l, "Measure 1", null, null, null, null, null, null, 
+            TestDataBuilder.createMeasure(1l, "Measure 1", null, null,
             "InProgress", true),
-            TestDataBuilder.createMeasure(2l, "Measure 2", null, null, null, null, null, null, 
+            TestDataBuilder.createMeasure(2l, "Measure 2", null, null,
             "InProgress", false)
         );
         List<CourseIndicator> courseIndicators = List.of(
