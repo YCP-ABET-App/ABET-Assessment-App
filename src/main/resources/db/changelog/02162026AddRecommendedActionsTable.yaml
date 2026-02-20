@@ -14,12 +14,13 @@ databaseChangeLog:
               - column:
                   name: id
                   type: BIGINT
+                  autoIncrement: true
                   constraints:
                     primaryKey: true
                     nullable: false
               - column:
                   name: recommendation
-                  type: VARCHAR
+                  type: VARCHAR(255)
                   constraints:
                     nullable: false
               - column:

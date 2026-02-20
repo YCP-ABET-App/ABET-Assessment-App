@@ -12,11 +12,19 @@ databaseChangeLog:
       file: db/changelog/02152026AddThresholdToCourse.yaml
   - include:
       file: db/changelog/02152026RemoveThresholdFromPI.yaml
-  - include:
-      file: db/changelog/02152026RemoveSemesterFromCourseTable.yaml
-  - include:
-      file: db/changelog/02162026RemoveCourseInstructorTable.yaml
+  #- include:
+  #    file: db/changelog/02152026RemoveSemesterFromCourseTable.yaml
+  #- include:
+  #    file: db/changelog/02162026RemoveCourseInstructorTable.yaml
   - include:
       file: db/changelog/02152026AddDescriptionsToMeasures.yaml
+  - include: 
+      file: db/changelog/02162026AddRecommendedActionsTable.yaml    
+  - include: 
+      file: db/changelog/02162026AddSectionUserTable.yaml           
+  - include: 
+      file: db/changelog/02162026AddRecommendedActionToSO.yaml      
+  - include: 
+      file: db/changelog/02192026AddMirrorIDtoCourse.yaml           
   - include:
       file: db/changelog/02162026RemoveInstructorFromSection.yaml
