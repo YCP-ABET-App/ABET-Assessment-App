@@ -1,6 +1,7 @@
 package com.abetappteam.abetapp.service;
 
 import com.abetappteam.abetapp.entity.Course;
+import com.abetappteam.abetapp.entity.Requests.Section.SectionSearchRequest;
 import com.abetappteam.abetapp.entity.Section;
 import com.abetappteam.abetapp.repository.SectionRepository;
 import org.springframework.transaction.annotation.Transactional;
@@ -65,17 +66,10 @@ public class SectionService extends BaseService<Section, Long, SectionRepository
     }
 
     @Transactional(readOnly = true)
-    public List<Section> getSectionsByCourseId(int courseId)
+    public Section searchSection(SectionSearchRequest request)
     {
-        logger.info("Retrieving sections for course id {}", courseId);
-        return repository.findByCourseId(courseId);
-    }
-
-    @Transactional(readOnly = true)
-    public List<Section> getSectionsBySemesterId(int semesterId)
-    {
-        logger.info("Retrieving sections for semester id {}", semesterId);
-        return repository.findBySemesterId(semesterId);
+        logger.info("Searching for sections with criteria: {}", request);
+        Section section = repository.searchSections(request);
     }
 
 }
