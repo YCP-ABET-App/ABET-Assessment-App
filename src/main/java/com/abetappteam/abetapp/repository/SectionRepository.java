@@ -33,13 +33,10 @@ public interface SectionRepository  extends JpaRepository<Section, Long>
     long countBySemesterId(int semesterId);
 
     // ========== Search Queries ==========
-    @Query("SELECT s FROM Section s WHERE s.semesterId = :semesterId")
-    List<Course> searchBySemesterId(@Param("semesterId") Long semesterId);
-
-    @Query("SELECT s FROM Section s WHERE s.courseId = :courseId")
-    List<Course> searchByCourseId(@Param("courseId") Long courseId);
-
-    @Query("SELECT s FROM Section s WHERE s.semesterId = :#{#request.semesterId} AND s.courseId = :#{#request.courseId} AND s.sectionNumber LIKE %:#{#request.sectionNumber}%")
+    @Query("SELECT s FROM Section s WHERE " +
+            "(#{#request.semesterId} IS NOT NULL OR  s.semesterId = :#{#request.semesterId}) AND " +
+            "(#{#request.courseId} IS NOT NULL OR s.courseId = :#{#request.courseId})" +
+            "(s.id IN (INNER JOIN SectionUser su ON s.id = su.sectionId WHERE su.userId = :#{#request.userId}))")
     Section searchSections(@Param("request")SectionSearchRequest request);
 
     @Query("SELECT s FROM Section s WHERE s.sectionNumber = :sectionNumber AND s.semesterId = :semesterId AND s.courseId = :courseId")
