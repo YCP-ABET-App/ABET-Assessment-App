@@ -64,7 +64,6 @@ public class ImporterService {
 
                         measure.setDescription(m.getDescription());
 
-                        measure.setObservation(null);
 
                         // Join recommended actions array into single string
                         measure.setRecommendedAction(
@@ -103,9 +102,6 @@ public class ImporterService {
                             exceeded = 0;
                         }
 
-                        measure.setStudentsMet(met);
-                        measure.setStudentsExceeded(exceeded);
-                        measure.setStudentsBelow(below);
 
                         measureService.createFromImport(measure);
 
@@ -184,13 +180,11 @@ public class ImporterService {
      */
     private Course getOrCreateCourse(String code, Long semesterId) {
         // Try to find an existing course in this semester
-        List<Course> semesterCourses = courseService.getCoursesBySemester(semesterId);
+        Course course = courseService.findByCourseCode(code);
 
-        for (Course course : semesterCourses) {
-            if (course.getCourseCode() != null &&
-                    course.getCourseCode().equalsIgnoreCase(code)) {
-                return course;
-            }
+        if (course.getCourseCode() != null &&
+                course.getCourseCode().equalsIgnoreCase(code)) {
+            return course;
         }
 
         // Create new course

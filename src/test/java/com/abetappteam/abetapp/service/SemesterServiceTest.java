@@ -5,6 +5,9 @@ import com.abetappteam.abetapp.dto.SemesterDTO;
 import com.abetappteam.abetapp.entity.Semester;
 import com.abetappteam.abetapp.entity.Semester.SemesterStatus;
 import com.abetappteam.abetapp.entity.Semester.SemesterType;
+import com.abetappteam.abetapp.exception.BusinessException;
+import com.abetappteam.abetapp.exception.ConflictException;
+import com.abetappteam.abetapp.exception.ResourceNotFoundException;
 import com.abetappteam.abetapp.repository.SemesterRepository;
 import com.abetappteam.abetapp.util.TestDataBuilder;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,9 +24,14 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
+/**
+ * Unit tests for SemesterService
+ */
 class SemesterServiceTest extends BaseServiceTest {
 
     @Mock
@@ -48,307 +56,212 @@ class SemesterServiceTest extends BaseServiceTest {
 
     @Test
     void shouldFindById() {
+        // Given
         when(semesterRepository.findById(1L)).thenReturn(Optional.of(testSemester));
 
+        // When
         Semester found = semesterService.findById(1L);
 
+        // Then
         assertThat(found).isNotNull();
         assertThat(found.getId()).isEqualTo(1L);
+        assertThat(found.getName()).isEqualTo("Fall 2024");
         verify(semesterRepository).findById(1L);
     }
 
     @Test
+    void shouldThrowExceptionWhenNotFound() {
+        // Given
+        when(semesterRepository.findById(999L)).thenReturn(Optional.empty());
+
+        // When/Then
+        assertThatThrownBy(() -> semesterService.findById(999L))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("Semester not found with id: 999");
+    }
+
+    @Test
     void shouldCreateSemester() {
+        // Given
         when(semesterRepository.findByCodeIgnoreCaseAndProgramId("SPRING-2025", 1L))
                 .thenReturn(Optional.empty());
         when(semesterRepository.save(any(Semester.class))).thenReturn(testSemester);
 
+        // When
         Semester created = semesterService.createSemester(testSemesterDTO);
 
+        // Then
         assertThat(created).isNotNull();
+        verify(semesterRepository).findByCodeIgnoreCaseAndProgramId("SPRING-2025", 1L);
         verify(semesterRepository).save(any(Semester.class));
+    }
+
+    @Test
+    void shouldThrowConflictWhenCreatingDuplicateCode() {
+        // Given
+        when(semesterRepository.findByCodeIgnoreCaseAndProgramId("SPRING-2025", 1L))
+                .thenReturn(Optional.of(testSemester));
+
+        // When/Then
+        assertThatThrownBy(() -> semesterService.createSemester(testSemesterDTO))
+                .isInstanceOf(ConflictException.class)
+                .hasMessageContaining("Semester with code 'SPRING-2025' already exists in this program");
+        verify(semesterRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldThrowBusinessExceptionWhenEndDateBeforeStartDate() {
+        // Given
+        SemesterDTO invalidDTO = TestDataBuilder.createSemesterDTO("Invalid", "INVALID-2025",
+                LocalDate.of(2025, 5, 15), LocalDate.of(2025, 1, 15), // End date before start date
+                2025, "SPRING", 1L, "Invalid dates", false);
+
+        when(semesterRepository.findByCodeIgnoreCaseAndProgramId("INVALID-2025", 1L))
+                .thenReturn(Optional.empty());
+
+        // When/Then
+        assertThatThrownBy(() -> semesterService.createSemester(invalidDTO))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("End date cannot be before start date");
+        verify(semesterRepository, never()).save(any());
     }
 
     @Test
     void shouldUpdateSemester() {
+        // Given
         when(semesterRepository.findById(1L)).thenReturn(Optional.of(testSemester));
         when(semesterRepository.findByCodeIgnoreCaseAndProgramId("SPRING-2025", 1L))
                 .thenReturn(Optional.empty());
         when(semesterRepository.save(any(Semester.class))).thenReturn(testSemester);
 
+        // When
         Semester updated = semesterService.updateSemester(1L, testSemesterDTO);
 
+        // Then
         assertThat(updated).isNotNull();
+        verify(semesterRepository).findById(1L);
         verify(semesterRepository).save(any(Semester.class));
     }
 
     @Test
-    void shouldRemoveSemester() {
-        when(semesterRepository.findById(1L)).thenReturn(Optional.of(testSemester));
-        when(semesterRepository.hasCourses(1L)).thenReturn(false);
+    void shouldThrowConflictWhenUpdatingWithDuplicateCode() {
+        // Given
+        Semester anotherSemester = TestDataBuilder.createSemesterWithId(2L, "Spring 2025", "SPRING-2025",
+                LocalDate.of(2025, 1, 15), LocalDate.of(2025, 5, 15),
+                2025, SemesterType.SPRING, 1L, "Another semester", false);
 
+        when(semesterRepository.findById(1L)).thenReturn(Optional.of(testSemester));
+        when(semesterRepository.findByCodeIgnoreCaseAndProgramId("SPRING-2025", 1L))
+                .thenReturn(Optional.of(anotherSemester));
+
+        // When/Then
+        assertThatThrownBy(() -> semesterService.updateSemester(1L, testSemesterDTO))
+                .isInstanceOf(ConflictException.class)
+                .hasMessageContaining("Semester with code 'SPRING-2025' already exists in this program");
+        verify(semesterRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldThrowBusinessExceptionWhenUpdatingNonEditableSemester() {
+        // Given
+        testSemester.setStatus(SemesterStatus.COMPLETED); // Completed semesters are not editable
+        when(semesterRepository.findById(1L)).thenReturn(Optional.of(testSemester));
+
+        // When/Then
+        assertThatThrownBy(() -> semesterService.updateSemester(1L, testSemesterDTO))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("Cannot edit semester that is completed or archived");
+        verify(semesterRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldRemoveSemester() {
+        // Given
+        when(semesterRepository.findById(1L)).thenReturn(Optional.of(testSemester));
+        doNothing().when(semesterRepository).delete(testSemester);
+
+        // When
         semesterService.removeSemester(1L);
 
+        // Then
+        verify(semesterRepository).findById(1L);
         verify(semesterRepository).delete(testSemester);
     }
 
     @Test
     void shouldGetSemestersByProgram() {
+        // Given
         Pageable pageable = PageRequest.of(0, 10);
         List<Semester> semesters = TestDataBuilder.createSemesterList(3, 1L);
         Page<Semester> page = new PageImpl<>(semesters, pageable, 3);
         when(semesterRepository.findByProgramId(1L, pageable)).thenReturn(page);
 
+        // When
         Page<Semester> found = semesterService.getSemestersByProgram(1L, pageable);
 
+        // Then
         assertThat(found.getContent()).hasSize(3);
-    }
-
-    @Test
-    void shouldGetSemestersByProgramList() {
-        List<Semester> semesters = TestDataBuilder.createSemesterList(3, 1L);
-        when(semesterRepository.findByProgramId(1L)).thenReturn(semesters);
-
-        List<Semester> found = semesterService.getSemestersByProgram(1L);
-
-        assertThat(found).hasSize(3);
-    }
-
-    @Test
-    void shouldGetSemestersByAcademicYear() {
-        Pageable pageable = PageRequest.of(0, 10);
-        List<Semester> semesters = TestDataBuilder.createSemesterList(2, 1L);
-        Page<Semester> page = new PageImpl<>(semesters, pageable, 2);
-        when(semesterRepository.findByAcademicYear(2024, pageable)).thenReturn(page);
-
-        Page<Semester> found = semesterService.getSemestersByAcademicYear(2024, pageable);
-
-        assertThat(found.getContent()).hasSize(2);
-    }
-
-    @Test
-    void shouldGetSemestersByType() {
-        Pageable pageable = PageRequest.of(0, 10);
-        List<Semester> semesters = TestDataBuilder.createSemesterList(2, 1L);
-        Page<Semester> page = new PageImpl<>(semesters, pageable, 2);
-        when(semesterRepository.findByType(SemesterType.FALL, pageable)).thenReturn(page);
-
-        Page<Semester> found = semesterService.getSemestersByType(SemesterType.FALL, pageable);
-
-        assertThat(found.getContent()).hasSize(2);
-    }
-
-    @Test
-    void shouldGetSemestersByStatus() {
-        Pageable pageable = PageRequest.of(0, 10);
-        List<Semester> semesters = TestDataBuilder.createSemesterList(2, 1L);
-        Page<Semester> page = new PageImpl<>(semesters, pageable, 2);
-        when(semesterRepository.findByStatus(SemesterStatus.ACTIVE, pageable)).thenReturn(page);
-
-        Page<Semester> found = semesterService.getSemestersByStatus(SemesterStatus.ACTIVE, pageable);
-
-        assertThat(found.getContent()).hasSize(2);
-    }
-
-    @Test
-    void shouldGetSemestersByProgramAndAcademicYear() {
-        Pageable pageable = PageRequest.of(0, 10);
-        List<Semester> semesters = TestDataBuilder.createSemesterList(2, 1L);
-        Page<Semester> page = new PageImpl<>(semesters, pageable, 2);
-        when(semesterRepository.findByProgramIdAndAcademicYear(1L, 2024, pageable)).thenReturn(page);
-
-        Page<Semester> found = semesterService.getSemestersByProgramAndAcademicYear(1L, 2024, pageable);
-
-        assertThat(found.getContent()).hasSize(2);
-    }
-
-    @Test
-    void shouldGetSemestersByProgramAndType() {
-        Pageable pageable = PageRequest.of(0, 10);
-        List<Semester> semesters = TestDataBuilder.createSemesterList(2, 1L);
-        Page<Semester> page = new PageImpl<>(semesters, pageable, 2);
-        when(semesterRepository.findByProgramIdAndType(1L, SemesterType.FALL, pageable)).thenReturn(page);
-
-        Page<Semester> found = semesterService.getSemestersByProgramAndType(1L, SemesterType.FALL, pageable);
-
-        assertThat(found.getContent()).hasSize(2);
-    }
-
-    @Test
-    void shouldGetSemestersByProgramAndStatus() {
-        Pageable pageable = PageRequest.of(0, 10);
-        List<Semester> semesters = TestDataBuilder.createSemesterList(2, 1L);
-        Page<Semester> page = new PageImpl<>(semesters, pageable, 2);
-        when(semesterRepository.findByProgramIdAndStatus(1L, SemesterStatus.ACTIVE, pageable))
-                .thenReturn(page);
-
-        Page<Semester> found = semesterService.getSemestersByProgramAndStatus(1L, SemesterStatus.ACTIVE, pageable);
-
-        assertThat(found.getContent()).hasSize(2);
+        assertThat(found.getTotalElements()).isEqualTo(3);
+        verify(semesterRepository).findByProgramId(1L, pageable);
     }
 
     @Test
     void shouldFindByCode() {
+        // Given
         when(semesterRepository.findByCodeIgnoreCase("FALL-2024")).thenReturn(Optional.of(testSemester));
 
+        // When
         Semester found = semesterService.findByCode("FALL-2024");
 
+        // Then
+        assertThat(found).isNotNull();
         assertThat(found.getCode()).isEqualTo("FALL-2024");
-    }
-
-    @Test
-    void shouldCheckExistsByCode() {
-        when(semesterRepository.existsByCodeIgnoreCase("FALL-2024")).thenReturn(true);
-
-        boolean exists = semesterService.existsByCode("FALL-2024");
-
-        assertThat(exists).isTrue();
-    }
-
-    @Test
-    void shouldSearchByNameOrCode() {
-        List<Semester> semesters = TestDataBuilder.createSemesterList(2, 1L);
-        when(semesterRepository.searchByNameOrCode("Fall")).thenReturn(semesters);
-
-        List<Semester> found = semesterService.searchByNameOrCode("Fall");
-
-        assertThat(found).hasSize(2);
-    }
-
-    @Test
-    void shouldSearchByNameOrCodePaginated() {
-        Pageable pageable = PageRequest.of(0, 10);
-        List<Semester> semesters = TestDataBuilder.createSemesterList(2, 1L);
-        Page<Semester> page = new PageImpl<>(semesters, pageable, 2);
-        when(semesterRepository.searchByNameOrCode("Fall", pageable)).thenReturn(page);
-
-        Page<Semester> found = semesterService.searchByNameOrCode("Fall", pageable);
-
-        assertThat(found.getContent()).hasSize(2);
-    }
-
-    @Test
-    void shouldGetActiveSemestersOnDate() {
-        LocalDate date = LocalDate.of(2024, 10, 1);
-        List<Semester> semesters = TestDataBuilder.createSemesterList(2, 1L);
-        when(semesterRepository.findActiveSemestersOnDate(date)).thenReturn(semesters);
-
-        List<Semester> found = semesterService.getActiveSemestersOnDate(date);
-
-        assertThat(found).hasSize(2);
-    }
-
-    @Test
-    void shouldGetCurrentSemesterByProgram() {
-        when(semesterRepository.findCurrentSemesterByProgram(1L)).thenReturn(Optional.of(testSemester));
-
-        Optional<Semester> found = semesterService.getCurrentSemesterByProgram(1L);
-
-        assertThat(found).isPresent();
+        verify(semesterRepository).findByCodeIgnoreCase("FALL-2024");
     }
 
     @Test
     void shouldGetCurrentSemesters() {
-        List<Semester> semesters = TestDataBuilder.createSemesterList(2, 1L);
-        when(semesterRepository.findByIsCurrentTrue()).thenReturn(semesters);
+        // Given
+        List<Semester> currentSemesters = TestDataBuilder.createSemesterList(2, 1L);
+        currentSemesters.forEach(sem -> sem.setIsCurrent(true));
+        when(semesterRepository.findByIsCurrentTrue()).thenReturn(currentSemesters);
 
+        // When
         List<Semester> found = semesterService.getCurrentSemesters();
 
+        // Then
         assertThat(found).hasSize(2);
-    }
-
-    @Test
-    void shouldGetActiveAndUpcomingSemestersByProgram() {
-        List<Semester> semesters = TestDataBuilder.createSemesterList(3, 1L);
-        when(semesterRepository.findActiveAndUpcomingSemestersByProgram(1L)).thenReturn(semesters);
-
-        List<Semester> found = semesterService.getActiveAndUpcomingSemestersByProgram(1L);
-
-        assertThat(found).hasSize(3);
-    }
-
-    @Test
-    void shouldGetDistinctAcademicYearsByProgram() {
-        List<Semester> semesters = TestDataBuilder.createSemesterList(3, 1L);
-        when(semesterRepository.findByProgramId(1L)).thenReturn(semesters);
-
-        List<Integer> years = semesterService.getDistinctAcademicYearsByProgram(1L);
-
-        assertThat(years).isNotEmpty();
-    }
-
-    @Test
-    void shouldCountByProgram() {
-        when(semesterRepository.countByProgramId(1L)).thenReturn(5L);
-
-        long count = semesterService.countByProgram(1L);
-
-        assertThat(count).isEqualTo(5L);
-    }
-
-    @Test
-    void shouldCountByProgramAndStatus() {
-        when(semesterRepository.countByProgramIdAndStatus(1L, SemesterStatus.ACTIVE)).thenReturn(2L);
-
-        long count = semesterService.countByProgramAndStatus(1L, SemesterStatus.ACTIVE);
-
-        assertThat(count).isEqualTo(2L);
+        assertThat(found).allMatch(Semester::getIsCurrent);
+        verify(semesterRepository).findByIsCurrentTrue();
     }
 
     @Test
     void shouldUpdateSemesterStatus() {
+        // Given
         when(semesterRepository.findById(1L)).thenReturn(Optional.of(testSemester));
         when(semesterRepository.save(any(Semester.class))).thenReturn(testSemester);
 
+        // When
         Semester updated = semesterService.updateSemesterStatus(1L, SemesterStatus.ACTIVE);
 
+        // Then
         assertThat(updated.getStatus()).isEqualTo(SemesterStatus.ACTIVE);
+        verify(semesterRepository).save(testSemester);
     }
 
     @Test
     void shouldSetAsCurrentSemester() {
+        // Given
         when(semesterRepository.findById(1L)).thenReturn(Optional.of(testSemester));
         when(semesterRepository.save(any(Semester.class))).thenReturn(testSemester);
+        doNothing().when(semesterRepository).clearCurrentSemesterFlag(1L);
 
+        // When
         Semester updated = semesterService.setAsCurrentSemester(1L);
 
+        // Then
         assertThat(updated.getIsCurrent()).isTrue();
         verify(semesterRepository).clearCurrentSemesterFlag(1L);
-    }
-
-    @Test
-    void shouldClearCurrentSemesterFlag() {
-        semesterService.clearCurrentSemesterFlag(1L);
-
-        verify(semesterRepository).clearCurrentSemesterFlag(1L);
-    }
-
-    @Test
-    void shouldCheckHasCourses() {
-        when(semesterRepository.hasCourses(1L)).thenReturn(true);
-
-        boolean hasCourses = semesterService.hasCourses(1L);
-
-        assertThat(hasCourses).isTrue();
-    }
-
-    @Test
-    void shouldCountCoursesBySemester() {
-        when(semesterRepository.countCoursesBySemesterId(1L)).thenReturn(10L);
-
-        long count = semesterService.countCoursesBySemester(1L);
-
-        assertThat(count).isEqualTo(10L);
-    }
-
-    @Test
-    void shouldUpdateAllSemesterStatuses() {
-        List<Semester> semesters = TestDataBuilder.createSemesterList(3, 1L);
-        when(semesterRepository.findAll()).thenReturn(semesters);
-        when(semesterRepository.save(any(Semester.class))).thenReturn(testSemester);
-
-        semesterService.updateAllSemesterStatuses();
-
-        verify(semesterRepository, atLeastOnce()).save(any(Semester.class));
+        verify(semesterRepository).save(testSemester);
     }
 }

@@ -53,7 +53,6 @@ public class TestDataBuilder {
         course.setCourseCode(courseCode);
         course.setCourseName(courseName);
         course.setCourseDescription(courseDescription);
-        course.setSemesterId(semesterId);
         course.setIsActive(true);
         course.setCreatedAt(LocalDateTime.now());
         course.setUpdatedAt(LocalDateTime.now());
@@ -424,22 +423,18 @@ public class TestDataBuilder {
 
     //Create Measure
     public static Measure createMeasure(){
-        return createMeasure(1l, "Example Description", "Example Observation", "Example Recommended Action", "Example Fcar", 
-        3, 1, 2, "InProgress", true);
+        return createMeasure(1l, "Example Description", "Example Recommended Action", "Example Fcar",
+         "InProgress", true);
     }
 
     //Create Custom Measure
-    public static Measure createMeasure(Long courseIndicatorId, String description, String observation, String recAction, String fcar, 
-    Integer met, Integer exceeded, Integer below, String status, Boolean active) {
+    public static Measure createMeasure(Long courseIndicatorId, String description, String recAction, String fcar,
+     String status, Boolean active) {
         Measure measure = new Measure();
         measure.setCourseIndicatorId(courseIndicatorId);
         measure.setDescription(description);
-        measure.setObservation(observation);
         measure.setRecommendedAction(recAction);
         measure.setFcar(fcar);
-        measure.setStudentsMet(met);
-        measure.setStudentsExceeded(exceeded);
-        measure.setStudentsBelow(below);
         measure.setStatus(status);
         measure.setActive(active);
         return measure;
@@ -448,7 +443,7 @@ public class TestDataBuilder {
     //Create Custom Measure with ID
     public static Measure createMeasureWithId(Long id, Long courseIndicatorId, String description, String observation, String recAction, String fcar, 
     Integer met, Integer exceeded, Integer below, String status, Boolean active) {
-        Measure measure = createMeasure(courseIndicatorId, description, observation, recAction, fcar, met, exceeded, below, status, active);
+        Measure measure = createMeasure(courseIndicatorId, description, recAction, fcar, status, active);
         measure.setId(id);
         return measure;
     }
@@ -466,12 +461,8 @@ public class TestDataBuilder {
         measureDTO.setId(id);
         measureDTO.setCourseIndicatorId(courseIndicatorId);
         measureDTO.setDescription(description);
-        measureDTO.setObservation(observation);
         measureDTO.setRecommendedAction(recAction);
         measureDTO.setFCar(fcar);
-        measureDTO.setStudentsMet(met);
-        measureDTO.setStudentsExceeded(exceeded);
-        measureDTO.setStudentsBelow(below);
         measureDTO.setStatus(status);
         measureDTO.setActive(active);
         return measureDTO;

@@ -16,7 +16,7 @@ const { isAdmin } = storeToRefs(userStore);
 // Toast notifications
 const toast = useToast();
 
-const props = defineProps({piid: Number, course_id: Number})
+const props = defineProps({piid: Number, course_id: Number, instructor_id:Number})
 
 const indicator_obj = ref({
   id: NaN,
@@ -81,7 +81,6 @@ async function edit_form_submit() {
 async function fetch_measures(){
   try {
     const { data } = await api.get(`/measure/byIndicator/${props.piid}`);
-    console.log(data)
     measures.value = data.data;
   } catch (error) {
     console.error('Error fetching or parsing indicator data:', error);
@@ -104,7 +103,6 @@ async function add_measure_submit(){
   //Get course indicator id
   try {
     const { data } = await api.get(`courses/courseIndicator/${props.course_id}/${props.piid}`)
-    console.log(data)
     ciid = data.data.id
   } catch(error) {
     console.error('Error fetching course/indicator joint ID: ', error)
@@ -132,8 +130,6 @@ async function add_measure_submit(){
     updatedAt: null,
     version: null
   })
-  console.log("New Measure: ")
-  console.log(new_measure)
 
   //POST request to server
   try {
@@ -185,6 +181,7 @@ initialize()
       v-for="measure_obj in measures"
       :key="measure_obj.id"
       :measure_prop="measure_obj"
+      :instructor_id="instructor_id"
       :is-admin="isAdmin"
       @refresh="fetch_measures"
     />

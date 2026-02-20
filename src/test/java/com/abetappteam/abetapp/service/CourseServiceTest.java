@@ -80,7 +80,7 @@ class CourseServiceTest extends BaseServiceTest {
     @Test
     void shouldCreateCourse() {
         // Given
-        when(courseRepository.existsByCourseCodeAndSemesterId("CS102", 1L)).thenReturn(false);
+        when(courseRepository.existsByCourseCodeIgnoreCase("CS102")).thenReturn(false);
         when(courseRepository.save(any(Course.class))).thenReturn(testCourse);
 
         // When
@@ -88,14 +88,14 @@ class CourseServiceTest extends BaseServiceTest {
 
         // Then
         assertThat(created).isNotNull();
-        verify(courseRepository).existsByCourseCodeAndSemesterId("CS102", 1L);
+        verify(courseRepository).existsByCourseCodeIgnoreCase("CS102");
         verify(courseRepository).save(any(Course.class));
     }
 
     @Test
     void shouldThrowConflictWhenCreatingDuplicate() {
         // Given
-        when(courseRepository.existsByCourseCodeAndSemesterId("CS102", 1L)).thenReturn(true);
+        when(courseRepository.existsByCourseCodeIgnoreCase("CS102")).thenReturn(true);
 
         // When/Then
         assertThatThrownBy(() -> courseService.createCourse(testCourseDTO))
@@ -108,7 +108,7 @@ class CourseServiceTest extends BaseServiceTest {
     void shouldUpdateCourse() {
         // Given
         when(courseRepository.findById(1L)).thenReturn(Optional.of(testCourse));
-        when(courseRepository.existsByCourseCodeAndSemesterId("CS102", 1L)).thenReturn(false);
+        when(courseRepository.existsByCourseCodeIgnoreCase("CS102")).thenReturn(false);
         when(courseRepository.save(any(Course.class))).thenReturn(testCourse);
 
         // When
@@ -152,7 +152,7 @@ class CourseServiceTest extends BaseServiceTest {
         // Then
         assertThat(updated).isNotNull();
         verify(courseRepository).findById(1L);
-        verify(courseRepository, never()).existsByCourseCodeAndSemesterId(anyString(), anyLong());
+        verify(courseRepository, never()).existsByCourseCodeIgnoreCase(anyString());
         verify(courseRepository).save(any(Course.class));
     }
 
@@ -160,7 +160,7 @@ class CourseServiceTest extends BaseServiceTest {
     void shouldThrowConflictWhenUpdatingWithDuplicateCourseCode() {
         // Given
         when(courseRepository.findById(1L)).thenReturn(Optional.of(testCourse));
-        when(courseRepository.existsByCourseCodeAndSemesterId("CS102", 1L)).thenReturn(true);
+        when(courseRepository.existsByCourseCodeIgnoreCase("CS102")).thenReturn(true);
 
         // When/Then
         assertThatThrownBy(() -> courseService.updateCourse(1L, testCourseDTO))
@@ -254,67 +254,6 @@ class CourseServiceTest extends BaseServiceTest {
     }
 
     @Test
-    void shouldGetCoursesBySemester() {
-        // Given
-        Pageable pageable = PageRequest.of(0, 10);
-        List<Course> courses = TestDataBuilder.createCourseList(3, 1L);
-        Page<Course> page = new PageImpl<>(courses, pageable, 3);
-        when(courseRepository.findBySemesterId(1L, pageable)).thenReturn(page);
-
-        // When
-        Page<Course> found = courseService.getCoursesBySemester(1L, pageable);
-
-        // Then
-        assertThat(found.getContent()).hasSize(3);
-        assertThat(found.getTotalElements()).isEqualTo(3);
-        verify(courseRepository).findBySemesterId(1L, pageable);
-    }
-
-    @Test
-    void shouldGetCoursesBySemesterList() {
-        // Given
-        List<Course> courses = TestDataBuilder.createCourseList(3, 1L);
-        when(courseRepository.findBySemesterId(1L)).thenReturn(courses);
-
-        // When
-        List<Course> found = courseService.getCoursesBySemester(1L);
-
-        // Then
-        assertThat(found).hasSize(3);
-        verify(courseRepository).findBySemesterId(1L);
-    }
-
-    @Test
-    void shouldGetActiveCoursesBySemester() {
-        // Given
-        Pageable pageable = PageRequest.of(0, 10);
-        List<Course> courses = TestDataBuilder.createCourseListWithStatus(4);
-        Page<Course> page = new PageImpl<>(courses, pageable, 4);
-        when(courseRepository.findBySemesterIdAndIsActive(1L, true, pageable)).thenReturn(page);
-
-        // When
-        Page<Course> found = courseService.getActiveCoursesBySemester(1L, pageable);
-
-        // Then
-        assertThat(found.getContent()).hasSize(4);
-        verify(courseRepository).findBySemesterIdAndIsActive(1L, true, pageable);
-    }
-
-    @Test
-    void shouldGetActiveCoursesBySemesterList() {
-        // Given
-        List<Course> courses = TestDataBuilder.createCourseListWithStatus(4);
-        when(courseRepository.findBySemesterIdAndIsActive(1L, true)).thenReturn(courses);
-
-        // When
-        List<Course> found = courseService.getActiveCoursesBySemester(1L);
-
-        // Then
-        assertThat(found).hasSize(4);
-        verify(courseRepository).findBySemesterIdAndIsActive(1L, true);
-    }
-
-    @Test
     void shouldSearchByNameOrCourseCode() {
         // Given
         List<Course> courses = TestDataBuilder.createCourseList(2);
@@ -342,32 +281,6 @@ class CourseServiceTest extends BaseServiceTest {
         // Then
         assertThat(found.getContent()).hasSize(2);
         verify(courseRepository).searchByNameOrCourseCode("software", pageable);
-    }
-
-    @Test
-    void shouldCountBySemester() {
-        // Given
-        when(courseRepository.countBySemesterId(1L)).thenReturn(5L);
-
-        // When
-        long count = courseService.countBySemester(1L);
-
-        // Then
-        assertThat(count).isEqualTo(5L);
-        verify(courseRepository).countBySemesterId(1L);
-    }
-
-    @Test
-    void shouldCountActiveBySemester() {
-        // Given
-        when(courseRepository.countBySemesterIdAndIsActive(1L, true)).thenReturn(3L);
-
-        // When
-        long count = courseService.countActiveBySemester(1L);
-
-        // Then
-        assertThat(count).isEqualTo(3L);
-        verify(courseRepository).countBySemesterIdAndIsActive(1L, true);
     }
 
     @Test

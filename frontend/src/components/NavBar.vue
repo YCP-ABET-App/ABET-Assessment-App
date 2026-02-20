@@ -2,6 +2,7 @@
 const props = defineProps({
   loggedIn: Boolean,
   username: String,
+  isInstructor: Boolean,
   isAdmin: Boolean,
 })
 
@@ -21,10 +22,10 @@ const emit = defineEmits(["logout"])
 
         <template v-if="loggedIn">
 
-        <template v-if="isAdmin">
+        <template v-if="isAdmin && isInstructor">
           <div class="nav-divider"></div>
           <router-link to="/admin-dashboard" class="nav_button">Admin</router-link>
-          </template>
+        </template>
 
           <div class="nav-divider"></div>
           <router-link to="/settings" class="nav_button">Settings</router-link>

@@ -25,7 +25,7 @@ class CourseRepositoryTest extends BaseRepositoryTest {
     void shouldSaveAndRetrieveCourse() {
         // Given
         Course course = createTestCourse("CS101", "Introduction to Computer Science",
-                "An introductory course covering fundamental concepts of computer science", 1L);
+                "An introductory course covering fundamental concepts of computer science");
 
         // When
         Course saved = courseRepository.save(course);
@@ -36,26 +36,10 @@ class CourseRepositoryTest extends BaseRepositoryTest {
         assertThat(found).isPresent();
         assertThat(found.get().getCourseCode()).isEqualTo("CS101");
         assertThat(found.get().getCourseName()).isEqualTo("Introduction to Computer Science");
-        assertThat(found.get().getSemesterId()).isEqualTo(1L);
         assertThat(found.get().getIsActive()).isTrue();
     }
 
-    @Test
-    void shouldFindBySemesterIdWithPagination() {
-        // Given
-        createAndSaveTestCourse("CS101", "Intro to CS", "Description 1", 1L);
-        createAndSaveTestCourse("MATH101", "Calculus I", "Description 2", 1L);
-        createAndSaveTestCourse("PHY101", "Physics I", "Description 3", 2L); // different semester
 
-        // When
-        Pageable pageable = PageRequest.of(0, 10);
-        Page<Course> found = courseRepository.findBySemesterId(1L, pageable);
-
-        // Then
-        assertThat(found.getContent()).hasSize(2);
-        assertThat(found.getContent()).extracting(Course::getSemesterId)
-                .containsOnly(1L);
-    }
 
     @Test
     void shouldFindByCourseCodeIgnoreCase() {
@@ -153,20 +137,6 @@ class CourseRepositoryTest extends BaseRepositoryTest {
     }
 
     @Test
-    void shouldCountBySemesterId() {
-        // Given
-        createAndSaveTestCourse("CS101", "Intro to CS", "Description 1", 1L);
-        createAndSaveTestCourse("CS102", "Data Structures", "Description 2", 1L);
-        createAndSaveTestCourse("MATH101", "Calculus I", "Description 3", 2L); // different semester
-
-        // When
-        long count = courseRepository.countBySemesterId(1L);
-
-        // Then
-        assertThat(count).isEqualTo(2);
-    }
-
-    @Test
     void shouldCheckCourseCodeExistence() {
         // Given
         createAndSaveTestCourse("CS101", "Intro to CS", "Description", 1L);
@@ -179,12 +149,11 @@ class CourseRepositoryTest extends BaseRepositoryTest {
 
     // Helper method to create test courses without saving
     private Course createTestCourse(String courseCode, String courseName,
-                                    String courseDescription, Long semesterId) {
+                                    String courseDescription) {
         Course course = new Course();
         course.setCourseCode(courseCode);
         course.setCourseName(courseName);
         course.setCourseDescription(courseDescription);
-        course.setSemesterId(semesterId);
         course.setIsActive(true);
         return course;
     }
@@ -192,7 +161,7 @@ class CourseRepositoryTest extends BaseRepositoryTest {
     // Helper method to create and save test courses in one step
     private Course createAndSaveTestCourse(String courseCode, String courseName,
                                            String courseDescription, Long semesterId) {
-        Course course = createTestCourse(courseCode, courseName, courseDescription, semesterId);
+        Course course = createTestCourse(courseCode, courseName, courseDescription);
         return courseRepository.save(course);
     }
 }

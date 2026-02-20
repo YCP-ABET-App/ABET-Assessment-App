@@ -269,28 +269,6 @@ public class SemesterController extends BaseController {
     }
 
     /**
-     * Check if semester has courses
-     */
-    @GetMapping("/{id}/has-courses")
-    public ResponseEntity<ApiResponse<Boolean>> hasCourses(@PathVariable Long id) {
-        logger.info("Checking if semester {} has courses", id);
-        validateId(id);
-        boolean hasCourses = semesterService.hasCourses(id);
-        return success(hasCourses, "Course existence checked successfully");
-    }
-
-    /**
-     * Count courses in a semester
-     */
-    @GetMapping("/{id}/course-count")
-    public ResponseEntity<ApiResponse<Long>> countCoursesBySemester(@PathVariable Long id) {
-        logger.info("Counting courses in semester {}", id);
-        validateId(id);
-        long courseCount = semesterService.countCoursesBySemester(id);
-        return success(courseCount, "Course count retrieved successfully");
-    }
-
-    /**
      * Count semesters by program and status
      */
     @GetMapping("/program/{programId}/status/{status}/count")

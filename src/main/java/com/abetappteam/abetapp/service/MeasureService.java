@@ -40,13 +40,9 @@ public class MeasureService extends BaseService<Measure, Long, MeasureRepository
         measure.setId(dto.getId());
         measure.setCourseIndicatorId(dto.getCourseIndicatorId());
         measure.setDescription(dto.getDescription());
-        measure.setObservation(dto.getObservation());
         measure.setFcar(dto.getFCar());
         measure.setRecommendedAction(dto.getRecommendedAction());
         measure.setStatus(dto.getStatus());
-        measure.setStudentsMet(dto.getStudentsMet());
-        measure.setStudentsExceeded(dto.getStudentsExceeded());
-        measure.setStudentsBelow(dto.getStudentsBelow());
         measure.setActive(dto.getActive());
 
         logger.info("Creating new measure: {}", dto.getId());
@@ -61,13 +57,9 @@ public class MeasureService extends BaseService<Measure, Long, MeasureRepository
         measure.setId(dto.getId());
         measure.setCourseIndicatorId(dto.getCourseIndicatorId());
         measure.setDescription(dto.getDescription());
-        measure.setObservation(dto.getObservation());
         measure.setFcar(dto.getFCar());
         measure.setRecommendedAction(dto.getRecommendedAction());
         measure.setStatus(dto.getStatus());
-        measure.setStudentsMet(dto.getStudentsMet());
-        measure.setStudentsExceeded(dto.getStudentsExceeded());
-        measure.setStudentsBelow(dto.getStudentsBelow());
         if(dto.getActive() != null){
             measure.setActive(dto.getActive());
         }
@@ -204,9 +196,9 @@ public class MeasureService extends BaseService<Measure, Long, MeasureRepository
 
     //Return all active measures by Status and Semester Id
     @Transactional(readOnly = true)
-    public List<Measure> findAllActiveMeasuresByStatusAndSemester(String status, Long semesterId){
+    public List<Measure> findAllActiveMeasures(){
         //Finds every active course in a semester
-        List<Course> foundCourses = courseRepository.findBySemesterIdAndIsActive(semesterId, true);
+        List<Course> foundCourses = courseRepository.findByIsActive(true);
         List<CourseIndicator> foundCI = new ArrayList<>();
         List<Measure> output = new ArrayList<>();
 
@@ -217,7 +209,7 @@ public class MeasureService extends BaseService<Measure, Long, MeasureRepository
 
         //Finds every active measure from every active CourseIndicator in the semester
         for(CourseIndicator i: foundCI){
-            output.addAll(repository.findActiveMeasuresByCourseIndicatorIdAndStatus(i.getId(), status));
+            output.addAll(repository.findByActiveTrue());
         }
 
         return output;
