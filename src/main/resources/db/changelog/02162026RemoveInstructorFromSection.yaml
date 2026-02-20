@@ -1,0 +1,13 @@
+databaseChangeLog:
+  - changeSet:
+      id: drop-instructor-column-from-section
+      author: elarson
+      preConditions:
+        - onFail: MARK_RAN
+          columnExists:
+              columnName: instructor_id
+              tableName: section
+      changes:
+        - dropColumn:
+            columnName: instructor_id
+            tableName: section

@@ -1,71 +1,43 @@
 package com.abetappteam.abetapp.repository;
 
+import com.abetappteam.abetapp.entity.Course;
 import com.abetappteam.abetapp.entity.Section;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Repository for Section entity
- */
+* */
 @Repository
-public interface SectionRepository extends JpaRepository<Section, Long> {
+public interface SectionRepository  extends JpaRepository<Section, Long>
+{
+    // ========== Course ID queries ==========
+    Page<Section> findByCourseId(int courseId, Pageable pageable);
 
-    // Basic find methods
+    List<Section> findByCourseId(int courseId);
 
-    Page<Section> findBySemesterId(Long semesterId, Pageable pageable);
+    long countByCourseId(int courseId);
 
-    List<Section> findBySemesterId(Long semesterId);
+    // ========== Semester ID queries ==========
+    Page<Section> findBySemesterId(int semesterId, Pageable pageable);
 
-    Page<Section> findByCourseId(Long courseId, Pageable pageable);
+    List<Section> findBySemesterId(int semesterId);
 
-    List<Section> findByCourseId(Long courseId);
+    long countBySemesterId(int semesterId);
 
-    Page<Section> findByInstructorId(Long instructorId, Pageable pageable);
+    // ========== Search Queries ==========
+    @Query("SELECT s FROM Section s WHERE s.semesterId = :semesterId")
+    List<Course> searchBySemesterId(@Param("semesterId") Long semesterId);
 
-    List<Section> findByInstructorId(Long instructorId);
+    @Query("SELECT s FROM Section s WHERE s.courseId = :courseId")
+    List<Course> searchByCourseId(@Param("courseId") Long courseId);
 
-    // Combined queries
-
-    Page<Section> findBySemesterIdAndCourseId(Long semesterId, Long courseId, Pageable pageable);
-
-    List<Section> findBySemesterIdAndCourseId(Long semesterId, Long courseId);
-
-    // Unique section validation (important)
-
-    Optional<Section> findByNameIgnoreCaseAndCourseIdAndSemesterId(
-            String name,
-            Long courseId,
-            Long semesterId
-    );
-
-    boolean existsByNameIgnoreCaseAndCourseIdAndSemesterId(
-            String name,
-            Long courseId,
-            Long semesterId
-    );
-
-    // Search functionality
-
-    @Query("SELECT s FROM Section s WHERE " +
-            "LOWER(s.name) LIKE LOWER(CONCAT('%', :searchTerm, '%'))")
-    List<Section> searchByName(@Param("searchTerm") String searchTerm);
-
-    @Query("SELECT s FROM Section s WHERE " +
-            "LOWER(s.name) LIKE LOWER(CONCAT('%', :searchTerm, '%'))")
-    Page<Section> searchByName(@Param("searchTerm") String searchTerm, Pageable pageable);
-
-    // Count methods
-
-    long countBySemesterId(Long semesterId);
-
-    long countByCourseId(Long courseId);
-
+    @Query("SELECT s FROM Section s WHERE s.sectionNumber = :sectionNumber AND s.semesterId = :semesterId AND s.courseId = :courseId")
+    boolean existsByCourseNumberAndSemesterIdAndCourseId(@Param("sectionNumber") String sectionNumber, @Param("semesterId") int semesterId, @Param("courseId") int courseId);
 }
-

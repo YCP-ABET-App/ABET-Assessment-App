@@ -1,17 +1,11 @@
 package com.abetappteam.abetapp.service;
 
-import com.abetappteam.abetapp.dto.SectionDTO;
 import com.abetappteam.abetapp.entity.Course;
 import com.abetappteam.abetapp.entity.Section;
-import com.abetappteam.abetapp.exception.BusinessException;
-import com.abetappteam.abetapp.exception.ConflictException;
-import com.abetappteam.abetapp.repository.CourseRepository;
 import com.abetappteam.abetapp.repository.SectionRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 
@@ -19,116 +13,69 @@ import java.util.List;
  * Service class for Section entity
  */
 @Service
-public class SectionService extends BaseService<Section, Long, SectionRepository> {
-
-    private final CourseRepository courseRepository;
-
+public class SectionService extends BaseService<Section, Long, SectionRepository>
+{
     @Autowired
-    public SectionService(SectionRepository repository,
-                          CourseRepository courseRepository) {
-        super(repository);
-        this.courseRepository = courseRepository;
-    }
+    public SectionService(SectionRepository repository) {super(repository);}
+
+    // TODO: Add reference to SectionUser junction repository
 
     @Override
-    protected String getEntityName() {
-        return "Section";
-    }
-
-    // ==============================
-    // CREATE
-    // ==============================
+    protected String getEntityName() {return "Section";}
 
     @Transactional
-    public Section createSection(SectionDTO dto) {
-
-        // Validate course exists
-        Course course = courseRepository.findById(dto.getCourseId())
-                .orElseThrow(() ->
-                        new BusinessException("Course not found with ID: " + dto.getCourseId()));
-
-        // Enforce semester consistency
-        if (!course.getSemesterId().equals(dto.getSemesterId())) {
-            throw new BusinessException(
-                    "Section semester must match course semester");
+    public Section createSection(String sectionNumber, int courseId, int semesterId)
+    {
+        // Check for duplicates
+        if(repository.existsByCourseNumberAndSemesterIdAndCourseId(sectionNumber, semesterId, courseId))
+        {
+            throw new IllegalArgumentException("A section with the same section number already exists for the given course and semester.");
         }
 
-        // Check duplicate section
-        if (repository.existsByNameIgnoreCaseAndCourseIdAndSemesterId(
-                dto.getName(),
-                dto.getCourseId(),
-                dto.getSemesterId())) {
-
-            throw new ConflictException(
-                    "Section '" + dto.getName() + "' already exists for this course in this semester");
-        }
-
-        Section section = new Section();
-        section.setName(dto.getName());
-        section.setCourseId(dto.getCourseId());
-        section.setInstructorId(dto.getInstructorId());
-        section.setSemesterId(dto.getSemesterId());
-
-        logger.info("Creating section: {} for course {}", dto.getName(), dto.getCourseId());
+        Section section = new Section(sectionNumber, courseId, semesterId);
+        logger.info("Creating new section: {}", section);
         return repository.save(section);
     }
 
-    // ==============================
-    // UPDATE
-    // ==============================
-
     @Transactional
-    public Section updateSection(Long sectionId, SectionDTO dto) {
+    public Section updateSection(Long id, String sectionNumber, int courseId, int semesterId)
+    {
+        Section section = findById(id);
 
-        Section section = findById(sectionId);
-
-        if (dto.getName() != null) {
-            section.setName(dto.getName());
+        // Check for a duplication section number for the same course and semester
+        if(repository.existsByCourseNumberAndSemesterIdAndCourseId(sectionNumber, semesterId, courseId))
+        {
+            throw new IllegalArgumentException("A section with the same section number already exists for the given course and semester.");
         }
 
-        if (dto.getInstructorId() != null) {
-            section.setInstructorId(dto.getInstructorId());
-        }
+        if(sectionNumber != null) {section.setSectionNumber(sectionNumber);}
+        if(courseId != 0) {section.setCourseId(courseId);}
+        if(semesterId != 0) {section.setSemesterId(semesterId);}
 
-        logger.info("Updating section: {}", sectionId);
+        logger.info("Updating section with id {}: {}", id, section);
         return repository.save(section);
     }
 
-    // ==============================
-    // DELETE
-    // ==============================
-
     @Transactional
-    public void removeSection(Long sectionId) {
-        Section section = findById(sectionId);
-
-        logger.info("Removing section: {}", section.getName());
+    public void removeSection(Long id)
+    {
+        Section section = findById(id);
+        logger.info("Removing section with id {}: {}", id, section);
         repository.delete(section);
     }
 
-    // ==============================
-    // READ METHODS
-    // ==============================
-
     @Transactional(readOnly = true)
-    public Page<Section> getSectionsBySemester(Long semesterId, Pageable pageable) {
-        return repository.findBySemesterId(semesterId, pageable);
-    }
-
-    @Transactional(readOnly = true)
-    public List<Section> getSectionsByCourse(Long courseId) {
+    public List<Section> getSectionsByCourseId(int courseId)
+    {
+        logger.info("Retrieving sections for course id {}", courseId);
         return repository.findByCourseId(courseId);
     }
 
     @Transactional(readOnly = true)
-    public List<Section> getSectionsByInstructor(Long instructorId) {
-        return repository.findByInstructorId(instructorId);
-    }
-
-    @Transactional(readOnly = true)
-    public boolean existsByNameAndCourseAndSemester(String name, Long courseId, Long semesterId) {
-        return repository.existsByNameIgnoreCaseAndCourseIdAndSemesterId(
-                name, courseId, semesterId);
+    public List<Section> getSectionsBySemesterId(int semesterId)
+    {
+        logger.info("Retrieving sections for semester id {}", semesterId);
+        return repository.findBySemesterId(semesterId);
     }
 
 }

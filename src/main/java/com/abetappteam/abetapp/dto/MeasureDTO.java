@@ -10,17 +10,10 @@ public class MeasureDTO {
     @NotBlank(message = "Description of Measure is required")
     private String description;
 
-    private String observation;
 
     private String recAction;
 
     private String fcar;
-
-    private Integer met;
-
-    private Integer exceeded;
-
-    private Integer below;
 
     private String status;
 
@@ -35,12 +28,8 @@ public class MeasureDTO {
         this.id = id;
         this.courseIndicatorId = courseIndicatorId;
         this.description = description;
-        this.observation = observation;
         this.recAction = recAction;
         this.fcar = fcar;
-        this.met = met;
-        this.exceeded = exceeded;
-        this.below = below;
         this.status = status;
         this.active = active;
     }
@@ -70,14 +59,6 @@ public class MeasureDTO {
         return description;
     }
 
-    public String getObservation(){
-        return observation;
-    }
-
-    public void setObservation(String observation){
-        this.observation = observation;
-    }
-
     public String getRecommendedAction(){
         return recAction;
     }
@@ -92,30 +73,6 @@ public class MeasureDTO {
 
     public void setFCar(String fcar){
         this.fcar = fcar;
-    }
-
-    public Integer getStudentsMet(){
-        return met;
-    }
-
-    public Integer getStudentsExceeded(){
-        return exceeded;
-    }
-
-    public Integer getStudentsBelow(){
-        return below;
-    }
-
-    public void setStudentsMet(Integer met){
-        this.met = met;
-    }
-
-    public void setStudentsExceeded(Integer exceeded){
-        this.exceeded = exceeded;
-    }
-
-    public void setStudentsBelow(Integer below){
-        this.below = below;
     }
 
     public String getStatus() {

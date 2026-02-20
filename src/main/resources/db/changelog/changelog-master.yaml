@@ -17,8 +17,6 @@ databaseChangeLog:
   - include:
       file: db/changelog/02162026RemoveCourseInstructorTable.yaml
   - include:
-      file: db/changelog/02162026AddRecommendedActionsTable.yaml
+      file: db/changelog/02152026AddDescriptionsToMeasures.yaml
   - include:
-      file: db/changelog/02162026AddSectionUserTable.yaml
-  - include:
-      file: db/changelog/02162026AddRecommendedActionToCO.yaml
+      file: db/changelog/02162026RemoveInstructorFromSection.yaml

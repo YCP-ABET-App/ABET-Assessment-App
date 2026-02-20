@@ -44,9 +44,9 @@ public class CourseService extends BaseService<Course, Long, CourseRepository> {
     }
 
     @Transactional
-    public Course createCourse(String courseCode, String courseName, String courseDescription, Long semesterId, Integer studentCount) {
+    public Course createCourse(String courseCode, String courseName, String courseDescription, Integer studentCount) {
         // Check for duplicate course code in the same semester
-        if (repository.existsByCourseCodeAndSemesterId(courseCode, semesterId)) {
+        if (repository.existsByCourseCodeIgnoreCase(courseCode)) {
             throw new ConflictException("Course with code '" + courseCode + "' already exists in this semester");
         }
 
@@ -54,7 +54,6 @@ public class CourseService extends BaseService<Course, Long, CourseRepository> {
         course.setCourseCode(courseCode);
         course.setCourseName(courseName);
         course.setCourseDescription(courseDescription);
-        course.setSemesterId(semesterId);
         course.setStudentCount(studentCount);
         course.setIsActive(true);
 
@@ -65,7 +64,7 @@ public class CourseService extends BaseService<Course, Long, CourseRepository> {
     @Transactional
     public Course createCourse(CourseDTO dto) {
         return createCourse(dto.getCourseCode(), dto.getCourseName(),
-                dto.getCourseDescription(), dto.getSemesterId(), dto.getStudentCount());
+                dto.getCourseDescription(), dto.getStudentCount());
     }
 
     @Transactional
@@ -74,7 +73,7 @@ public class CourseService extends BaseService<Course, Long, CourseRepository> {
 
         // Check for duplicate course code if it's being changed
         if (courseCode != null && !courseCode.equals(course.getCourseCode())) {
-            if (repository.existsByCourseCodeAndSemesterId(courseCode, course.getSemesterId())) {
+            if (repository.existsByCourseCodeIgnoreCase(courseCode)) {
                 throw new ConflictException("Course with code '" + courseCode + "' already exists in this semester");
             }
             course.setCourseCode(courseCode);
