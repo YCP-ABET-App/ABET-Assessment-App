@@ -137,20 +137,6 @@ class CourseRepositoryTest extends BaseRepositoryTest {
     }
 
     @Test
-    void shouldCountBySemesterId() {
-        // Given
-        createAndSaveTestCourse("CS101", "Intro to CS", "Description 1", 1L);
-        createAndSaveTestCourse("CS102", "Data Structures", "Description 2", 1L);
-        createAndSaveTestCourse("MATH101", "Calculus I", "Description 3", 2L); // different semester
-
-        // When
-        long count = courseRepository.countBySemesterId(1L);
-
-        // Then
-        assertThat(count).isEqualTo(2);
-    }
-
-    @Test
     void shouldCheckCourseCodeExistence() {
         // Given
         createAndSaveTestCourse("CS101", "Intro to CS", "Description", 1L);

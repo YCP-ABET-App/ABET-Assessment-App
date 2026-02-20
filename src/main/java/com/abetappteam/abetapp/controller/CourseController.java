@@ -65,23 +65,7 @@ public class CourseController extends BaseController {
         return success(course, "Course retrieved successfully");
     }
 
-    /**
-     * Get all courses for a specific semester
-     */
-    @GetMapping
-    public ResponseEntity<PagedResponse<Course>> getAllCourses(
-            @RequestParam Long semesterId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
-            @RequestParam(defaultValue = "courseName") String sort,
-            @RequestParam(defaultValue = "asc") String direction) {
 
-        logger.info("Fetching all courses for semester ID: {}", semesterId);
-        validateId(semesterId);
-        Pageable pageable = createPageable(page, size, sort, direction);
-        Page<Course> courses = courseService.getCoursesBySemester(semesterId, pageable);
-        return pagedSuccess(courses);
-    }
 
     /**
      * Get all active courses
@@ -186,23 +170,6 @@ public class CourseController extends BaseController {
         return success(completeness, "Measure completeness retrieved successfully");
     }
 
-    /**
-     * Get active courses by semester
-     */
-    @GetMapping("/active")
-    public ResponseEntity<PagedResponse<Course>> getActiveCourses(
-            @RequestParam Long semesterId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
-            @RequestParam(defaultValue = "courseName") String sort,
-            @RequestParam(defaultValue = "asc") String direction) {
-
-        logger.info("Fetching active courses for semester ID: {}", semesterId);
-        validateId(semesterId);
-        Pageable pageable = createPageable(page, size, sort, direction);
-        Page<Course> courses = courseService.getActiveCoursesBySemester(semesterId, pageable);
-        return pagedSuccess(courses);
-    }
 
     /**
      * Search courses by name or course code
@@ -221,11 +188,10 @@ public class CourseController extends BaseController {
 
     @GetMapping("/code/{courseCode}")
     public ResponseEntity<ApiResponse<Course>> getCourseByCourseCode(
-            @PathVariable String courseCode,
-            @RequestParam Long semesterId) {
+            @PathVariable String courseCode) {
 
-        logger.info("Fetching course {} for semester {}", courseCode, semesterId);
-        Course course = courseService.findByCourseCodeAndSemesterId(courseCode, semesterId);
+        logger.info("Fetching course {} for semester {}", courseCode);
+        Course course = courseService.findByCourseCode(courseCode);
         return success(course, "Course retrieved successfully");
     }
 
@@ -237,28 +203,6 @@ public class CourseController extends BaseController {
         logger.info("Checking if course code exists: {}", courseCode);
         boolean exists = courseService.existsByCourseCode(courseCode);
         return success(exists, "Course code existence checked successfully");
-    }
-
-    /**
-     * Count courses in a semester
-     */
-    @GetMapping("/count")
-    public ResponseEntity<ApiResponse<Long>> countCoursesBySemester(@RequestParam Long semesterId) {
-        logger.info("Counting courses for semester ID: {}", semesterId);
-        validateId(semesterId);
-        long count = courseService.countBySemester(semesterId);
-        return success(count, "Course count retrieved successfully");
-    }
-
-    /**
-     * Count active courses in a semester
-     */
-    @GetMapping("/count/active")
-    public ResponseEntity<ApiResponse<Long>> countActiveCoursesBySemester(@RequestParam Long semesterId) {
-        logger.info("Counting active courses for semester ID: {}", semesterId);
-        validateId(semesterId);
-        long count = courseService.countActiveBySemester(semesterId);
-        return success(count, "Active course count retrieved successfully");
     }
 
 

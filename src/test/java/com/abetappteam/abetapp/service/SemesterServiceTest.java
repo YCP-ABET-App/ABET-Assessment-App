@@ -178,7 +178,6 @@ class SemesterServiceTest extends BaseServiceTest {
     void shouldRemoveSemester() {
         // Given
         when(semesterRepository.findById(1L)).thenReturn(Optional.of(testSemester));
-        when(semesterRepository.hasCourses(1L)).thenReturn(false);
         doNothing().when(semesterRepository).delete(testSemester);
 
         // When
@@ -186,21 +185,7 @@ class SemesterServiceTest extends BaseServiceTest {
 
         // Then
         verify(semesterRepository).findById(1L);
-        verify(semesterRepository).hasCourses(1L);
         verify(semesterRepository).delete(testSemester);
-    }
-
-    @Test
-    void shouldThrowBusinessExceptionWhenRemovingSemesterWithCourses() {
-        // Given
-        when(semesterRepository.findById(1L)).thenReturn(Optional.of(testSemester));
-        when(semesterRepository.hasCourses(1L)).thenReturn(true);
-
-        // When/Then
-        assertThatThrownBy(() -> semesterService.removeSemester(1L))
-                .isInstanceOf(BusinessException.class)
-                .hasMessageContaining("Cannot delete semester that has courses assigned");
-        verify(semesterRepository, never()).delete(any());
     }
 
     @Test

@@ -423,13 +423,13 @@ public class TestDataBuilder {
 
     //Create Measure
     public static Measure createMeasure(){
-        return createMeasure(1l, "Example Description", "Example Observation", "Example Recommended Action", "Example Fcar", 
-        3, 1, 2, "InProgress", true);
+        return createMeasure(1l, "Example Description", "Example Recommended Action", "Example Fcar",
+         "InProgress", true);
     }
 
     //Create Custom Measure
-    public static Measure createMeasure(Long courseIndicatorId, String description, String observation, String recAction, String fcar, 
-    Integer met, Integer exceeded, Integer below, String status, Boolean active) {
+    public static Measure createMeasure(Long courseIndicatorId, String description, String recAction, String fcar,
+     String status, Boolean active) {
         Measure measure = new Measure();
         measure.setCourseIndicatorId(courseIndicatorId);
         measure.setDescription(description);
@@ -443,7 +443,7 @@ public class TestDataBuilder {
     //Create Custom Measure with ID
     public static Measure createMeasureWithId(Long id, Long courseIndicatorId, String description, String observation, String recAction, String fcar, 
     Integer met, Integer exceeded, Integer below, String status, Boolean active) {
-        Measure measure = createMeasure(courseIndicatorId, description, observation, recAction, fcar, met, exceeded, below, status, active);
+        Measure measure = createMeasure(courseIndicatorId, description, recAction, fcar, status, active);
         measure.setId(id);
         return measure;
     }

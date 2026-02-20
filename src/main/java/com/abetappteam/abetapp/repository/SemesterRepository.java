@@ -88,13 +88,6 @@ public interface SemesterRepository extends JpaRepository<Semester, Long> {
 
     long countByProgramIdAndStatus(Long programId, SemesterStatus status);
 
-    // Methods for assessment generation validation
-    @Query("SELECT COUNT(c) > 0 FROM Course c WHERE c.semesterId = :semesterId")
-    boolean hasCourses(@Param("semesterId") Long semesterId);
-
-    @Query("SELECT COUNT(c) FROM Course c WHERE c.semesterId = :semesterId")
-    long countCoursesBySemesterId(@Param("semesterId") Long semesterId);
-
     // Bulk update methods
     @Modifying
     @Query("UPDATE Semester s SET s.isCurrent = false WHERE s.programId = :programId")
