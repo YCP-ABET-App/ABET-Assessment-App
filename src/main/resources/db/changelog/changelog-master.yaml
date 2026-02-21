@@ -28,7 +28,3 @@ databaseChangeLog:
       file: db/changelog/02192026AddMirrorIDtoCourse.yaml
   - include:
       file: db/changelog/02162026RemoveInstructorFromSection.yaml
-  - include:
-      file: db/changelog/02162026AddRecommendedActionsTable.yaml
-  - include:
-      file: db/changelog/02162026AddSectionUserTable.yaml
