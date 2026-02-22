@@ -30,6 +30,8 @@ class ImporterServiceTest {
     private CourseIndicatorService courseIndicatorService;
     @Mock
     private MeasureService measureService;
+    @Mock
+    private MeasureResultService measureResultService;
 
     @InjectMocks
     private ImporterService importerService;
@@ -70,7 +72,6 @@ class ImporterServiceTest {
         when(outcomeService.create(any())).thenReturn(outcome);
         when(indicatorService.getIndicatorsByStudentOutcome(1L)).thenReturn(new ArrayList<>());
         when(indicatorService.createPerformanceIndicator(any())).thenReturn(indicator);
-        when(courseService.getCoursesBySemester(1L)).thenReturn(new ArrayList<>());
         when(courseService.createCourse(any())).thenReturn(course);
         when(courseIndicatorService.getOrCreate(1L, 1L)).thenReturn(courseIndicator);
         when(measureService.createFromImport(any())).thenReturn(new Measure());
@@ -91,7 +92,6 @@ class ImporterServiceTest {
         when(outcomeService.findActiveOutcomesBySemester(1L)).thenReturn(Arrays.asList(outcome));
         when(indicatorService.getIndicatorsByStudentOutcome(1L)).thenReturn(new ArrayList<>());
         when(indicatorService.createPerformanceIndicator(any())).thenReturn(indicator);
-        when(courseService.getCoursesBySemester(1L)).thenReturn(new ArrayList<>());
         when(courseService.createCourse(any())).thenReturn(course);
         when(courseIndicatorService.getOrCreate(1L, 1L)).thenReturn(courseIndicator);
         when(measureService.createFromImport(any())).thenReturn(new Measure());
@@ -108,7 +108,6 @@ class ImporterServiceTest {
         when(semesterService.findById(1L)).thenReturn(semester);
         when(outcomeService.findActiveOutcomesBySemester(1L)).thenReturn(Arrays.asList(outcome));
         when(indicatorService.getIndicatorsByStudentOutcome(1L)).thenReturn(Arrays.asList(indicator));
-        when(courseService.getCoursesBySemester(1L)).thenReturn(new ArrayList<>());
         when(courseService.createCourse(any())).thenReturn(course);
         when(courseIndicatorService.getOrCreate(1L, 1L)).thenReturn(courseIndicator);
         when(measureService.createFromImport(any())).thenReturn(new Measure());
@@ -125,7 +124,7 @@ class ImporterServiceTest {
         when(semesterService.findById(1L)).thenReturn(semester);
         when(outcomeService.findActiveOutcomesBySemester(1L)).thenReturn(Arrays.asList(outcome));
         when(indicatorService.getIndicatorsByStudentOutcome(1L)).thenReturn(Arrays.asList(indicator));
-        when(courseService.getCoursesBySemester(1L)).thenReturn(Arrays.asList(course));
+        when(courseService.findByCourseCode("CS101")).thenReturn(course);
         when(courseIndicatorService.getOrCreate(1L, 1L)).thenReturn(courseIndicator);
         when(measureService.createFromImport(any())).thenReturn(new Measure());
 
@@ -144,7 +143,6 @@ class ImporterServiceTest {
         when(outcomeService.create(any())).thenReturn(outcome);
         when(indicatorService.getIndicatorsByStudentOutcome(1L)).thenReturn(new ArrayList<>());
         when(indicatorService.createPerformanceIndicator(any())).thenReturn(indicator);
-        when(courseService.getCoursesBySemester(1L)).thenReturn(new ArrayList<>());
         when(courseService.createCourse(any())).thenReturn(course);
         when(courseIndicatorService.getOrCreate(anyLong(), anyLong())).thenReturn(courseIndicator);
         when(measureService.createFromImport(any())).thenReturn(new Measure());
@@ -164,7 +162,6 @@ class ImporterServiceTest {
         when(outcomeService.create(any())).thenReturn(outcome);
         when(indicatorService.getIndicatorsByStudentOutcome(1L)).thenReturn(new ArrayList<>());
         when(indicatorService.createPerformanceIndicator(any())).thenReturn(indicator);
-        when(courseService.getCoursesBySemester(1L)).thenReturn(new ArrayList<>());
         when(courseService.createCourse(any())).thenReturn(course);
         when(courseIndicatorService.getOrCreate(anyLong(), anyLong())).thenReturn(courseIndicator);
         when(measureService.createFromImport(any())).thenReturn(new Measure());
@@ -225,8 +222,9 @@ class ImporterServiceTest {
 
         importerService.importSummary(dto);
 
-        verify(measureService).createFromImport(
-                argThat(m -> m.getStudentsExceeded() == 10 && m.getStudentsMet() == 14 && m.getStudentsBelow() == 6));
+        verify(measureResultService).createFromImport(
+                argThat(mr -> mr.getStudentsExceeded() == 10 && mr.getStudentsMet() == 14
+                        && mr.getStudentsBelow() == 6));
     }
 
     @Test
@@ -239,8 +237,9 @@ class ImporterServiceTest {
 
         importerService.importSummary(dto);
 
-        verify(measureService).createFromImport(
-                argThat(m -> m.getStudentsExceeded() == 4 && m.getStudentsMet() == 17 && m.getStudentsBelow() == 9));
+        verify(measureResultService).createFromImport(
+                argThat(mr -> mr.getStudentsExceeded() == 4 && mr.getStudentsMet() == 17
+                        && mr.getStudentsBelow() == 9));
     }
 
     @Test
@@ -255,8 +254,9 @@ class ImporterServiceTest {
 
         importerService.importSummary(dto);
 
-        verify(measureService).createFromImport(
-                argThat(m -> m.getStudentsExceeded() == 0 && m.getStudentsMet() == 12 && m.getStudentsBelow() == 18));
+        verify(measureResultService).createFromImport(
+                argThat(mr -> mr.getStudentsExceeded() == 0 && mr.getStudentsMet() == 12
+                        && mr.getStudentsBelow() == 18));
     }
 
     @Test
@@ -340,9 +340,9 @@ class ImporterServiceTest {
         when(semesterService.findById(1L)).thenReturn(semester);
         when(outcomeService.findActiveOutcomesBySemester(1L)).thenReturn(Arrays.asList(outcome));
         when(indicatorService.getIndicatorsByStudentOutcome(1L)).thenReturn(Arrays.asList(indicator));
-        when(courseService.getCoursesBySemester(1L)).thenReturn(new ArrayList<>());
         when(courseService.createCourse(any())).thenReturn(course);
         when(courseIndicatorService.getOrCreate(1L, 1L)).thenReturn(courseIndicator);
         when(measureService.createFromImport(any())).thenReturn(new Measure());
+        when(measureResultService.createFromImport(any())).thenReturn(new MeasureResult());
     }
 }
