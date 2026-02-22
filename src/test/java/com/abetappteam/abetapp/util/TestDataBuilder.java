@@ -62,8 +62,8 @@ public class TestDataBuilder {
     /**
      * Create a Course entity without ID (for creation tests)
      */
-    public static Course createCourse(String courseCode, String courseName, String courseDescription, Long semesterId) {
-        return new Course(courseCode, courseName, courseDescription, semesterId);
+    public static Course createCourse(String courseCode, String courseName, String courseDescription, Double threshold) {
+        return new Course(courseCode, courseName, courseDescription, threshold);
     }
 
     /**
