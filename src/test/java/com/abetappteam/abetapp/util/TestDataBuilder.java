@@ -62,30 +62,30 @@ public class TestDataBuilder {
     /**
      * Create a Course entity without ID (for creation tests)
      */
-    public static Course createCourse(String courseCode, String courseName, String courseDescription, Long semesterId) {
-        return new Course(courseCode, courseName, courseDescription, semesterId);
+    public static Course createCourse(String courseCode, String courseName, String courseDescription, Integer studentCount, Double threshHold) {
+        return new Course(courseCode, courseName, courseDescription, threshHold);
     }
 
     /**
      * Create a default Course entity
      */
     public static Course createCourse() {
-        return createCourse("CS101", "Introduction to Computer Science", "Basic computer science principles", 1L);
+        return createCourse("CS101", "Introduction to Computer Science", "Basic computer science principles", 1, 1.0);
     }
 
     /**
      * Create a CourseDTO for testing
      */
     public static CourseDTO createCourseDTO(String courseCode, String courseName, String courseDescription,
-            Long semesterId) {
-        return new CourseDTO(courseCode, courseName, courseDescription, semesterId);
+            Integer studentCount, Double threshHold) {
+        return new CourseDTO(courseCode, courseName, courseDescription, studentCount, threshHold);
     }
 
     /**
      * Create a default CourseDTO
      */
     public static CourseDTO createCourseDTO() {
-        return createCourseDTO("CS101", "Introduction to Computer Science", "Basic computer science principles", 1L);
+        return createCourseDTO("CS101", "Introduction to Computer Science", "Description", 1, 1.0);
     }
 
     /**
@@ -96,7 +96,6 @@ public class TestDataBuilder {
         dto.setCourseCode(null); // Invalid - required
         dto.setCourseName(""); // Invalid - blank
         dto.setCourseDescription(null); // Invalid - required
-        dto.setSemesterId(null); // Invalid - required
         return dto;
     }
 

@@ -46,7 +46,7 @@ class CourseServiceTest extends BaseServiceTest {
         testCourse.setStudentCount(30);
 
         testCourseDTO = TestDataBuilder.createCourseDTO("CS102", "Database Systems",
-                "Database management systems", 1L);
+                "Database management systems", 1, 1.0);
         testCourseDTO.setStudentCount(25);
     }
 
@@ -142,7 +142,7 @@ class CourseServiceTest extends BaseServiceTest {
         Course existingCourse = TestDataBuilder.createCourseWithId(1L, "CS102", "Some Course",
                 "Description", 1L);
         CourseDTO updateDTO = TestDataBuilder.createCourseDTO("CS102", "Updated Name",
-                "Updated Description", 1L);
+                "Updated Description", 1, 1.0);
         when(courseRepository.findById(1L)).thenReturn(Optional.of(existingCourse));
         when(courseRepository.save(any(Course.class))).thenReturn(existingCourse);
 

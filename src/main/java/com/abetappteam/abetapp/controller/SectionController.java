@@ -41,10 +41,12 @@ public class SectionController extends BaseController {
             courseIds.add(section.getCourseId());
         }
 
-        // Todo: Add searchCourses
-        List<Course> course = courseService.searchCourses(courseIds);
+        // Todo: Add searchCourses, then uncomment
+        //List<Course> course = courseService.searchCourses(courseIds);
 
-        SectionSearchResponse response = new SectionSearchResponse(sections, course);
+        //SectionSearchResponse response = new SectionSearchResponse(sections, course);
+
+        SectionSearchResponse response = new SectionSearchResponse(sections, Collections.emptyList());
 
         return success(response, "Sections retrieved successfully for course");
     }
