@@ -81,15 +81,15 @@ public class MeasureRepositoryTest extends BaseRepositoryTest{
     @Test
     void shouldFindAllActiveMeasures() {
         Measure active1 = TestDataBuilder.createMeasure(
-                1L, "Active Measure 1", null, null, null, null, null, null, "InProgress", true
+                1L, "Active Measure 1", null, null,  "InProgress", true
         );
 
         Measure active2 = TestDataBuilder.createMeasure(
-                1L, "Active Measure 2", null, null, null, null, null, null, "InProgress", true
+                1L, "Active Measure 2", null, null, "InProgress", true
         );
 
         Measure inactive = TestDataBuilder.createMeasure(
-                1L, "Inactive Measure", null, null, null, null, null, null, "InProgress", false
+                1L, "Inactive Measure", null, null, "InProgress", false
         );
 
         measureRepository.save(active1);
