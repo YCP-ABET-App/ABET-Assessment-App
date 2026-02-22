@@ -11,7 +11,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.ArrayList;
 
 /**
  * Controller for section entity operations
@@ -30,10 +32,17 @@ public class SectionController extends BaseController {
     public ResponseEntity<ApiResponse<List<Section>>> searchSection(
             @RequestParam SectionSearchRequest body) {
         logger.info("Fetching sections for request: {}", body);
-        Section section = sectionService.searchSections(body);
-        Long id =  (long) section.getCourseId();
-        Course course = courseService.findById(id);
-        return success(section, "Sections retrieved successfully for course");
+        List<Section> sections = sectionService.searchSections(body);
+
+        List<Integer> courseIds = new ArrayList<>();
+
+        for(Section section : sections) {
+            courseIds.add(section.getCourseId());
+        }
+
+        // Todo: Add searchCourses
+        List<Course> course = courseService.searchCourses(courseIds);
+        return success(sections, "Sections retrieved successfully for course");
     }
 
     @PostMapping

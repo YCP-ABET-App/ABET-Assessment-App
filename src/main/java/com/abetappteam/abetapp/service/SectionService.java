@@ -66,7 +66,7 @@ public class SectionService extends BaseService<Section, Long, SectionRepository
     }
 
     @Transactional(readOnly = true)
-    public Section searchSections(SectionSearchRequest request)
+    public List<Section> searchSections(SectionSearchRequest request)
     {
         logger.info("Searching for sections with criteria: {}", request);
         return repository.searchSections(request);
