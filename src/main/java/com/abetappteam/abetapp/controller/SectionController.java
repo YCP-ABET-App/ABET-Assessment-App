@@ -4,6 +4,7 @@ import com.abetappteam.abetapp.dto.ApiResponse;
 import com.abetappteam.abetapp.dto.SectionDTO;
 import com.abetappteam.abetapp.entity.Course;
 import com.abetappteam.abetapp.entity.Requests.Section.SectionSearchRequest;
+import com.abetappteam.abetapp.entity.Requests.Section.SectionSearchResponse;
 import com.abetappteam.abetapp.entity.Section;
 import com.abetappteam.abetapp.service.CourseService;
 import com.abetappteam.abetapp.service.SectionService;
@@ -29,7 +30,7 @@ public class SectionController extends BaseController {
     private CourseService courseService;
 
     @GetMapping("/course")
-    public ResponseEntity<ApiResponse<List<Section>>> searchSection(
+    public ResponseEntity<ApiResponse<SectionSearchResponse>> searchSection(
             @RequestParam SectionSearchRequest body) {
         logger.info("Fetching sections for request: {}", body);
         List<Section> sections = sectionService.searchSections(body);
@@ -42,7 +43,10 @@ public class SectionController extends BaseController {
 
         // Todo: Add searchCourses
         List<Course> course = courseService.searchCourses(courseIds);
-        return success(sections, "Sections retrieved successfully for course");
+
+        SectionSearchResponse response = new SectionSearchResponse(sections, course);
+
+        return success(response, "Sections retrieved successfully for course");
     }
 
     @PostMapping
