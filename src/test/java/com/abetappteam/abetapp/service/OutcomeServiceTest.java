@@ -25,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-public class OutcomeServiceTest extends BaseServiceTest{
+public class OutcomeServiceTest extends BaseServiceTest {
     @Mock
     private OutcomeRepository repository;
 
@@ -36,21 +36,21 @@ public class OutcomeServiceTest extends BaseServiceTest{
     private OutcomeDTO testDTO;
 
     @BeforeEach
-    void setUp(){
-        testOutcome = TestDataBuilder.createOutcomeWithId(1l, 1, 
-            "Test Description", 1l, 80, "Test Evaluation", true);
+    void setUp() {
+        testOutcome = TestDataBuilder.createOutcomeWithId(1l, 1,
+                "Test Description", 1l, 80, "Test Evaluation", true);
         testDTO = TestDataBuilder.createOutcomeDTO();
     }
 
     @Test
-    void shouldFindById(){
-        //Given
+    void shouldFindById() {
+        // Given
         when(repository.findById(1L)).thenReturn(Optional.of(testOutcome));
 
-        //When
+        // When
         Outcome found = service.findById(1L);
 
-        //Then
+        // Then
         assertThat(found).isNotNull();
         assertThat(found.getActive()).isTrue();
         assertThat(found.getSemesterId()).isEqualTo(1l);
@@ -58,18 +58,18 @@ public class OutcomeServiceTest extends BaseServiceTest{
     }
 
     @Test
-    void shouldThrowExceptionWhenNotFound(){
-        //Given
+    void shouldThrowExceptionWhenNotFound() {
+        // Given
         when(repository.findById(999L)).thenReturn(Optional.empty());
 
-        //When/Then
+        // When/Then
         assertThatThrownBy(() -> service.findById(999L))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("Outcome not found with id: 999");
     }
 
     @Test
-    void shouldFindAll(){
+    void shouldFindAll() {
         // Given
         List<Outcome> outcomes = TestDataBuilder.createOutcomeList(3);
         when(repository.findAll()).thenReturn(outcomes);
@@ -142,16 +142,16 @@ public class OutcomeServiceTest extends BaseServiceTest{
     }
 
     @Test
-    void shouldReturnAllActiveOutcomesBySemesterid(){
-        //Given
+    void shouldReturnAllActiveOutcomesBySemesterid() {
+        // Given
         List<Outcome> outcomes = new ArrayList<>();
         outcomes.add(testOutcome);
         when(repository.findBySemesterIdAndActive(1l, true)).thenReturn(outcomes);
 
-        //When
+        // When
         List<Outcome> found = service.findActiveOutcomesBySemester(1l);
 
-        //Then
+        // Then
         assertThat(found).hasSize(1);
         assertThat(found).extracting(Outcome::getSemesterId).containsExactly(1l);
         assertThat(found).extracting(Outcome::getActive).containsExactly(true);
@@ -159,17 +159,17 @@ public class OutcomeServiceTest extends BaseServiceTest{
     }
 
     @Test
-    void shouldReturnAllInactiveOutcomesBySemesterId(){
-        //Given
+    void shouldReturnAllInactiveOutcomesBySemesterId() {
+        // Given
         testOutcome.setActive(false);
         List<Outcome> outcomes = new ArrayList<>();
         outcomes.add(testOutcome);
         when(repository.findBySemesterIdAndActive(1l, false)).thenReturn(outcomes);
 
-        //When
+        // When
         List<Outcome> found = service.findInactiveOutcomesBySemester(1l);
 
-        //Then
+        // Then
         assertThat(found).hasSize(1);
         assertThat(found).extracting(Outcome::getSemesterId).containsExactly(1l);
         assertThat(found).extracting(Outcome::getActive).containsExactly(false);
@@ -177,19 +177,80 @@ public class OutcomeServiceTest extends BaseServiceTest{
     }
 
     @Test
-    void shouldReturnOutcomeBySemesterIdAndNumber(){
-        //Given
+    void shouldReturnOutcomeBySemesterIdAndNumber() {
+        // Given
         List<Outcome> outcomes = new ArrayList<>();
         outcomes.add(testOutcome);
         when(repository.findBySemesterIdAndOutNum(1l, 1)).thenReturn(outcomes);
 
-        //When
+        // When
         List<Outcome> found = service.findOutcomesBySemesterAndNumber(1l, 1);
 
-        //Then
+        // Then
         assertThat(found).hasSize(1);
         assertThat(found).extracting(Outcome::getNumber).containsExactly(1);
         assertThat(found).extracting(Outcome::getSemesterId).containsExactly(1l);
         verify(repository).findBySemesterIdAndOutNum(1l, 1);
+    }
+
+    @Test
+    void shouldActivateOutcome() {
+        // Given
+        testOutcome.setActive(false);
+        when(repository.findById(1L)).thenReturn(Optional.of(testOutcome));
+        when(repository.save(any(Outcome.class))).thenReturn(testOutcome);
+
+        // When
+        Outcome activated = service.activate(1L);
+
+        // Then
+        assertThat(activated.getActive()).isTrue();
+        verify(repository).save(testOutcome);
+    }
+
+    @Test
+    void shouldDeactivateOutcome() {
+        // Given
+        when(repository.findById(1L)).thenReturn(Optional.of(testOutcome));
+        when(repository.save(any(Outcome.class))).thenReturn(testOutcome);
+
+        // When
+        Outcome deactivated = service.deactivate(1L);
+
+        // Then
+        assertThat(deactivated.getActive()).isFalse();
+        verify(repository).save(testOutcome);
+    }
+
+    @Test
+    void shouldFindAllActive() {
+        // Given
+        List<Outcome> activeOutcomes = List.of(
+                TestDataBuilder.createOutcomeWithId(1L, 1, "Active 1", 1L, 80, "Evaluation", true),
+                TestDataBuilder.createOutcomeWithId(2L, 2, "Active 2", 1L, 85, "Evaluation", true));
+        when(repository.findByActiveTrue()).thenReturn(activeOutcomes);
+
+        // When
+        List<Outcome> found = service.findAllActive();
+
+        // Then
+        assertThat(found).hasSize(2);
+        assertThat(found).allMatch(Outcome::getActive);
+    }
+
+    @Test
+    void shouldFindAllInactive() {
+        // Given
+        List<Outcome> inactiveOutcomes = List.of(
+                TestDataBuilder.createOutcomeWithId(1L, 1, "Inactive 1", 1L, 80, "Evaluation", false),
+                TestDataBuilder.createOutcomeWithId(2L, 2, "Inactive 2", 1L, 85, "Evaluation", false));
+        when(repository.findByActiveFalse()).thenReturn(inactiveOutcomes);
+
+        // When
+        List<Outcome> found = service.findAllInactive();
+
+        // Then
+        assertThat(found).hasSize(2);
+        assertThat(found).allMatch(outcome -> !outcome.getActive());
     }
 }
