@@ -46,22 +46,15 @@ public interface MeasureResultRepository extends JpaRepository<MeasureResult, Lo
 
     void deleteByMeasureIdAndProgramId(Long measureId, Long programId);
 
-    // search queries
-    @Query("SELECT mr FROM MeasureResult mr WHERE mr.status NOT IN ('Rejected')")
-    List<MeasureResult> findByMeasureIdAndActiveTrue(@Param("measureId") Long measureId);
-
-    @Query("SELECT mr FROM MeasureResult mr WHERE mr.status = 'Rejected' AND mr.measureId = :measureId")
-    List<MeasureResult> findByMeasureIdAndActiveFalse(@Param("measureId") Long measureId);
-
-    @Query("SELECT mr FROM MeasureResult mr WHERE mr.status NOT IN ('Rejected') AND mr.programId = :programId")
-    List<MeasureResult> findByProgramIdAndActiveTrue(@Param("programId") Long programId);
-
-    @Query("SELECT mr FROM MeasureResult mr WHERE mr.status NOT IN ('Rejected') AND mr.sectionId = :sectionId")
-    List<MeasureResult> findBySectionIdAndActiveTrue(@Param("sectionId") Long sectionId);
-
-    @Query("SELECT mr FROM MeasureResult mr WHERE mr.status NOT IN ('Rejected') AND mr.status = :status")
-    List<MeasureResult> findByActiveTrueAndStatus(@Param("status") String status);
-
+    @Query("SELECT mr FROM MeasureResult mr " +
+            "WHERE (:id IS NULL OR mr.id = :id) " +
+            "AND (:measureId IS NULL OR mr.measureId = :measureId) " +
+            "AND (:sectionId IS NULL OR mr.sectionId = :sectionId) " +
+            "AND (:programId IS NULL OR mr.programId = :programId)")
+    List<MeasureResult> searchMeasureResults(@Param("id") int id,
+                                             @Param("measureId") int measureId,
+                                             @Param("sectionId") int sectionId,
+                                             @Param("programId") int programId);
     // Check if measure results has active sections
     @Query("SELECT COUNT(mr) > 0 FROM MeasureResult mr WHERE mr.sectionId = :sectionId AND mr.status NOT IN ('Rejected')")
     boolean hasActiveSections(@Param("sectionId") Long sectionId);
