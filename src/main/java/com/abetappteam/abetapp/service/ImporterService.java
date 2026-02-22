@@ -203,7 +203,6 @@ public class ImporterService {
         dto.setCourseCode(code);
         dto.setCourseName(code);
         dto.setCourseDescription("Imported course " + code);
-        //dto.setSemesterId(semesterId);
         dto.setStudentCount(0);
         dto.setIsActive(true);
 

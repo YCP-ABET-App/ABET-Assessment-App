@@ -63,7 +63,6 @@ class CourseControllerUnitTest extends BaseControllerTest {
         testCourseDTO.setCourseCode("CS401");
         testCourseDTO.setCourseName("Software Engineering");
         testCourseDTO.setCourseDescription("An introduction to software engineering principles");
-        //testCourseDTO.setSemesterId(1L);
         testCourseDTO.setStudentCount(28);
 
         testCI = new CourseIndicator();

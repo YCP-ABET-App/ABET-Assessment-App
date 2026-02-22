@@ -2,13 +2,19 @@ package com.abetappteam.abetapp.controller;
 
 import com.abetappteam.abetapp.dto.ApiResponse;
 import com.abetappteam.abetapp.dto.SectionDTO;
+import com.abetappteam.abetapp.entity.Course;
+import com.abetappteam.abetapp.entity.Requests.Section.SectionSearchRequest;
+import com.abetappteam.abetapp.entity.Requests.Section.SectionSearchResponse;
 import com.abetappteam.abetapp.entity.Section;
+import com.abetappteam.abetapp.service.CourseService;
 import com.abetappteam.abetapp.service.SectionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.ArrayList;
 
 /**
  * Controller for section entity operations
@@ -20,33 +26,29 @@ public class SectionController extends BaseController {
 
     @Autowired
     private SectionService sectionService;
-
-    @GetMapping("/semester")
-    public ResponseEntity<ApiResponse<List<Section>>> getSectionBySemester(
-            @RequestParam int semesterId ) {
-        logger.info("Fetching sections for semester id: {}", semesterId);
-        long id = semesterId;
-        validateId(id);
-        List<Section> sections = sectionService.getSectionsBySemesterId(semesterId);
-        return success(sections, "Sections retrieved successfully for semester");
-    }
+    @Autowired
+    private CourseService courseService;
 
     @GetMapping("/course")
-    public ResponseEntity<ApiResponse<List<Section>>> getSectionByCourse(
-            @RequestParam int courseId ) {
-        logger.info("Fetching sections for semester id: {}", courseId);
-        long id = courseId;
-        validateId(id);
-        List<Section> sections = sectionService.getSectionsByCourseId(courseId);
-        return success(sections, "Sections retrieved successfully for course");
-    }
+    public ResponseEntity<ApiResponse<SectionSearchResponse>> searchSection(
+            @RequestParam SectionSearchRequest body) {
+        logger.info("Fetching sections for request: {}", body);
+        List<Section> sections = sectionService.searchSections(body);
 
-    @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<Section>> getSectionById(@PathVariable Long id) {
-        logger.info("Fetching section with id: {}", id);
-        validateId(id);
-        Section section = sectionService.findById(id);
-        return success(section, "Section retrieved successfully");
+        List<Integer> courseIds = new ArrayList<>();
+
+        for(Section section : sections) {
+            courseIds.add(section.getCourseId());
+        }
+
+        // Todo: Add searchCourses, then uncomment
+        //List<Course> course = courseService.searchCourses(courseIds);
+
+        //SectionSearchResponse response = new SectionSearchResponse(sections, course);
+
+        SectionSearchResponse response = new SectionSearchResponse(sections, Collections.emptyList());
+
+        return success(response, "Sections retrieved successfully for course");
     }
 
     @PostMapping

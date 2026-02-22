@@ -1,6 +1,7 @@
 package com.abetappteam.abetapp.service;
 
 import com.abetappteam.abetapp.dto.SemesterDTO;
+import com.abetappteam.abetapp.entity.Requests.Semester.SemesterSearchRequest;
 import com.abetappteam.abetapp.entity.Semester;
 import com.abetappteam.abetapp.entity.Semester.SemesterStatus;
 import com.abetappteam.abetapp.entity.Semester.SemesterType;
@@ -36,12 +37,36 @@ public class SemesterService extends BaseService<Semester, Long, SemesterReposit
     }
 
     @Transactional
+    public List<Semester> getAllSemesters(SemesterSearchRequest request) {
+        logger.info("Searching semesters with request: {}", request);
+        return repository.searchSemesters(
+                request.id(),
+                request.status(),
+                request.academicYear(),
+                request.startDate(),
+                request.endDate(),
+                request.type(),
+                request.name(),
+                request.code()
+        );
+    }
+
+    @Transactional
     public Semester createSemester(String name, String code, LocalDate startDate, LocalDate endDate,
                                    Integer academicYear, SemesterType type, Long programId,
                                    String description, Boolean isCurrent) {
         // Check for duplicate semester code in the same program
-        Optional<Semester> existingSemester = repository.findByCodeIgnoreCaseAndProgramId(code, programId);
-        if (existingSemester.isPresent()) {
+        List<Semester> existingSemester = repository.searchSemesters(
+                -1,
+                null,
+                -1,
+                null,
+                null,
+                null,
+                null,
+                code
+        );
+        if (!existingSemester.isEmpty()) {
             throw new ConflictException("Semester with code '" + code + "' already exists in this program");
         }
 
@@ -98,11 +123,21 @@ public class SemesterService extends BaseService<Semester, Long, SemesterReposit
 
         // Check for duplicate semester code
         if (code != null && !code.equals(semester.getCode())) {
-            repository.findByCodeIgnoreCaseAndProgramId(code, semester.getProgramId()).ifPresent(existing -> {
-                if (!existing.getId().equals(semesterId)) {
-                    throw new ConflictException("Semester with code '" + code + "' already exists in this program");
-                }
-            });
+            List<Semester> found = repository.searchSemesters(
+                    -1,
+                    null,
+                    -1,
+                    null,
+                    null,
+                    null,
+                    null,
+                    code
+            );
+
+            if(!found.isEmpty()) {
+                throw new ConflictException("Semester with code '" + code + "' already exists in this program");
+            }
+
             semester.setCode(code);
         }
 
@@ -164,117 +199,10 @@ public class SemesterService extends BaseService<Semester, Long, SemesterReposit
     }
 
     @Transactional(readOnly = true)
-    public Page<Semester> getSemestersByProgram(Long programId, Pageable pageable) {
-        logger.debug("Fetching semesters for program ID: {}", programId);
-        return repository.findByProgramId(programId, pageable);
-    }
-
-    @Transactional(readOnly = true)
-    public List<Semester> getSemestersByProgram(Long programId) {
-        logger.debug("Fetching all semesters for program ID: {}", programId);
-        return repository.findByProgramId(programId);
-    }
-
-    @Transactional(readOnly = true)
-    public Page<Semester> getSemestersByAcademicYear(Integer academicYear, Pageable pageable) {
-        logger.debug("Fetching semesters for academic year: {}", academicYear);
-        return repository.findByAcademicYear(academicYear, pageable);
-    }
-
-    @Transactional(readOnly = true)
-    public Page<Semester> getSemestersByType(SemesterType type, Pageable pageable) {
-        logger.debug("Fetching semesters of type: {}", type);
-        return repository.findByType(type, pageable);
-    }
-
-    @Transactional(readOnly = true)
-    public Page<Semester> getSemestersByStatus(SemesterStatus status, Pageable pageable) {
-        logger.debug("Fetching semesters with status: {}", status);
-        return repository.findByStatus(status, pageable);
-    }
-
-    @Transactional(readOnly = true)
-    public Page<Semester> getSemestersByProgramAndAcademicYear(Long programId, Integer academicYear,
-                                                               Pageable pageable) {
-        logger.debug("Fetching semesters for program {} and academic year {}", programId, academicYear);
-        return repository.findByProgramIdAndAcademicYear(programId, academicYear, pageable);
-    }
-
-    @Transactional(readOnly = true)
-    public Page<Semester> getSemestersByProgramAndType(Long programId, SemesterType type, Pageable pageable) {
-        logger.debug("Fetching semesters for program {} and type {}", programId, type);
-        return repository.findByProgramIdAndType(programId, type, pageable);
-    }
-
-    @Transactional(readOnly = true)
-    public Page<Semester> getSemestersByProgramAndStatus(Long programId, SemesterStatus status,
-                                                         Pageable pageable) {
-        logger.debug("Fetching semesters for program {} and status {}", programId, status);
-        return repository.findByProgramIdAndStatus(programId, status, pageable);
-    }
-
-    @Transactional(readOnly = true)
-    public Semester findByCode(String code) {
-        return repository.findByCodeIgnoreCase(code)
-                .orElseThrow(() -> new ResourceNotFoundException("Semester not found with code: " + code));
-    }
-
-    @Transactional(readOnly = true)
     public boolean existsByCode(String code) {
         return repository.existsByCodeIgnoreCase(code);
     }
 
-    @Transactional(readOnly = true)
-    public List<Semester> searchByNameOrCode(String searchTerm) {
-        logger.debug("Searching semesters with term: {}", searchTerm);
-        return repository.searchByNameOrCode(searchTerm);
-    }
-
-    @Transactional(readOnly = true)
-    public Page<Semester> searchByNameOrCode(String searchTerm, Pageable pageable) {
-        logger.debug("Searching semesters with term: {}", searchTerm);
-        return repository.searchByNameOrCode(searchTerm, pageable);
-    }
-
-    @Transactional(readOnly = true)
-    public List<Semester> getActiveSemestersOnDate(LocalDate date) {
-        logger.debug("Fetching active semesters on date: {}", date);
-        return repository.findActiveSemestersOnDate(date);
-    }
-
-    @Transactional(readOnly = true)
-    public Optional<Semester> getCurrentSemesterByProgram(Long programId) {
-        logger.debug("Fetching current semester for program: {}", programId);
-        return repository.findCurrentSemesterByProgram(programId);
-    }
-
-    @Transactional(readOnly = true)
-    public List<Semester> getCurrentSemesters() {
-        logger.debug("Fetching all current semesters");
-        return repository.findByIsCurrentTrue();
-    }
-
-    @Transactional(readOnly = true)
-    public List<Semester> getActiveAndUpcomingSemestersByProgram(Long programId) {
-        logger.debug("Fetching active and upcoming semesters for program: {}", programId);
-        return repository.findActiveAndUpcomingSemestersByProgram(programId);
-    }
-
-    @Transactional(readOnly = true)
-    public List<Integer> getDistinctAcademicYearsByProgram(Long programId) {
-        logger.debug("Fetching distinct academic years for program: {}", programId);
-        List<Semester> semesters = repository.findByProgramId(programId);
-        return semesters.stream()
-                .map(Semester::getAcademicYear)
-                .distinct()
-                .sorted()
-                .collect(Collectors.toList());
-    }
-
-    @Transactional(readOnly = true)
-    public long countByProgram(Long programId) {
-        return repository.countByProgramId(programId);
-    }
 
     @Transactional(readOnly = true)
     public long countByProgramAndStatus(Long programId, SemesterStatus status) {
