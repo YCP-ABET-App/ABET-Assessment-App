@@ -34,12 +34,12 @@ public interface SectionRepository  extends JpaRepository<Section, Long>
 
     // ========== Search Queries ==========
     @Query("SELECT s FROM Section s " +
-            "INNER JOIN SectionProgram sp ON s.id = sp.section_id " +
-            "INNER JOIN SectionUser su ON s.id = su.section_id " +
+            "INNER JOIN SectionProgram sp ON s.id = sp.sectionId " +
+            "INNER JOIN SectionUser su ON s.id = su.sectionId " +
             "WHERE s.id = :#{#request.id()} " +
-            "AND s.semester_id = :#{#request.semesterId()} " +
-            "AND s.course_id = :#{#request.courseId()} " +
-            "AND sp.program_id = :#{#request.programId()} " +
+            "AND s.semesterId = :#{#request.semesterId()} " +
+            "AND s.courseId = :#{#request.courseId()} " +
+            "AND sp.programId = :#{#request.programId()} " +
             "AND su.userId = :#{#request.userId()}")
     List<Section> searchSections(@Param("request")SectionSearchRequest request);
 
