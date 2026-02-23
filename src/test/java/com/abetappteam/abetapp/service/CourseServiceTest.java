@@ -3,6 +3,7 @@ package com.abetappteam.abetapp.service;
 import com.abetappteam.abetapp.BaseServiceTest;
 import com.abetappteam.abetapp.dto.CourseDTO;
 import com.abetappteam.abetapp.entity.Course;
+import com.abetappteam.abetapp.entity.Requests.Course.CourseSearchRequest;
 import com.abetappteam.abetapp.exception.BusinessException;
 import com.abetappteam.abetapp.exception.ConflictException;
 import com.abetappteam.abetapp.exception.ResourceNotFoundException;
@@ -251,36 +252,6 @@ class CourseServiceTest extends BaseServiceTest {
         assertThatThrownBy(() -> courseService.findByCourseCode("UNKNOWN"))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("Course not found with code: UNKNOWN");
-    }
-
-    @Test
-    void shouldSearchByNameOrCourseCode() {
-        // Given
-        List<Course> courses = TestDataBuilder.createCourseList(2);
-        when(courseRepository.searchByNameOrCourseCode("CS101")).thenReturn(courses);
-
-        // When
-        List<Course> found = courseService.searchByNameOrCourseCode("CS101");
-
-        // Then
-        assertThat(found).hasSize(2);
-        verify(courseRepository).searchByNameOrCourseCode("CS101");
-    }
-
-    @Test
-    void shouldSearchByNameOrCourseCodeWithPaging() {
-        // Given
-        Pageable pageable = PageRequest.of(0, 10);
-        List<Course> courses = TestDataBuilder.createCourseList(2);
-        Page<Course> page = new PageImpl<>(courses, pageable, 2);
-        when(courseRepository.searchByNameOrCourseCode("software", pageable)).thenReturn(page);
-
-        // When
-        Page<Course> found = courseService.searchByNameOrCourseCode("software", pageable);
-
-        // Then
-        assertThat(found.getContent()).hasSize(2);
-        verify(courseRepository).searchByNameOrCourseCode("software", pageable);
     }
 
     @Test

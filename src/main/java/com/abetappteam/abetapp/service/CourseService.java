@@ -4,6 +4,7 @@ import com.abetappteam.abetapp.dto.CourseDTO;
 import com.abetappteam.abetapp.entity.Course;
 import com.abetappteam.abetapp.entity.CourseIndicator;
 import com.abetappteam.abetapp.entity.CourseInstructor;
+import com.abetappteam.abetapp.entity.Requests.Course.CourseSearchRequest;
 import com.abetappteam.abetapp.exception.BusinessException;
 import com.abetappteam.abetapp.exception.ConflictException;
 import com.abetappteam.abetapp.exception.ResourceNotFoundException;
@@ -65,6 +66,20 @@ public class CourseService extends BaseService<Course, Long, CourseRepository> {
     public Course createCourse(CourseDTO dto) {
         return createCourse(dto.getCourseCode(), dto.getCourseName(),
                 dto.getCourseDescription(), dto.getStudentCount());
+    }
+
+    @Transactional(readOnly = true)
+    public List<Course> searchCourse(CourseSearchRequest request) {
+        logger.info("Service: searching courses with request: {}", request);
+        return repository.searchCourse(
+                request.id(),
+                request.courseCode(),
+                request.courseName(),
+                request.courseDescription(),
+                request.student_count(),
+                request.mirrorId(),
+                request.isActive()
+        );
     }
 
     @Transactional
@@ -172,18 +187,6 @@ public class CourseService extends BaseService<Course, Long, CourseRepository> {
     @Transactional(readOnly = true)
     public boolean existsByCourseCode(String courseCode) {
         return repository.existsByCourseCodeIgnoreCase(courseCode);
-    }
-
-    @Transactional(readOnly = true)
-    public List<Course> searchByNameOrCourseCode(String searchTerm) {
-        logger.debug("Searching courses with term: {}", searchTerm);
-        return repository.searchByNameOrCourseCode(searchTerm);
-    }
-
-    @Transactional(readOnly = true)
-    public Page<Course> searchByNameOrCourseCode(String searchTerm, Pageable pageable) {
-        logger.debug("Searching courses with term: {}", searchTerm);
-        return repository.searchByNameOrCourseCode(searchTerm, pageable);
     }
 
     @Transactional

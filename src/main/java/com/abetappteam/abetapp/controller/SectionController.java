@@ -3,6 +3,7 @@ package com.abetappteam.abetapp.controller;
 import com.abetappteam.abetapp.dto.ApiResponse;
 import com.abetappteam.abetapp.dto.SectionDTO;
 import com.abetappteam.abetapp.entity.Course;
+import com.abetappteam.abetapp.entity.Requests.Course.CourseSearchRequest;
 import com.abetappteam.abetapp.entity.Requests.Section.SectionSearchRequest;
 import com.abetappteam.abetapp.entity.Requests.Section.SectionSearchResponse;
 import com.abetappteam.abetapp.entity.Section;
@@ -29,24 +30,37 @@ public class SectionController extends BaseController {
     @Autowired
     private CourseService courseService;
 
-    @GetMapping("/course")
+    @GetMapping("/section")
     public ResponseEntity<ApiResponse<SectionSearchResponse>> searchSection(
             @RequestParam SectionSearchRequest body) {
         logger.info("Fetching sections for request: {}", body);
         List<Section> sections = sectionService.searchSections(body);
 
-        List<Integer> courseIds = new ArrayList<>();
+        List<CourseSearchRequest> requests = new ArrayList<>();
+        List<Course> course = new ArrayList<>();
 
         for(Section section : sections) {
-            courseIds.add(section.getCourseId());
+            requests.add(
+                new CourseSearchRequest(
+                    section.getCourseId(),
+                    null,
+                    null,
+                    null,
+                    -1,
+                    -1,
+                    true
+                )
+            );
         }
 
-        // Todo: Add searchCourses, then uncomment
-        //List<Course> course = courseService.searchCourses(courseIds);
+        List<Course> courses = new ArrayList<>();
 
-        //SectionSearchResponse response = new SectionSearchResponse(sections, course);
+        for(CourseSearchRequest req : requests) {
+            List<Course> results = courseService.searchCourse(req);
+            courses.addAll(results);
+        }
 
-        SectionSearchResponse response = new SectionSearchResponse(sections, Collections.emptyList());
+        SectionSearchResponse response = new SectionSearchResponse(sections, courses);
 
         return success(response, "Sections retrieved successfully for course");
     }

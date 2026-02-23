@@ -55,25 +55,6 @@ class CourseRepositoryTest extends BaseRepositoryTest {
     }
 
     @Test
-    void shouldSearchByNameOrCourseCode() {
-        // Given
-        createAndSaveTestCourse("CS101", "Introduction to Computer Science", "Description 1", 1L);
-        createAndSaveTestCourse("DATA101", "Database Systems", "Description 2", 1L);
-
-        // When - search by course code
-        List<Course> foundByCode = courseRepository.searchByNameOrCourseCode("CS101");
-        // When - search by name
-        List<Course> foundByName = courseRepository.searchByNameOrCourseCode("Database");
-
-        // Then
-        assertThat(foundByCode).hasSize(1);
-        assertThat(foundByCode.getFirst().getCourseCode()).isEqualTo("CS101");
-
-        assertThat(foundByName).hasSize(1);
-        assertThat(foundByName.getFirst().getCourseName()).contains("Database");
-    }
-
-    @Test
     void shouldFindActiveCourses() {
         // Given
         Course active1 = createAndSaveTestCourse("CS101", "Intro to CS", "Description 1", 1L);
