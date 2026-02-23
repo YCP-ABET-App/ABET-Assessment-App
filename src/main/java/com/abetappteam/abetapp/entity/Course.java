@@ -27,8 +27,11 @@ public class Course extends BaseEntity {
     @Column(name = "student_count")
     private Integer studentCount;
 
-    @Column(name = "threshold")   //should not be hard-coded, it can be different for different courses
+    @Column(name = "threshold")   // should not be hard-coded, it can be different for different courses
     private Double threshold = 70.00;
+
+    @Column(name = "mirror_id")
+    private int mirrorId;
 
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
@@ -37,10 +40,11 @@ public class Course extends BaseEntity {
     public Course() {
     }
 
-    public Course(String courseCode, String courseName, String courseDescription, Long semesterId) {
+    public Course(String courseCode, String courseName, String courseDescription, Double threshold) { // remove semesterId
         this.courseCode = courseCode;
         this.courseName = courseName;
         this.courseDescription = courseDescription;
+        this.threshold = threshold;
         this.studentCount = null;
         this.isActive = true;
     }
@@ -49,7 +53,6 @@ public class Course extends BaseEntity {
     public String getCourseCode() {
         return courseCode;
     }
-
     public void setCourseCode(String courseCode) {
         this.courseCode = courseCode;
     }
@@ -57,7 +60,6 @@ public class Course extends BaseEntity {
     public String getCourseName() {
         return courseName;
     }
-
     public void setCourseName(String courseName) {
         this.courseName = courseName;
     }
@@ -65,7 +67,6 @@ public class Course extends BaseEntity {
     public String getCourseDescription() {
         return courseDescription;
     }
-
     public void setCourseDescription(String courseDescription) {
         this.courseDescription = courseDescription;
     }
@@ -73,7 +74,6 @@ public class Course extends BaseEntity {
     public Integer getStudentCount() {
         return studentCount;
     }
-
     public void setStudentCount(Integer studentCount) {
         this.studentCount = studentCount;
     }
@@ -81,7 +81,6 @@ public class Course extends BaseEntity {
     public Boolean getIsActive() {
         return isActive;
     }
-
     public void setIsActive(Boolean isActive) {
         this.isActive = isActive;
     }
@@ -89,10 +88,17 @@ public class Course extends BaseEntity {
     public Double getThreshold() {
         return threshold;
     }
-
     public void setThreshold(Double threshold) {
         this.threshold = threshold;
     }
+
+    public int getMirrorId() {
+        return mirrorId;
+    }
+    public void setMirrorId(int mirrorId) {
+        this.mirrorId = mirrorId;
+    }
+
 
     @Override
     public String toString() {

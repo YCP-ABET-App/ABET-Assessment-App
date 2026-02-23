@@ -1,0 +1,17 @@
+databaseChangeLog:
+    - changeSet:
+        id: add-recommended-action-to-student-outcome
+        author: ohornbeck
+        preConditions:
+            - onFail: MARK_RAN
+              not:
+                  columnExists:
+                      columnName: recommended_action
+                      tableName: student_outcome
+        changes:
+            - addColumn:
+                tableName: student_outcome
+                columns:
+                    - column:
+                        name: recommended_action
+                        type: VARCHAR(255)
