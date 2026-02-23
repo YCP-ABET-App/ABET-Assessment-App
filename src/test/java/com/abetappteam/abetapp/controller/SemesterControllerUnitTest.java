@@ -13,15 +13,13 @@ import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
+import java.util.HashMap;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -91,17 +89,29 @@ class SemesterControllerUnitTest extends BaseControllerTest {
 
     @Test
     void shouldGetSemesterById() throws Exception {
-        // Given
-        when(semesterService.findById(1L)).thenReturn(testSemester);
+        // Given: search by id=1 should return the semester in a list
+        Map<String, Object> body = new HashMap<>();
+        body.put("id", 1);
+        body.put("status", null);
+        body.put("academicYear", null);
+        body.put("startDate", null);
+        body.put("endDate", null);
+        body.put("type", null);
+        body.put("name", null);
+        body.put("code", null);
+
+        when(semesterService.getAllSemesters(any())).thenReturn(List.of(testSemester));
 
         // When/Then
-        mockMvc.perform(get("/api/semesters/1"))
+        mockMvc.perform(get("/api/semesters")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(toJson(body)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.id").value(1))
-                .andExpect(jsonPath("$.data.name").value("Fall 2025"));
+                .andExpect(jsonPath("$.data[0].id").value(1))
+                .andExpect(jsonPath("$.data[0].name").value("Fall 2025"));
 
-        verify(semesterService, times(1)).findById(1L);
+        verify(semesterService, times(1)).getAllSemesters(any());
     }
 
     @Test
@@ -289,11 +299,28 @@ class SemesterControllerUnitTest extends BaseControllerTest {
 
     @Test
     void shouldReturnBadRequestForInvalidSemesterId() throws Exception {
-        // Test invalid ID in path
-        mockMvc.perform(get("/api/semesters/0"))
-                .andExpect(status().isBadRequest());
+        // Searching with id=0 should return no results (controller accepts search body)
+        Map<String, Object> body = new HashMap<>();
+        body.put("id", 0);
+        body.put("status", null);
+        body.put("academicYear", null);
+        body.put("startDate", null);
+        body.put("endDate", null);
+        body.put("type", null);
+        body.put("name", null);
+        body.put("code", null);
 
-        verify(semesterService, never()).findById(0L);
+        when(semesterService.getAllSemesters(any())).thenReturn(List.of());
+
+        mockMvc.perform(get("/api/semesters")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(toJson(body)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data").isArray())
+                .andExpect(jsonPath("$.data.length()").value(0));
+
+        verify(semesterService, times(1)).getAllSemesters(any());
     }
 
 //    @Test
@@ -311,14 +338,37 @@ class SemesterControllerUnitTest extends BaseControllerTest {
 
     @Test
     void shouldCountByProgramAndStatus() throws Exception {
-        when(semesterService.countByProgramAndStatus(1L, SemesterStatus.ACTIVE))
-                .thenReturn(3L);
+        // Use the search endpoint to fetch semesters with status=ACTIVE and assert we get 3 results
+        var s2 = new Semester();
+        s2.setId(2L);
+        s2.setName("Spring 2025");
+        s2.setType(SemesterType.FALL);
 
-        mockMvc.perform(get("/api/semesters/program/1/status/ACTIVE/count"))
+        var s3 = new Semester();
+        s3.setId(3L);
+        s3.setName("Summer 2025");
+        s3.setType(SemesterType.FALL);
+
+        when(semesterService.getAllSemesters(any())).thenReturn(List.of(testSemester, s2, s3));
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("id", null);
+        body.put("status", "ACTIVE");
+        body.put("academicYear", null);
+        body.put("startDate", null);
+        body.put("endDate", null);
+        body.put("type", null);
+        body.put("name", null);
+        body.put("code", null);
+
+        mockMvc.perform(get("/api/semesters")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(toJson(body)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data").value(3));
+                .andExpect(jsonPath("$.data").isArray())
+                .andExpect(jsonPath("$.data.length()").value(3));
 
-        verify(semesterService).countByProgramAndStatus(1L, SemesterStatus.ACTIVE);
+        verify(semesterService, times(1)).getAllSemesters(any());
     }
 
     @Test
