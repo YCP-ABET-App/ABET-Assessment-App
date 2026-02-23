@@ -5,6 +5,7 @@ import com.abetappteam.abetapp.dto.CourseDTO;
 import com.abetappteam.abetapp.dto.PagedResponse;
 import com.abetappteam.abetapp.entity.Course;
 import com.abetappteam.abetapp.entity.CourseIndicator;
+import com.abetappteam.abetapp.entity.Requests.Course.CourseSearchRequest;
 import com.abetappteam.abetapp.service.CourseService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -18,8 +19,6 @@ import jakarta.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 
 /**
  * Controller for course entity operations
@@ -32,6 +31,25 @@ public class CourseController extends BaseController {
     @Autowired
     private CourseService courseService;
 
+
+
+        /**
+     * Search courses by name or course code
+     */
+@GetMapping("/searchCourse")
+public ResponseEntity<PagedResponse<Course>> searchCourse(
+        CourseSearchRequest request, 
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "20") int size) {
+
+    logger.info("Search request received for: {}", request);
+    
+    Pageable pageable = createPageable(page, size, "courseName", "asc");
+    
+    Page<Course> courses = courseService.searchCourse(request, pageable);
+    
+    return pagedSuccess(courses);
+}
 
 
     /**

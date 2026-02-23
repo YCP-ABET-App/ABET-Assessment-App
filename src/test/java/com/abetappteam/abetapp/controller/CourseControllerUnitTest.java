@@ -6,6 +6,7 @@ import com.abetappteam.abetapp.dto.CourseDTO;
 import com.abetappteam.abetapp.entity.Course;
 import com.abetappteam.abetapp.entity.CourseIndicator;
 import com.abetappteam.abetapp.entity.Semester;
+import com.abetappteam.abetapp.entity.Requests.Course.CourseSearchRequest;
 import com.abetappteam.abetapp.service.CourseService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -225,54 +226,52 @@ class CourseControllerUnitTest extends BaseControllerTest {
         verify(courseService, times(1)).calculateMeasureCompleteness(1L);
     }
 
-    @Test
+@Test
     void shouldSearchCourses() throws Exception {
-        // Given
         List<Course> courses = List.of(testCourse);
         Page<Course> page = new PageImpl<>(courses, PageRequest.of(0, 20), 1);
 
-        when(courseService.searchByNameOrCourseCode(eq("Software"), any(PageRequest.class))).thenReturn(page);
+       
+        when(courseService.searchCourse(
+            org.mockito.ArgumentMatchers.any(), 
+            org.mockito.ArgumentMatchers.any(org.springframework.data.domain.Pageable.class)
+        )).thenReturn(page);
 
-        // When/Then
-        mockMvc.perform(get("/api/courses/search")
-                        .param("searchTerm", "Software")
+        mockMvc.perform(get("/api/courses/searchCourse")
+                        .param("courseName", "Software")
                         .param("page", "0")
                         .param("size", "20"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isArray())
                 .andExpect(jsonPath("$.content.length()").value(1));
 
-        verify(courseService, times(1)).searchByNameOrCourseCode(eq("Software"), any(PageRequest.class));
+        verify(courseService, times(1)).searchCourse(
+            org.mockito.ArgumentMatchers.any(), 
+            org.mockito.ArgumentMatchers.any(org.springframework.data.domain.Pageable.class)
+        );
     }
 
-    @Test
+@Test
     void shouldGetCourseByCourseCode() throws Exception {
         // Arrange
         String courseCode = "CS401";
-        Long semesterId = 1L;
 
-        // Create properly populated mock course
         Course mockCourse = new Course();
-        mockCourse.setId(1L);
+        mockCourse.setId(1L); 
         mockCourse.setCourseCode(courseCode);
         mockCourse.setCourseName("Advanced Computer Science");
         mockCourse.setCourseDescription("Advanced topics in CS");
         mockCourse.setIsActive(true);
 
-        // Mock the service method with BOTH parameters
         when(courseService.findByCourseCode(eq(courseCode)))
                 .thenReturn(mockCourse);
 
-        // Act & Assert - Add semesterId parameter
-        mockMvc.perform(get("/api/courses/code/{courseCode}", courseCode)
-                        .param("semesterId", semesterId.toString()))
+        mockMvc.perform(get("/api/courses/code/{courseCode}", courseCode))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data").exists())
                 .andExpect(jsonPath("$.data.courseCode").value(courseCode))
                 .andExpect(jsonPath("$.data.courseName").value("Advanced Computer Science"));
 
-        // Verify the service was called with correct parameters
         verify(courseService, times(1)).findByCourseCode(courseCode);
     }
 
