@@ -29,7 +29,7 @@ public class SectionController extends BaseController {
     @Autowired
     private CourseService courseService;
 
-    @GetMapping("/course")
+    @GetMapping("/section")
     public ResponseEntity<ApiResponse<SectionSearchResponse>> searchSection(
             @RequestParam SectionSearchRequest body) {
         logger.info("Fetching sections for request: {}", body);
