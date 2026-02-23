@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 
 @Entity
-@Table(name = "section_program")
+@Table(name = "section_user")
 public class SectionUser extends BaseEntity {
 
     @NotBlank(message = "Section is required")
@@ -25,7 +25,9 @@ public class SectionUser extends BaseEntity {
         this.userId = userId;
     }
 
+    public int getSectionId(){return sectionId;}
     public void setSectionId(int sectionId){this.sectionId = sectionId;}
+    public int getUserId(){return userId;}
     public void setUserId(int userId){this.userId = userId;}
 
     @Override

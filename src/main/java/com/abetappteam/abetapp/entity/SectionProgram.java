@@ -26,7 +26,9 @@ public class SectionProgram extends BaseEntity {
     }
 
     public void setSectionId(int sectionId){this.sectionId = sectionId;}
+    public int getSectionId(){return this.sectionId;}
     public void setProgramId(int programId){this.programId = programId;}
+    public int getProgramId(){return this.programId;}
 
     @Override
     public String toString()

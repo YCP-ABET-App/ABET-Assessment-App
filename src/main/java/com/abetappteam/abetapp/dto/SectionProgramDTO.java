@@ -23,34 +23,21 @@ public class SectionProgramDTO {
     }
 
     // Getters and Setters
-    public int getId() {
-        return id;
-    }
+    public int getId() {return id;}
 
-    public int getSectionId() {
-        return sectionId;
-    }
+    public int getSectionId() {return sectionId;}
+    public void setSectionId(int sectionId) {this.sectionId = sectionId;}
 
-    public void setSectionId(int sectionId) {
-        this.sectionId = sectionId;
-    }
-
-    public int getProgramId() {
-        return programId;
-    }
-
-    public void setProgramId(int programId) {
-        this.programId = programId;
-    }
+    public int getProgramId() {return programId;}
+    public void setProgramId(int programId) {this.programId = programId;}
 
 
     @Override
     public String toString() {
         return "SectionDTO{" +
                 "id=" + id +
-                ", sectionNumber='" + sectionNumber + '\'' +
-                ", courseId=" + courseId +
-                ", semesterId=" + semesterId +
+                ", sectionId=" + sectionId +
+                ", programId=" + programId +
                 '}';
     }
 }

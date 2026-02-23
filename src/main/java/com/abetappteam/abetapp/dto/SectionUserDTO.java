@@ -23,25 +23,13 @@ public class SectionUserDTO {
     }
 
     // Getters and Setters
-    public int getId() {
-        return id;
-    }
+    public int getId() {return id;}
 
-    public int getSectionId() {
-        return sectionId;
-    }
+    public int getSectionId() {return sectionId;}
+    public void setSectionId(int sectionId) {this.sectionId = sectionId;}
 
-    public void setSectionId(int sectionId) {
-        this.sectionId = sectionId;
-    }
-
-    public int getUserId() {
-        return userId;
-    }
-
-    public void setUserId(int userId) {
-        this.userId = userId;
-    }
+    public int getUserId() {return userId;}
+    public void setUserId(int userId) {this.userId = userId;}
 
 
     @Override
