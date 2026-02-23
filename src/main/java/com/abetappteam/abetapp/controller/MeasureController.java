@@ -1,5 +1,6 @@
 package com.abetappteam.abetapp.controller;
 
+import com.abetappteam.abetapp.entity.Requests.Measure.MeasureSearchRequest;
 import com.abetappteam.abetapp.service.MeasureService;
 import com.abetappteam.abetapp.dto.ApiResponse;
 import com.abetappteam.abetapp.dto.MeasureDTO;
@@ -23,46 +24,11 @@ public class MeasureController extends BaseController{
     @Autowired
     private MeasureService service;
 
-    //Return all Measures
     @GetMapping
-    public ResponseEntity<PagedResponse<Measure>> getAllMeasures(
-        @RequestParam(defaultValue = "0") int page,
-        @RequestParam(defaultValue = "20") int size){
-            Pageable pageable = createPageable(page, size, DEFAULT_SORT_FIELD, DEFAULT_SORT_DIRECTION);
-            Page<Measure> measures = service.findAll(pageable);
-            return pagedSuccess(measures);
-        }
-
-    //Return a measure by id
-    @GetMapping("/{id:\\d+}")
-    public ResponseEntity<ApiResponse<Measure>> getMeasure(@PathVariable Long id) {
-        logger.info("Fetching measure with id: {}", id);
-        Measure measure = service.findById(id);
-        return success(measure, "Measure found");
-    }
-
-    //Return all Active measures by courseid
-    @GetMapping("/byCourse/{courseId}")
-    public ResponseEntity<ApiResponse<List<Measure>>> getMeasuresByCourseId(@PathVariable Long courseId){
-        logger.info("Fetching measure with course id: {}", courseId);
-        List<Measure> measures = service.findAllActiveMeasuresByCourse(courseId);
-        return success(measures, "Measures found");
-    }
-
-    //Return all Active measures by indicatorid
-    @GetMapping("/byIndicator/{indicatorId}")
-    public ResponseEntity<ApiResponse<List<Measure>>> getMeasuresByIndicatorId(@PathVariable Long indicatorId){
-        logger.info("Fetching measure with indicator id: {}", indicatorId);
-        List<Measure> measures = service.findAllActiveMeasuresByIndicator(indicatorId);
-        return success(measures, "Measures found");
-    }
-
-    //Return all Inactive measures by indicatorid
-    @GetMapping("/byIndicator/Inactive/{indicatorId}")
-    public ResponseEntity<ApiResponse<List<Measure>>> getInactiveMeasuresByIndicatorId(@PathVariable Long indicatorId){
-        logger.info("Fetching inactive measures with indicator id: {}", indicatorId);
-        List<Measure> measures = service.findAllInactiveMeasuresByIndicator(indicatorId);
-        return success(measures, "Measures found");
+    public ResponseEntity<ApiResponse<List<Measure>>> getAllMeasures(@RequestBody MeasureSearchRequest request) {
+        logger.info("Fetching all measures");
+        List<Measure> measures = service.searchMeasures(request);
+        return success(measures, "Measures retrieved successfully");
     }
 
     //Create a new measure
