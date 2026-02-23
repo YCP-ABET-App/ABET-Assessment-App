@@ -14,7 +14,7 @@ interface Instructor {
   email: string;
 }
 
-const course_id = ref(NaN);
+const section_id = ref(NaN);
 const course_obj = ref({
   id: NaN,
   course_code: '',
@@ -24,6 +24,9 @@ const course_obj = ref({
   created_at: '',
   is_active: false
 });
+const section_obj = ref({
+
+})
 const semester_name = ref('');
 const instructors = ref<Instructor[]>([]);
 const indicator_ids = ref([]);
@@ -49,9 +52,10 @@ const indicator_ids = ref([1,2])
 */
 //--------------------------
 
-async function fetch_course_data() {
+async function fetch_course_section_data() {
   try {
-    const { data } = await api.get(`/courses/${course_id.value}`);
+    const { data } = await api.get(`/sections/${section_id.value}`);
+    console.log(data)
     course_obj.value = {
       id: data.data.id,
       course_code: data.data.courseCode,
@@ -78,7 +82,7 @@ async function fetch_semester_data() {
 
 async function fetch_instructor_ids() {
   try {
-    const { data } = await api.get(`/courses/${course_id.value}/instructors`);
+    const { data } = await api.get(`/courses/${section_id.value}/instructors`);
     const instructorIds = data;
 
     // Fetch full instructor details for each ID
@@ -106,7 +110,7 @@ async function fetch_instructor_ids() {
 
 async function fetch_indicator_ids() {
   try {
-    const { data } = await api.get(`/courses/${course_id.value}/indicators`);
+    const { data } = await api.get(`/courses/${section_id.value}/indicators`);
     indicator_ids.value = data
   } catch (error) {
     console.error('Error fetching or parsing course data:', error);
@@ -134,10 +138,10 @@ function closeInspectModal() {
 }
 
 async function initialize() {
-  course_id.value = parseInt(route.params.course_id as string, 10)
+  section_id.value = parseInt(route.params.section_id as string, 10)
 
   //Fetch Course data
-  await fetch_course_data();
+  await fetch_course_section_data();
 
   //Fetch Semester data
   await fetch_semester_data();
@@ -210,7 +214,7 @@ initialize();
 
       <div class="indicator-list">
         <BaseCard v-for="piid in indicator_ids" :key="piid" variant="default" class="indicator-card">
-          <IndicatorListing :piid="piid" :course_id="course_id" :instructor_id="instructors[0].id"/>
+          <IndicatorListing :piid="piid" :course_id="section_id" :instructor_id="instructors[0].id"/>
         </BaseCard>
       </div>
     </section>
