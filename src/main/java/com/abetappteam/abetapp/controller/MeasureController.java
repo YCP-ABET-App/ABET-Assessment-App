@@ -25,7 +25,7 @@ public class MeasureController extends BaseController{
     private MeasureService service;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<Measure>>> getAllMeasures(@RequestBody MeasureSearchRequest request) {
+    public ResponseEntity<ApiResponse<List<Measure>>> getAllMeasures(@RequestParam MeasureSearchRequest request) {
         logger.info("Fetching all measures");
         List<Measure> measures = service.searchMeasures(request);
         return success(measures, "Measures retrieved successfully");

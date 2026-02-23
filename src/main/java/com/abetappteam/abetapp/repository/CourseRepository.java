@@ -30,14 +30,6 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     // ========== Course name queries ==========
     List<Course> findByCourseNameContainingIgnoreCase(String nameFragment);
 
-    // ========== Search queries ==========
-    @Query("SELECT c FROM Course c WHERE LOWER(c.courseName) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR LOWER(c.courseCode) LIKE LOWER(CONCAT('%', :searchTerm, '%'))")
-    List<Course> searchByNameOrCourseCode(@Param("searchTerm") String searchTerm);
-
-    @Query("SELECT c FROM Course c WHERE LOWER(c.courseName) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR LOWER(c.courseCode) LIKE LOWER(CONCAT('%', :searchTerm, '%'))")
-    Page<Course> searchByNameOrCourseCode(@Param("searchTerm") String searchTerm, Pageable pageable);
-
-
     // ========== Instructor relationship queries (via course_instructor table) ==========
     // Note: These queries use the course_instructor junction table
     @Query("SELECT c FROM Course c JOIN CourseInstructor ci ON c.id = ci.courseId WHERE ci.programUserId = :programUserId AND c.isActive = true")
@@ -49,12 +41,18 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
 @Query("SELECT c FROM Course c WHERE " +
            "(:courseCode IS NULL OR c.courseCode = :courseCode) AND " +
            "(:courseName IS NULL OR LOWER(c.courseName) LIKE LOWER(CONCAT('%', :courseName, '%'))) AND " +
-           "(:courseDescription IS NULL OR LOWER(c.courseDescription) LIKE LOWER(CONCAT('%', :courseDescription, '%')))")
-    Page<Course> searchCourse(
-        @Param("courseCode") String courseCode,
-        @Param("courseName") String courseName,
-        @Param("courseDescription") String courseDescription,
-        Pageable pageable
+           "(:courseDescription IS NULL OR LOWER(c.courseDescription) LIKE LOWER(CONCAT('%', :courseDescription, '%'))) AND " +
+           "(:studentCount IS NULL OR c.studentCount = :studentCount) AND " +
+           "(:mirrorId IS NULL OR c.mirrorId = :mirrorId) AND " +
+           "(:isActive IS NULL OR c.isActive = :isActive)")
+    List<Course> searchCourse(
+            @Param("id") int id,
+            @Param("courseCode") String courseCode,
+            @Param("courseName") String courseName,
+            @Param("courseDescription") String courseDescription,
+            @Param("studentCount") int studentCount,
+            @Param("mirrorId") int mirrorId,
+            @Param("isActive") boolean isActive
     );
     
     @Query("SELECT c FROM Course c JOIN CourseInstructor ci ON c.id = ci.courseId WHERE ci.programUserId = :programUserId")

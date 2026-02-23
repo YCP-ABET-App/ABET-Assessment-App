@@ -37,18 +37,14 @@ public class CourseController extends BaseController {
      * Search courses by name or course code
      */
 @GetMapping("/searchCourse")
-public ResponseEntity<PagedResponse<Course>> searchCourse(
-        CourseSearchRequest request, 
-        @RequestParam(defaultValue = "0") int page,
-        @RequestParam(defaultValue = "20") int size) {
+public ResponseEntity<ApiResponse<List<Course>>> searchCourse(
+        @RequestParam CourseSearchRequest request) {
 
     logger.info("Search request received for: {}", request);
+
+    List<Course> courses = courseService.searchCourse(request);
     
-    Pageable pageable = createPageable(page, size, "courseName", "asc");
-    
-    Page<Course> courses = courseService.searchCourse(request, pageable);
-    
-    return pagedSuccess(courses);
+    return success(courses, "Courses retrieved successfully");
 }
 
 
