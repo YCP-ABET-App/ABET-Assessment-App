@@ -64,7 +64,7 @@
         </div>
 
         <div v-else-if="selectedCourseId" class="view-container">
-          <SemesterViewPage :course-id="selectedCourseId" />
+          <SectionViewPage :course-id="selectedCourseId" />
         </div>
 
         <div v-else class="empty-state">
@@ -92,7 +92,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import SemesterViewPage from '@/components/pages/SemesterViewPage.vue'
+import SectionViewPage from '@/components/pages/SectionViewPage.vue'
 import InstructorSelector from '@/components/pages/InstructorSelector.vue'
 import api from '@/api'
 import CourseEditorModal from "@/components/CourseEditorModal.vue";
