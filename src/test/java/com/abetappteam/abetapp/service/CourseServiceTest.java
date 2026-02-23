@@ -3,6 +3,7 @@ package com.abetappteam.abetapp.service;
 import com.abetappteam.abetapp.BaseServiceTest;
 import com.abetappteam.abetapp.dto.CourseDTO;
 import com.abetappteam.abetapp.entity.Course;
+import com.abetappteam.abetapp.entity.Requests.Course.CourseSearchRequest;
 import com.abetappteam.abetapp.exception.BusinessException;
 import com.abetappteam.abetapp.exception.ConflictException;
 import com.abetappteam.abetapp.exception.ResourceNotFoundException;
@@ -253,34 +254,42 @@ class CourseServiceTest extends BaseServiceTest {
                 .hasMessageContaining("Course not found with code: UNKNOWN");
     }
 
-    @Test
-    void shouldSearchByNameOrCourseCode() {
-        // Given
+@Test
+    void shouldSearchCourses() {
+
+        CourseSearchRequest request = new CourseSearchRequest("CS101", null, null);
+        Pageable pageable = PageRequest.of(0, 10);
+        
         List<Course> courses = TestDataBuilder.createCourseList(2);
-        when(courseRepository.searchByNameOrCourseCode("CS101")).thenReturn(courses);
+        Page<Course> page = new PageImpl<>(courses, pageable, 2);
 
-        // When
-        List<Course> found = courseService.searchByNameOrCourseCode("CS101");
+        when(courseRepository.searchCourse(eq("CS101"), any(), any(), eq(pageable)))
+                .thenReturn(page);
 
-        // Then
-        assertThat(found).hasSize(2);
-        verify(courseRepository).searchByNameOrCourseCode("CS101");
+        Page<Course> found = courseService.searchCourse(request, pageable);
+
+        assertThat(found.getContent()).hasSize(2);
+        verify(courseRepository).searchCourse(eq("CS101"), isNull(), isNull(), eq(pageable));
     }
 
-    @Test
+@Test
     void shouldSearchByNameOrCourseCodeWithPaging() {
-        // Given
+
         Pageable pageable = PageRequest.of(0, 10);
         List<Course> courses = TestDataBuilder.createCourseList(2);
         Page<Course> page = new PageImpl<>(courses, pageable, 2);
-        when(courseRepository.searchByNameOrCourseCode("software", pageable)).thenReturn(page);
+        
+        CourseSearchRequest request = new CourseSearchRequest(null, "software", null);
 
-        // When
-        Page<Course> found = courseService.searchByNameOrCourseCode("software", pageable);
 
-        // Then
+        when(courseRepository.searchCourse(isNull(), eq("software"), isNull(), eq(pageable)))
+                .thenReturn(page);
+
+
+        Page<Course> found = courseService.searchCourse(request, pageable);
+
         assertThat(found.getContent()).hasSize(2);
-        verify(courseRepository).searchByNameOrCourseCode("software", pageable);
+        verify(courseRepository).searchCourse(isNull(), eq("software"), isNull(), eq(pageable));
     }
 
     @Test
