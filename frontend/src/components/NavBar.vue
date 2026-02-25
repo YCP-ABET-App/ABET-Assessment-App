@@ -16,9 +16,6 @@ const emit = defineEmits(["logout"])
 
 <div class="navbar-links">
         <router-link to="/" class="nav_button">Home</router-link>
-        
-        <div class="nav-divider"></div>
-        <router-link to="/about" class="nav_button">About</router-link>
 
         <template v-if="loggedIn">
 
