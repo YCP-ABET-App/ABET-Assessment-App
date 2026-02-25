@@ -326,7 +326,7 @@ function handleRegenerate() {
           @click="exportToPDF"
           :disabled="exporting"
         >
-          {{ exporting ? 'Downloading...' : 'Downloading PDF' }}
+          {{ exporting ? 'Downloading...' : 'Download PDF' }}
         </BaseButton>
 
 
