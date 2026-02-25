@@ -24,6 +24,9 @@ const emit = defineEmits(["logout"])
           <router-link to="/admin-dashboard" class="nav_button">Admin</router-link>
         </template>
 
+          <div class="nav-divider"/>
+          <router-link to="/import-tool" class="nav_button">Importer</router-link>
+
           <div class="nav-divider"></div>
           <router-link to="/settings" class="nav_button">Settings</router-link>
         </template>
@@ -191,7 +194,7 @@ const emit = defineEmits(["logout"])
 }
 
 .user-avatar {
-  width: 28px;          
+  width: 28px;
   height: 28px;
   background-color: var(--color-primary-dark, #3498db);
   border-radius: 50%;
@@ -212,7 +215,7 @@ const emit = defineEmits(["logout"])
 }
 
 .user-name {
-  font-size: 10px;       
+  font-size: 10px;
   font-weight: 500;
   color: var(--navbar-text, white);
   white-space: nowrap;
