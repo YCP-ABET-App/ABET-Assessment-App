@@ -100,7 +100,7 @@ class SemesterControllerUnitTest extends BaseControllerTest {
         body.put("name", null);
         body.put("code", null);
 
-        when(semesterService.getAllSemesters(any())).thenReturn(List.of(testSemester));
+        when(semesterService.searchSemesters(any())).thenReturn(List.of(testSemester));
 
         // When/Then
         mockMvc.perform(get("/api/semesters")
@@ -111,7 +111,7 @@ class SemesterControllerUnitTest extends BaseControllerTest {
                 .andExpect(jsonPath("$.data[0].id").value(1))
                 .andExpect(jsonPath("$.data[0].name").value("Fall 2025"));
 
-        verify(semesterService, times(1)).getAllSemesters(any());
+        verify(semesterService, times(1)).searchSemesters(any());
     }
 
     @Test
@@ -310,7 +310,7 @@ class SemesterControllerUnitTest extends BaseControllerTest {
         body.put("name", null);
         body.put("code", null);
 
-        when(semesterService.getAllSemesters(any())).thenReturn(List.of());
+        when(semesterService.searchSemesters(any())).thenReturn(List.of());
 
         mockMvc.perform(get("/api/semesters")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -320,7 +320,7 @@ class SemesterControllerUnitTest extends BaseControllerTest {
                 .andExpect(jsonPath("$.data").isArray())
                 .andExpect(jsonPath("$.data.length()").value(0));
 
-        verify(semesterService, times(1)).getAllSemesters(any());
+        verify(semesterService, times(1)).searchSemesters(any());
     }
 
 //    @Test
@@ -349,7 +349,7 @@ class SemesterControllerUnitTest extends BaseControllerTest {
         s3.setName("Summer 2025");
         s3.setType(SemesterType.FALL);
 
-        when(semesterService.getAllSemesters(any())).thenReturn(List.of(testSemester, s2, s3));
+        when(semesterService.searchSemesters(any())).thenReturn(List.of(testSemester, s2, s3));
 
         Map<String, Object> body = new HashMap<>();
         body.put("id", null);
@@ -368,7 +368,7 @@ class SemesterControllerUnitTest extends BaseControllerTest {
                 .andExpect(jsonPath("$.data").isArray())
                 .andExpect(jsonPath("$.data.length()").value(3));
 
-        verify(semesterService, times(1)).getAllSemesters(any());
+        verify(semesterService, times(1)).searchSemesters(any());
     }
 
     @Test

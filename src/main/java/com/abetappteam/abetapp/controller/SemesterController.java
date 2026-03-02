@@ -29,7 +29,7 @@ public class SemesterController extends BaseController {
     private SemesterService semesterService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<Semester>>> getAllSemesters(
+    public ResponseEntity<ApiResponse<List<Semester>>> searchSemesters(
         @RequestParam(required = false) Integer id,
         @RequestParam(required = false) String status,
         @RequestParam(required = false) Integer academicYear,
