@@ -25,8 +25,12 @@ public class SectionUserController extends BaseController {
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<SectionUser>>> searchSectionUser(
-            @RequestParam SectionUserSearchRequest request) {
-
+            @RequestParam(required = false) Integer id,
+            @RequestParam(required = false) Integer sectionId,
+            @RequestParam(required = false) Integer userId
+        ) {
+        SectionUserSearchRequest request = new SectionUserSearchRequest(id, sectionId, userId);
+        
         logger.info("Fetching SectionUser with request: {}", request);
 
         List<SectionUser> results = sectionUserService.searchSectionUser(request);

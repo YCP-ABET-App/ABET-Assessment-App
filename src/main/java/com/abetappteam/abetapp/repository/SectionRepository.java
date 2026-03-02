@@ -1,6 +1,5 @@
 package com.abetappteam.abetapp.repository;
 
-import com.abetappteam.abetapp.entity.Course;
 import com.abetappteam.abetapp.entity.Requests.Section.SectionSearchRequest;
 import com.abetappteam.abetapp.entity.Section;
 import org.springframework.data.jpa.repository.JpaRepository;

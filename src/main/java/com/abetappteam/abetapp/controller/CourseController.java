@@ -2,23 +2,17 @@ package com.abetappteam.abetapp.controller;
 
 import com.abetappteam.abetapp.dto.ApiResponse;
 import com.abetappteam.abetapp.dto.CourseDTO;
-import com.abetappteam.abetapp.dto.PagedResponse;
 import com.abetappteam.abetapp.entity.Course;
-import com.abetappteam.abetapp.entity.CourseIndicator;
 import com.abetappteam.abetapp.entity.Requests.Course.CourseSearchRequest;
 import com.abetappteam.abetapp.service.CourseService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Controller for course entity operations
@@ -36,16 +30,24 @@ public class CourseController extends BaseController {
         /**
      * Search courses by name or course code
      */
-@GetMapping("/searchCourse")
-public ResponseEntity<ApiResponse<List<Course>>> searchCourse(
-        @RequestParam CourseSearchRequest request) {
+    @GetMapping("/searchCourse")
+    public ResponseEntity<ApiResponse<List<Course>>> searchCourse(
+            @RequestParam(required = false) Integer id,
+            @RequestParam(required = false) String courseCode,
+            @RequestParam(required = false) String courseName,
+            @RequestParam(required = false) String courseDescription,
+            @RequestParam(required = false) Integer student_count,
+            @RequestParam(required = false) Integer mirrorId,
+            @RequestParam(required = false) boolean isActive
+        ) {
+        CourseSearchRequest request = new CourseSearchRequest(id, courseCode, courseName, courseDescription, student_count, mirrorId, isActive);
+        
+        logger.info("Search request received for: {}", request);
 
-    logger.info("Search request received for: {}", request);
-
-    List<Course> courses = courseService.searchCourse(request);
-    
-    return success(courses, "Courses retrieved successfully");
-}
+        List<Course> courses = courseService.searchCourse(request);
+        
+        return success(courses, "Courses retrieved successfully");
+    }
 
 
     /**

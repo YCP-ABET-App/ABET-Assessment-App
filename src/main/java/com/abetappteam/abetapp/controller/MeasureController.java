@@ -4,12 +4,9 @@ import com.abetappteam.abetapp.entity.Requests.Measure.MeasureSearchRequest;
 import com.abetappteam.abetapp.service.MeasureService;
 import com.abetappteam.abetapp.dto.ApiResponse;
 import com.abetappteam.abetapp.dto.MeasureDTO;
-import com.abetappteam.abetapp.dto.PagedResponse;
 import com.abetappteam.abetapp.entity.Measure;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,8 +22,13 @@ public class MeasureController extends BaseController{
     private MeasureService service;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<Measure>>> getAllMeasures(@RequestParam MeasureSearchRequest request) {
-        logger.info("Fetching all measures");
+    public ResponseEntity<ApiResponse<List<Measure>>> searchMeasures(
+        @RequestParam(required = false) Integer id,
+        @RequestParam(required = false) Integer courseIndicatorId,
+        @RequestParam(required = false) boolean active
+    ) {
+        MeasureSearchRequest request = new MeasureSearchRequest(id, courseIndicatorId, active);
+        logger.info("Fetching measures for request: {}", request);
         List<Measure> measures = service.searchMeasures(request);
         return success(measures, "Measures retrieved successfully");
     }

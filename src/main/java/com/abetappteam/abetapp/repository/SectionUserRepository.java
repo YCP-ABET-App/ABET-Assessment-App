@@ -28,9 +28,9 @@ public interface SectionUserRepository extends JpaRepository<SectionUser, Long>
     // Search 
 
     @Query("SELECT su FROM SectionUser su " +
-           "WHERE su.id = :#{#request.id()} " +
-           "AND su.sectionId = :#{#request.sectionId()} " +
-           "AND su.userId = :#{#request.userId()}")
+           "WHERE (:#{#request.id()} IS NULL OR su.id = :#{#request.id()}) " +
+           "AND (:#{#request.sectionId()} IS NULL OR su.sectionId = :#{#request.sectionId()}) " +
+           "AND (:#{#request.userId()} IS NULL OR su.userId = :#{#request.userId()})")
     List<SectionUser> searchSectionUser(@Param("request") SectionUserSearchRequest request);
 
     // Exists 
