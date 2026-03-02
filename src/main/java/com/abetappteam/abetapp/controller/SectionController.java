@@ -30,14 +30,19 @@ public class SectionController extends BaseController {
     @Autowired
     private CourseService courseService;
 
-    @GetMapping("/section")
+    @GetMapping()
     public ResponseEntity<ApiResponse<SectionSearchResponse>> searchSection(
-            @RequestParam SectionSearchRequest body) {
+            @RequestParam(required = false) Integer id,
+            @RequestParam(required = false) Integer semesterId,
+            @RequestParam(required = false) Integer programId,
+            @RequestParam(required = false) Integer courseId,
+            @RequestParam(required = false) Integer userId) {
+
+        SectionSearchRequest body = new SectionSearchRequest(id, semesterId, programId, courseId, userId);
         logger.info("Fetching sections for request: {}", body);
         List<Section> sections = sectionService.searchSections(body);
 
         List<CourseSearchRequest> requests = new ArrayList<>();
-        List<Course> course = new ArrayList<>();
 
         for(Section section : sections) {
             requests.add(
@@ -46,8 +51,8 @@ public class SectionController extends BaseController {
                     null,
                     null,
                     null,
-                    -1,
-                    -1,
+                    null,
+                    null,
                     true
                 )
             );

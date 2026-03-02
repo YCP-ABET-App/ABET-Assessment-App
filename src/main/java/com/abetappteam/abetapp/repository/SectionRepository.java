@@ -33,15 +33,15 @@ public interface SectionRepository  extends JpaRepository<Section, Long>
     long countBySemesterId(int semesterId);
 
     // ========== Search Queries ==========
-    @Query("SELECT s FROM Section s " +
-            "INNER JOIN SectionProgram sp ON s.id = sp.sectionId " +
-            "INNER JOIN SectionUser su ON s.id = su.sectionId " +
-            "WHERE s.id = :#{#request.id()} " +
-            "AND s.semesterId = :#{#request.semesterId()} " +
-            "AND s.courseId = :#{#request.courseId()} " +
-            "AND sp.programId = :#{#request.programId()} " +
-            "AND su.userId = :#{#request.userId()}")
-    List<Section> searchSections(@Param("request")SectionSearchRequest request);
+    @Query("SELECT DISTINCT s FROM Section s " +
+       "LEFT JOIN SectionProgram sp ON s.id = sp.sectionId " +
+       "LEFT JOIN SectionUser su ON s.id = su.sectionId " +
+       "WHERE (:#{#request.id()} IS NULL OR s.id = :#{#request.id()}) " +
+       "AND (:#{#request.semesterId()} IS NULL OR s.semesterId = :#{#request.semesterId()}) " +
+       "AND (:#{#request.courseId()} IS NULL OR s.courseId = :#{#request.courseId()}) " +
+       "AND (:#{#request.programId()} IS NULL OR sp.programId = :#{#request.programId()}) " +
+       "AND (:#{#request.userId()} IS NULL OR su.userId = :#{#request.userId()})")
+    List<Section> searchSections(@Param("request") SectionSearchRequest request);
 
     @Query("SELECT s FROM Section s WHERE s.sectionNumber = :sectionNumber AND s.semesterId = :semesterId AND s.courseId = :courseId")
     boolean existsByCourseNumberAndSemesterIdAndCourseId(@Param("sectionNumber") String sectionNumber, @Param("semesterId") int semesterId, @Param("courseId") int courseId);

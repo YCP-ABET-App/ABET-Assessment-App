@@ -39,6 +39,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     List<Course> findActiveCoursesByProgramId(@Param("programId") Long programId);
 
 @Query("SELECT c FROM Course c WHERE " +
+           "(:id IS NULL OR c.id = :id) AND" +
            "(:courseCode IS NULL OR c.courseCode = :courseCode) AND " +
            "(:courseName IS NULL OR LOWER(c.courseName) LIKE LOWER(CONCAT('%', :courseName, '%'))) AND " +
            "(:courseDescription IS NULL OR LOWER(c.courseDescription) LIKE LOWER(CONCAT('%', :courseDescription, '%'))) AND " +
@@ -46,12 +47,12 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
            "(:mirrorId IS NULL OR c.mirrorId = :mirrorId) AND " +
            "(:isActive IS NULL OR c.isActive = :isActive)")
     List<Course> searchCourse(
-            @Param("id") int id,
+            @Param("id") Integer id,
             @Param("courseCode") String courseCode,
             @Param("courseName") String courseName,
             @Param("courseDescription") String courseDescription,
-            @Param("studentCount") int studentCount,
-            @Param("mirrorId") int mirrorId,
+            @Param("studentCount") Integer studentCount,
+            @Param("mirrorId") Integer mirrorId,
             @Param("isActive") boolean isActive
     );
     
