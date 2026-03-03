@@ -15,17 +15,14 @@ interface Instructor {
 }
 
 const section_id = ref(NaN);
-const course_obj = ref({
-  id: NaN,
+//Contains data from both the backend section and course objects
+const section_obj = ref({
+  course_id: NaN,
+  semester_id: NaN,
   course_code: '',
   course_name: '',
   course_description: '',
-  semester_id: '',
-  created_at: '',
-  is_active: false
-});
-const section_obj = ref({
-
+  section_number: ''
 })
 const semester_name = ref('');
 const instructors = ref<Instructor[]>([]);
@@ -34,36 +31,21 @@ const indicator_ids = ref([]);
 // Modal state
 const selectedInstructor = ref<Instructor | null>(null);
 
-//--------TEST DATA--------
-/*
-const course_id = ref(1);
-const course_obj = ref({
-    id: 1,
-    course_code: 'CS101',
-    course_name: 'Fundamentals of Computer Science I',
-    course_description: 'Basic programming concepts and problem solving',
-    semester_id: '1',
-    created_at: '2025-11-10T10:16:56.456221',
-    is_active: true
-});
-const semester_name = ref('Fall 2025');
-const instructor_ids = ref([1, 2]);
-const indicator_ids = ref([1,2])
-*/
-//--------------------------
-
 async function fetch_course_section_data() {
   try {
-    const { data } = await api.get(`/sections/${section_id.value}`);
-    console.log(data)
-    course_obj.value = {
-      id: data.data.id,
-      course_code: data.data.courseCode,
-      course_name: data.data.courseName,
-      course_description: data.data.courseDescription,
-      semester_id: data.data.semesterId,
-      created_at: data.data.createdAt,
-      is_active: data.data.isActive
+    const { data } = await api.get(`/section`, {
+      params: {
+        "id": section_id.value
+      }
+    });
+
+    section_obj.value = {
+      course_code: data.data.courses[0].courseCode,
+      course_name: data.data.courses[0].courseName,
+      course_description: data.data.courses[0].courseDescription,
+      semester_id: data.data.sections[0].semesterId,
+      course_id: data.data.sections[0].courseId,
+      section_number: data.data.sections[0].sectionNumber
     }
   } catch (error) {
     console.error('Error fetching or parsing course data:', error);
@@ -73,8 +55,8 @@ async function fetch_course_section_data() {
 
 async function fetch_semester_data() {
   try {
-    const { data } = await api.get(`/semesters/${course_obj.value.semester_id}`);
-    semester_name.value = `${data.data.name}`
+    const { data } = await api.get(`/semesters`, {params:{"id": section_obj.value.semester_id}});
+    semester_name.value = `${data.data[0].name}`
   } catch (error) {
     console.error('Error fetching or parsing course data:', error);
   }
@@ -140,7 +122,7 @@ function closeInspectModal() {
 async function initialize() {
   section_id.value = parseInt(route.params.section_id as string, 10)
 
-  //Fetch Course data
+  //Fetch Section data
   await fetch_course_section_data();
 
   //Fetch Semester data
@@ -164,7 +146,7 @@ initialize();
     <div class="page-header">
       <div class="header-content">
         <h2 class="course-title">
-          {{ course_obj.course_code }} — {{ course_obj.course_name }}
+          {{ section_obj.course_code }} — {{ section_obj.course_name }}
         </h2>
 
         <p class="subtitle">
@@ -175,7 +157,7 @@ initialize();
 
     <!-- Description -->
     <p class="course-description">
-      {{ course_obj.course_description }}
+      {{ section_obj.course_description }}
     </p>
 
     <!-- Instructors -->
