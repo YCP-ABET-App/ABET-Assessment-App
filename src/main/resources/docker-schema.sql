@@ -29,19 +29,19 @@ CREATE TABLE users (
     is_active BOOLEAN DEFAULT TRUE NOT NULL
     );
 
-    -- Program table
-    CREATE TABLE program (
-     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-     program_name VARCHAR(255) NOT NULL,
-     institution VARCHAR(255) NOT NULL,
+-- Program table
+CREATE TABLE program (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    program_name VARCHAR(255) NOT NULL,
+    institution VARCHAR(255) NOT NULL,
     -- From BaseEntity
-     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-     version BIGINT DEFAULT 0,
-     deleted BOOLEAN DEFAULT FALSE NOT NULL,
-     deleted_at TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    version BIGINT DEFAULT 0,
+    deleted BOOLEAN DEFAULT FALSE NOT NULL,
+    deleted_at TIMESTAMP NULL,
     -- Program-specific
-     is_active BOOLEAN DEFAULT TRUE NOT NULL
+    is_active BOOLEAN DEFAULT TRUE NOT NULL
 );
 
 -- ProgramUser table
@@ -165,7 +165,7 @@ CREATE TABLE section (
 -- SectionUser table
 CREATE TABLE section_user (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    program_user_id BIGINT NOT NULL,
+    user_id BIGINT NOT NULL,
     section_id BIGINT NOT NULL,
     -- From BaseEntity
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
@@ -175,7 +175,7 @@ CREATE TABLE section_user (
     deleted_at TIMESTAMP NULL,
     -- CourseInstructor-specific
     is_active BOOLEAN DEFAULT TRUE NOT NULL,
-    FOREIGN KEY (program_user_id) REFERENCES program_user(id),
+    FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (section_id) REFERENCES section(id)
 );
 
@@ -227,12 +227,12 @@ CREATE TABLE measure (
 -----------------------------------------
 -- USERS (Instructors and Admins)
 -----------------------------------------
-INSERT INTO users (email, password_hash, name_first, name_last, name_title)
+INSERT INTO users (id, email, password_hash, name_first, name_last, name_title)
 VALUES
-    ('david.babcock@university.edu', '$2a$10$k3ohvw57L0aMryaJpFAet.hfSjsWiXalzsVouNQGdsfI48uCjgIEa', 'David', 'Babcock', 'Dr.'),
-    ('james.moscola@university.edu', '$2a$10$k3ohvw57L0aMryaJpFAet.hfSjsWiXalzsVouNQGdsfI48uCjgIEa', 'James', 'Moscola', 'Dr.'),
-    ('dean.zeller@university.edu', '$2a$10$k3ohvw57L0aMryaJpFAet.hfSjsWiXalzsVouNQGdsfI48uCjgIEa', 'Dean', 'Zeller', 'Dr.'),
-    ('admin@university.edu', '$2a$10$NyeKnPTpI8OxJmYnCHanceO/hPFw8lfk/ZQFWBqq7rB.cl9H6vwwq', 'System', 'Administrator', NULL);
+    (1, 'david.babcock@university.edu', '$2a$10$k3ohvw57L0aMryaJpFAet.hfSjsWiXalzsVouNQGdsfI48uCjgIEa', 'David', 'Babcock', 'Dr.'),
+    (2, 'james.moscola@university.edu', '$2a$10$k3ohvw57L0aMryaJpFAet.hfSjsWiXalzsVouNQGdsfI48uCjgIEa', 'James', 'Moscola', 'Dr.'),
+    (3, 'dean.zeller@university.edu', '$2a$10$k3ohvw57L0aMryaJpFAet.hfSjsWiXalzsVouNQGdsfI48uCjgIEa', 'Dean', 'Zeller', 'Dr.'),
+    (4, 'admin@university.edu', '$2a$10$NyeKnPTpI8OxJmYnCHanceO/hPFw8lfk/ZQFWBqq7rB.cl9H6vwwq', 'System', 'Administrator', NULL);
 
 ------------------------------------------------------------
 -- PROGRAMS
@@ -358,7 +358,7 @@ VALUES
 ------------------------------------------------------------
 -- SECTION_USER (Assign instructors to sections)
 ------------------------------------------------------------
-INSERT INTO section_user (id, program_user_id, section_id, is_active)
+INSERT INTO section_user (id, user_id, section_id, is_active)
 VALUES
     (1, 1, 1, TRUE),  -- Babcock teaches CS 101 section 1
     (2, 3, 2, TRUE),  -- Zeller teaches CS 101 section 2
