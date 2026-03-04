@@ -45,7 +45,7 @@ async function fetch_course_section_data() {
       course_description: data.data.courses[0].courseDescription,
       semester_id: data.data.sections[0].semesterId,
       course_id: data.data.sections[0].courseId,
-      section_number: data.data.sections[0].sectionNumber
+      section_number: "Section " + data.data.sections[0].sectionNumber
     }
   } catch (error) {
     console.error('Error fetching or parsing course data:', error);
@@ -64,8 +64,11 @@ async function fetch_semester_data() {
 
 async function fetch_instructor_ids() {
   try {
-    const { data } = await api.get(`/courses/${section_id.value}/instructors`);
-    const instructorIds = data;
+    const { data } = await api.get(`/section-user`, {params:{"sectionId": section_id.value}});
+    let instructorIds: number[] = [];
+    for(const entry of data.data){
+      instructorIds.push(entry.userId)
+    }
 
     // Fetch full instructor details for each ID
     const instructorPromises = instructorIds.map(async (id: number) => {
@@ -145,9 +148,13 @@ initialize();
     <!-- Header -->
     <div class="page-header">
       <div class="header-content">
-        <h2 class="course-title">
-          {{ section_obj.course_code }} — {{ section_obj.course_name }}
-        </h2>
+        <div class="course-title">
+          <div id="codes">
+            <span id="course-code">{{ section_obj.course_code }}</span>
+            <span id="section-code">{{ section_obj.section_number }}</span>
+          </div>
+          <div id="course-name">{{ section_obj.course_name }}</div>
+        </div>
 
         <p class="subtitle">
           {{ semester_name }}
@@ -274,10 +281,31 @@ initialize();
 }
 
 .course-title {
-  margin: 0;
   color: var(--color-text-primary);
   font-size: 2rem;
   font-weight: 700;
+}
+
+#course-name {
+  margin-bottom: 1rem;
+  color: var(--color-text-primary);
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+#course-code {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+#section-code {
+  color: var(--color-text-secondary);
+  font-size: 1rem;
+  font-weight: 700;
+  margin-left: 1rem;
+  margin-bottom: 0rem;
 }
 
 .subtitle {
