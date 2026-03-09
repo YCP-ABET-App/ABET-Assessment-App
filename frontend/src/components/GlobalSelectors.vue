@@ -91,7 +91,6 @@ watch(localProgramId, async (id) => {
     params: requestObj
   });
 
-  console.log(res.data.data)
 
   semesters.value = res.data.data ?? [];
 
