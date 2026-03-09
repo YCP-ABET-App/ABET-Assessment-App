@@ -1,10 +1,5 @@
 {
   "dependencies": {
-    "jspdf": "^3.0.4",
-    "jspdf-autotable": "^5.0.2",
     "node": "^25.1.0"
-  },
-  "devDependencies": {
-    "@vue/devtools": "^8.0.6"
   }
 }
