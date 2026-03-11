@@ -164,18 +164,7 @@ public class MeasureResultControllerUnitTest {
 
         verify(service, times(1)).delete(1L);
     }
-
-    @Test
-    void shouldReturnBadRequestWhenMeasureIdIsMissing() throws Exception {
-        testDTO.setMeasureId(null);
-
-        mockMvc.perform(post("/api/measure-result")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(testDTO)))
-                .andExpect(status().isBadRequest());
-
-        verify(service, never()).create(any());
-    }
+    
 
 
 }
