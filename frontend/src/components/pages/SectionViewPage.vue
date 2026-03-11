@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import type { Ref } from 'vue';
 import { ref } from 'vue';
 import { useRoute } from 'vue-router';
 import api from '@/api';
@@ -26,7 +27,7 @@ const section_obj = ref({
 })
 const semester_name = ref('');
 const instructors = ref<Instructor[]>([]);
-const indicator_ids = ref([]);
+const indicator_ids: Ref<number[]> = ref([]);
 
 // Modal state
 const selectedInstructor = ref<Instructor | null>(null);
@@ -95,8 +96,10 @@ async function fetch_instructor_ids() {
 
 async function fetch_indicator_ids() {
   try {
-    const { data } = await api.get(`/courses/${section_id.value}/indicators`);
-    indicator_ids.value = data
+    const { data } = await api.get(`/course-indicators/by-course/${section_obj.value.course_id}`);
+    for (const entry of data.data){
+      indicator_ids.value.push(entry.indicatorId);
+    }
   } catch (error) {
     console.error('Error fetching or parsing course data:', error);
   }
