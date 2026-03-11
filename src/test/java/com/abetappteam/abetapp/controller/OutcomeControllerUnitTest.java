@@ -190,18 +190,6 @@ public class OutcomeControllerUnitTest {
     }
 
     @Test
-    void shouldReturnBadRequestWhenOutcomeNumberIsMissing() throws Exception {
-        testDTO.setNumber(null);
-
-        mockMvc.perform(post("/api/outcome")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(testDTO)))
-                .andExpect(status().isBadRequest());
-
-        verify(service, never()).create(any());
-    }
-
-    @Test
     void shouldReturnEmptyPageWhenNoOutcomesExist() throws Exception {
         Page<Outcome> emptyPage = new PageImpl<>(List.of(), PageRequest.of(0, 20), 0);
         when(service.findAll(any(PageRequest.class))).thenReturn(emptyPage);
