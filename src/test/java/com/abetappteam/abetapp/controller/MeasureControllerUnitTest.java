@@ -173,6 +173,18 @@ public class MeasureControllerUnitTest {
 //    }
 
     @Test
+    void shouldReturnBadRequestWhenDescriptionIsMissing() throws Exception {
+        testDTO.setDescription(null); // Force a validation error
+
+        mockMvc.perform(post("/api/measure")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(testDTO)))
+                .andExpect(status().isBadRequest());
+
+        verify(service, never()).create(any());
+    }
+
+    @Test
     void shouldUpdateMeasure() throws Exception {
         // Given
         when(service.update(eq(1L), any(MeasureDTO.class))).thenReturn(testMeasure);

@@ -184,4 +184,23 @@ public class CourseIndicatorControllerUnitTest {
 
         verify(courseIndicatorService).countActiveIndicatorsByCourse(1L);
     }
+
+    @Test
+    void shouldReturnBadRequestForInvalidIdFormat() throws Exception {
+        mockMvc.perform(get("/api/course-indicators/-5"))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(courseIndicatorService);
+    }
+
+    @Test
+    void shouldReturnEmptyListWhenNoIndicatorsMatch() throws Exception {
+        when(courseIndicatorService.searchCourseIndicators(any())).thenReturn(List.of());
+
+        mockMvc.perform(get("/api/course-indicators")
+                        .param("courseId", "999"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data").isArray())
+                .andExpect(jsonPath("$.data").isEmpty());
+    }
 }
