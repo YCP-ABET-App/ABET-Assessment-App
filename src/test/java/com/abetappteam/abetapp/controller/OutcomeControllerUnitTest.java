@@ -187,5 +187,28 @@ public class OutcomeControllerUnitTest {
             .andExpect(jsonPath("$.message").value("Outcomes found"))
             .andExpect(jsonPath("$.data.[0].number").value(1))
             .andExpect(jsonPath("$.data.[0].semesterId").value(1l));
-    } 
+    }
+
+    @Test
+    void shouldReturnBadRequestWhenOutcomeNumberIsMissing() throws Exception {
+        testDTO.setNumber(null);
+
+        mockMvc.perform(post("/api/outcome")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(testDTO)))
+                .andExpect(status().isBadRequest());
+
+        verify(service, never()).create(any());
+    }
+
+    @Test
+    void shouldReturnEmptyPageWhenNoOutcomesExist() throws Exception {
+        Page<Outcome> emptyPage = new PageImpl<>(List.of(), PageRequest.of(0, 20), 0);
+        when(service.findAll(any(PageRequest.class))).thenReturn(emptyPage);
+
+        mockMvc.perform(get("/api/outcome")
+                        .param("page", "99"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isEmpty());
+    }
 }
