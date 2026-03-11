@@ -20,17 +20,26 @@ interface Semester {
   isCurrent: boolean;
 }
 
+interface Course {
+  id: number;
+  courseName: string;
+  courseDescription: string;
+  isActive: boolean;
+}
+
 // Store refs
 const userStore = useUserStore();
-const { currentProgramId, currentSemesterId } = storeToRefs(userStore);
+const { currentProgramId, currentSemesterId, currentCourseId } = storeToRefs(userStore);
 
 // Local state
 const programs = ref<Program[]>([]);
 const semesters = ref<Semester[]>([]);
+const courses = ref<Course[]>([]);
 const loading = ref(false);
 
 const localProgramId = ref<number | null>(null);
 const localSemesterId = ref<number | null>(null);
+const localCourseId = ref<number | null>(null);
 
 // Option lists for BaseSelect
 const programOptions = computed(() =>
@@ -44,6 +53,13 @@ const semesterOptions = computed(() =>
   semesters.value.map(s => ({
     label: s.name,
     value: s.id
+  }))
+);
+
+const courseOptions = computed(() =>
+  courses.value.map(c => ({
+    label: c.courseName,
+    value: c.id
   }))
 );
 
@@ -62,6 +78,29 @@ async function loadPrograms() {
     localProgramId.value =
       currentProgramId.value ||
       programs.value[0]?.id ||
+      null;
+
+  } finally {
+    loading.value = false;
+  }
+}
+
+async function loadCourses() {
+  loading.value = true;
+  console.log("Reloading courses...")
+  try{
+    const res = await api.get("/section", { params:
+        {
+          semesterId: currentSemesterId.value
+        }
+    });
+
+    courses.value = res.data.data.courses ?? [];
+
+    localCourseId.value =
+      currentCourseId.value ||
+      courses.value.find(s => s.isActive)?.id ||
+      courses.value[0]?.id ||
       null;
 
   } finally {
@@ -102,31 +141,49 @@ watch(localProgramId, async (id) => {
 });
 
 // When semester changes → update store
-watch(localSemesterId, (id) => {
+watch(localSemesterId, async (id) => {
+  console.log(id)
+  if (!id) return;
+
   currentSemesterId.value = id;
   userStore.saveToStorage();
+  await loadCourses();
 });
+
+// When course changes → update store
+watch(localCourseId, (id) => {
+  currentCourseId.value = id;
+  userStore.saveToStorage();
+})
 </script>
 
 <template>
   <div class="selectors">
-    <div class="selector-row" v-if="!loading">
+    <div v-if="!loading">
+      <div class="selector-row">
+        <BaseSelect
+          label="Program"
+          :options="programOptions"
+          v-model="localProgramId"
+          placeholder="Select a program"
+        />
 
-      <BaseSelect
-        label="Program"
-        :options="programOptions"
-        v-model="localProgramId"
-        placeholder="Select a program"
-      />
+        <BaseSelect
+          v-if="semesters.length > 0"
+          label="Semester"
+          :options="semesterOptions"
+          v-model="localSemesterId"
+          placeholder="Select a semester"
+        />
 
-      <BaseSelect
-        v-if="semesters.length > 0"
-        label="Semester"
-        :options="semesterOptions"
-        v-model="localSemesterId"
-        placeholder="Select a semester"
-      />
-
+        <BaseSelect
+          v-if="courses.length > 0"
+          label="Course"
+          :options="courseOptions"
+          v-model="localCourseId"
+          placeholder="Select a course"
+        />
+      </div>
     </div>
   </div>
 </template>

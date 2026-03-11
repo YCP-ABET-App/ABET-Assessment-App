@@ -99,14 +99,15 @@ async function loadCourseMeasures(courseId: number): Promise<Measure[]> {
 async function loadInstructorCourses() {
   if (!programUserId.value || !semesterId.value) return;
 
-  const cRes = await api.get("/courses/instructor/semester", {
+  const cRes = await api.get("/section", {
     params: {
-      programUserId: programUserId.value,
       semesterId: semesterId.value
     },
   });
 
   const rawCourses = cRes.data.data as RawCourse[];
+
+  console.log(rawCourses)
 
   const results: InstructorDashboardCourse[] = [];
 
