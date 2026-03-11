@@ -1,21 +1,24 @@
 package com.abetappteam.abetapp.controller;
 
 import com.abetappteam.abetapp.dto.ApiResponse;
+import com.abetappteam.abetapp.dto.PagedResponse;
 import com.abetappteam.abetapp.dto.SemesterDTO;
 import com.abetappteam.abetapp.entity.Requests.Semester.SemesterSearchRequest;
 import com.abetappteam.abetapp.entity.Semester;
 import com.abetappteam.abetapp.entity.Semester.SemesterStatus;
+import com.abetappteam.abetapp.entity.Semester.SemesterType;
 import com.abetappteam.abetapp.service.SemesterService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
-
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Controller for Semester entity operations
@@ -29,18 +32,8 @@ public class SemesterController extends BaseController {
     private SemesterService semesterService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<Semester>>> searchSemesters(
-        @RequestParam(required = false) Integer id,
-        @RequestParam(required = false) String status,
-        @RequestParam(required = false) Integer academicYear,
-        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
-        @RequestParam(required = false) String type,
-        @RequestParam(required = false) String name,
-        @RequestParam(required = false) String code
-    ) {
-        SemesterSearchRequest request = new SemesterSearchRequest(id, status, academicYear, startDate, endDate, type, name, code);
-        logger.info("Fetching semesters for request: {}", request);
+    public ResponseEntity<ApiResponse<List<Semester>>> getAllSemesters(@ModelAttribute SemesterSearchRequest request) {
+        logger.info("Fetching all semesters");
         List<Semester> semesters = semesterService.searchSemesters(request);
         return success(semesters, "Semesters retrieved successfully");
     }
