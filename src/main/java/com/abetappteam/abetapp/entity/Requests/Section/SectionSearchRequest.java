@@ -1,7 +1,9 @@
 package com.abetappteam.abetapp.entity.Requests.Section;
 
+import java.util.List;
+
 public record SectionSearchRequest(
-        Integer id,
+        List<Integer> ids,
         Integer semesterId,
         Integer programId,
         Integer courseId,

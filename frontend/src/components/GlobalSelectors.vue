@@ -20,6 +20,7 @@ interface Semester {
   isCurrent: boolean;
 }
 
+
 // Store refs
 const userStore = useUserStore();
 const { currentProgramId, currentSemesterId } = storeToRefs(userStore);
@@ -47,6 +48,7 @@ const semesterOptions = computed(() =>
   }))
 );
 
+
 // Load programs on mount
 onMounted(async () => {
   await loadPrograms();
@@ -63,6 +65,21 @@ async function loadPrograms() {
       currentProgramId.value ||
       programs.value[0]?.id ||
       null;
+
+  } finally {
+    loading.value = false;
+  }
+}
+
+async function loadCourses() {
+  loading.value = true;
+  console.log("Reloading courses...")
+  try{
+    const res = await api.get("/section", { params:
+        {
+          semesterId: currentSemesterId.value
+        }
+    });
 
   } finally {
     loading.value = false;
@@ -102,31 +119,36 @@ watch(localProgramId, async (id) => {
 });
 
 // When semester changes → update store
-watch(localSemesterId, (id) => {
+watch(localSemesterId, async (id) => {
+  console.log(id)
+  if (!id) return;
+
   currentSemesterId.value = id;
   userStore.saveToStorage();
+  await loadCourses();
 });
+
 </script>
 
 <template>
   <div class="selectors">
-    <div class="selector-row" v-if="!loading">
+    <div v-if="!loading">
+      <div class="selector-row">
+        <BaseSelect
+          label="Program"
+          :options="programOptions"
+          v-model="localProgramId"
+          placeholder="Select a program"
+        />
 
-      <BaseSelect
-        label="Program"
-        :options="programOptions"
-        v-model="localProgramId"
-        placeholder="Select a program"
-      />
-
-      <BaseSelect
-        v-if="semesters.length > 0"
-        label="Semester"
-        :options="semesterOptions"
-        v-model="localSemesterId"
-        placeholder="Select a semester"
-      />
-
+        <BaseSelect
+          v-if="semesters.length > 0"
+          label="Semester"
+          :options="semesterOptions"
+          v-model="localSemesterId"
+          placeholder="Select a semester"
+        />
+      </div>
     </div>
   </div>
 </template>

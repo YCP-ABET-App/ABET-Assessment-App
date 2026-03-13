@@ -36,15 +36,15 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @Query("SELECT DISTINCT c FROM Course c JOIN CourseInstructor ci ON c.id = ci.courseId JOIN ProgramUser pu ON pu.id = ci.programUserId WHERE pu.programId = :programId AND pu.isActive = true AND c.isActive = true")
     List<Course> findActiveCoursesByProgramId(@Param("programId") Long programId);
 
-@Query("SELECT c FROM Course c WHERE " +
-           "(:id IS NULL OR c.id = :id) AND" +
+    @Query("SELECT DISTINCT c FROM Course c WHERE " +
+           "(:id IS NULL OR c.id = :id) AND " +
            "(:courseCode IS NULL OR c.courseCode = :courseCode) AND " +
            "(:courseName IS NULL OR LOWER(c.courseName) LIKE LOWER(CONCAT('%', :courseName, '%'))) AND " +
            "(:courseDescription IS NULL OR LOWER(c.courseDescription) LIKE LOWER(CONCAT('%', :courseDescription, '%'))) AND " +
            "(:studentCount IS NULL OR c.studentCount = :studentCount) AND " +
            "(:mirrorId IS NULL OR c.mirrorId = :mirrorId) AND " +
            "(:isActive IS NULL OR c.isActive = :isActive)")
-    List<Course> searchCourse(
+        List<Course> searchCourse(
             @Param("id") Integer id,
             @Param("courseCode") String courseCode,
             @Param("courseName") String courseName,
@@ -52,7 +52,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             @Param("studentCount") Integer studentCount,
             @Param("mirrorId") Integer mirrorId,
             @Param("isActive") boolean isActive
-    );
+        );
     
     @Query("SELECT c FROM Course c JOIN CourseInstructor ci ON c.id = ci.courseId WHERE ci.programUserId = :programUserId")
     List<Course> findCoursesByProgramUserId(@Param("programUserId") Long programUserId);
