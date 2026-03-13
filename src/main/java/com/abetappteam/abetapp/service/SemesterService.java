@@ -37,7 +37,7 @@ public class SemesterService extends BaseService<Semester, Long, SemesterReposit
     }
 
     @Transactional
-    public List<Semester> getAllSemesters(SemesterSearchRequest request) {
+    public List<Semester> searchSemesters(SemesterSearchRequest request) {
         logger.info("Searching semesters with request: {}", request);
         return repository.searchSemesters(
                 request.id(),

@@ -69,13 +69,16 @@ public class CourseService extends BaseService<Course, Long, CourseRepository> {
     }
 
     @Transactional(readOnly = true)
-    public Page<Course> searchCourse(CourseSearchRequest request, Pageable pageable) {
+    public List<Course> searchCourse(CourseSearchRequest request) {
         logger.info("Service: searching courses with request: {}", request);
         return repository.searchCourse(
+                request.id(),
                 request.courseCode(),
                 request.courseName(),
                 request.courseDescription(),
-                pageable
+                request.student_count(),
+                request.mirrorId(),
+                request.isActive()
         );
     }
 

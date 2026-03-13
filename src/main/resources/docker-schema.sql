@@ -29,19 +29,19 @@ CREATE TABLE users (
     is_active BOOLEAN DEFAULT TRUE NOT NULL
     );
 
-    -- Program table
-    CREATE TABLE program (
-     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-     program_name VARCHAR(255) NOT NULL,
-     institution VARCHAR(255) NOT NULL,
+-- Program table
+CREATE TABLE program (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    program_name VARCHAR(255) NOT NULL,
+    institution VARCHAR(255) NOT NULL,
     -- From BaseEntity
-     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-     version BIGINT DEFAULT 0,
-     deleted BOOLEAN DEFAULT FALSE NOT NULL,
-     deleted_at TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    version BIGINT DEFAULT 0,
+    deleted BOOLEAN DEFAULT FALSE NOT NULL,
+    deleted_at TIMESTAMP NULL,
     -- Program-specific
-     is_active BOOLEAN DEFAULT TRUE NOT NULL
+    is_active BOOLEAN DEFAULT TRUE NOT NULL
 );
 
 -- ProgramUser table
@@ -133,7 +133,6 @@ CREATE TABLE course (
     course_code VARCHAR(20) NOT NULL,
     course_name VARCHAR(255) NOT NULL,
     course_description TEXT NOT NULL,
-    semester_id BIGINT NOT NULL,
     student_count INT NULL,
     -- From BaseEntity
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
@@ -142,15 +141,32 @@ CREATE TABLE course (
     deleted BOOLEAN DEFAULT FALSE NOT NULL,
     deleted_at TIMESTAMP NULL,
     -- Course-specific
-    is_active BOOLEAN DEFAULT TRUE NOT NULL,
-    FOREIGN KEY (semester_id) REFERENCES semester(id),
-    CONSTRAINT unique_course_per_semester UNIQUE (course_code, semester_id));
+    is_active BOOLEAN DEFAULT TRUE NOT NULL
+);
 
--- CourseInstructor table
-CREATE TABLE course_instructor (
+-- Section table
+CREATE TABLE section (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    program_user_id BIGINT NOT NULL,
+    section_number VARCHAR(50) NOT NULL,
     course_id BIGINT NOT NULL,
+    semester_id BIGINT NOT NULL,
+    -- From BaseEntity
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    version BIGINT DEFAULT 0,
+    deleted BOOLEAN DEFAULT FALSE NOT NULL,
+    deleted_at TIMESTAMP NULL,
+    -- Section-specific
+    is_active BOOLEAN DEFAULT TRUE NOT NULL,
+    FOREIGN KEY (course_id) REFERENCES course(id),
+    FOREIGN KEY (semester_id) REFERENCES semester(id)
+);
+
+-- SectionUser table
+CREATE TABLE section_user (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    section_id BIGINT NOT NULL,
     -- From BaseEntity
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
@@ -159,8 +175,8 @@ CREATE TABLE course_instructor (
     deleted_at TIMESTAMP NULL,
     -- CourseInstructor-specific
     is_active BOOLEAN DEFAULT TRUE NOT NULL,
-    FOREIGN KEY (program_user_id) REFERENCES program_user(id),
-    FOREIGN KEY (course_id) REFERENCES course(id)
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (section_id) REFERENCES section(id)
 );
 
 -- CourseIndicator table
@@ -211,12 +227,12 @@ CREATE TABLE measure (
 -----------------------------------------
 -- USERS (Instructors and Admins)
 -----------------------------------------
-INSERT INTO users (email, password_hash, name_first, name_last, name_title)
+INSERT INTO users (id, email, password_hash, name_first, name_last, name_title)
 VALUES
-    ('david.babcock@university.edu', '$2a$10$k3ohvw57L0aMryaJpFAet.hfSjsWiXalzsVouNQGdsfI48uCjgIEa', 'David', 'Babcock', 'Dr.'),
-    ('james.moscola@university.edu', '$2a$10$k3ohvw57L0aMryaJpFAet.hfSjsWiXalzsVouNQGdsfI48uCjgIEa', 'James', 'Moscola', 'Dr.'),
-    ('dean.zeller@university.edu', '$2a$10$k3ohvw57L0aMryaJpFAet.hfSjsWiXalzsVouNQGdsfI48uCjgIEa', 'Dean', 'Zeller', 'Dr.'),
-    ('admin@university.edu', '$2a$10$NyeKnPTpI8OxJmYnCHanceO/hPFw8lfk/ZQFWBqq7rB.cl9H6vwwq', 'System', 'Administrator', NULL);
+    (1, 'david.babcock@university.edu', '$2a$10$k3ohvw57L0aMryaJpFAet.hfSjsWiXalzsVouNQGdsfI48uCjgIEa', 'David', 'Babcock', 'Dr.'),
+    (2, 'james.moscola@university.edu', '$2a$10$k3ohvw57L0aMryaJpFAet.hfSjsWiXalzsVouNQGdsfI48uCjgIEa', 'James', 'Moscola', 'Dr.'),
+    (3, 'dean.zeller@university.edu', '$2a$10$k3ohvw57L0aMryaJpFAet.hfSjsWiXalzsVouNQGdsfI48uCjgIEa', 'Dean', 'Zeller', 'Dr.'),
+    (4, 'admin@university.edu', '$2a$10$NyeKnPTpI8OxJmYnCHanceO/hPFw8lfk/ZQFWBqq7rB.cl9H6vwwq', 'System', 'Administrator', NULL);
 
 ------------------------------------------------------------
 -- PROGRAMS
@@ -313,30 +329,46 @@ VALUES
 ------------------------------------------------------------
 -- COURSES (Based on Summary Report)
 ------------------------------------------------------------
-INSERT INTO course (id, course_code, course_name, course_description, semester_id, student_count, is_active)
+INSERT INTO course (id, course_code, course_name, course_description, student_count, is_active)
 VALUES
-    (1, 'CS 101', 'Fundamentals of Computer Science I', 'Introduction to programming and problem solving', 2, 44, TRUE),
-    (2, 'CS 201', 'Fundamentals of Computer Science II', 'Data structures and algorithms', 2, 28, TRUE),
-    (3, 'CS 330', 'Introduction to Networks', 'Computer networking fundamentals', 2, 16, TRUE),
-    (4, 'CS 335', 'Cybersecurity', 'Security principles and practices', 2, 13, TRUE),
-    (5, 'CS 340', 'Programming Language Design', 'Compiler design and implementation', 2, 15, TRUE),
-    (6, 'CS 360', 'Analysis of Algorithms', 'Algorithm design and analysis', 2, 15, TRUE),
-    (7, 'CS 400', 'Software Engineering', 'Software development lifecycle and team projects', 2, 27, TRUE),
-    (8, 'CS 420', 'Operating Systems', 'Operating system concepts and programming', 2, 25, TRUE);
+    (1, 'CS 101', 'Fundamentals of Computer Science I', 'Introduction to programming and problem solving', 44, TRUE),
+    (2, 'CS 201', 'Fundamentals of Computer Science II', 'Data structures and algorithms', 28, TRUE),
+    (3, 'CS 330', 'Introduction to Networks', 'Computer networking fundamentals', 16, TRUE),
+    (4, 'CS 335', 'Cybersecurity', 'Security principles and practices', 13, TRUE),
+    (5, 'CS 340', 'Programming Language Design', 'Compiler design and implementation', 15, TRUE),
+    (6, 'CS 360', 'Analysis of Algorithms', 'Algorithm design and analysis', 15, TRUE),
+    (7, 'CS 400', 'Software Engineering', 'Software development lifecycle and team projects', 27, TRUE),
+    (8, 'CS 420', 'Operating Systems', 'Operating system concepts and programming', 25, TRUE);
 
 ------------------------------------------------------------
--- COURSE_INSTRUCTOR (Assign instructors to courses)
+-- SECTIONS (Based on Summary Report)
 ------------------------------------------------------------
-INSERT INTO course_instructor (id, program_user_id, course_id, is_active)
+INSERT INTO section (id, section_number, course_id, semester_id, is_active)
 VALUES
-    (1, 1, 1, TRUE),  -- Babcock teaches CS 101
-    (2, 1, 2, TRUE),  -- Babcock teaches CS 201
-    (3, 2, 3, TRUE),  -- Moscola teaches CS 330
-    (4, 2, 4, TRUE),  -- Moscola teaches CS 335
-    (5, 3, 5, TRUE),  -- Zeller teaches CS 340
-    (6, 1, 6, TRUE),  -- Babcock teaches CS 360
-    (7, 3, 7, TRUE),  -- Zeller teaches CS 400
-    (8, 2, 8, TRUE);  -- Moscola teaches CS 420
+    (1, '1', 1, 2, TRUE), -- CS 101 section 1
+    (2, '2', 1, 2, TRUE), -- CS 101 section 2
+    (3, '1', 2, 2, TRUE), -- CS 201 section 1
+    (4, '1', 3, 2, TRUE), -- CS 330 section 1
+    (5, '1', 4, 2, TRUE), -- CS 335 section 1
+    (6, '1', 5, 2, TRUE), -- CS 340 section 1
+    (7, '1', 6, 2, TRUE), -- CS 360 section 1
+    (8, '1', 7, 2, TRUE), -- CS 400 section 1
+    (9, '1', 8, 2, TRUE); -- CS 420 section 1
+
+------------------------------------------------------------
+-- SECTION_USER (Assign instructors to sections)
+------------------------------------------------------------
+INSERT INTO section_user (id, user_id, section_id, is_active)
+VALUES
+    (1, 1, 1, TRUE),  -- Babcock teaches CS 101 section 1
+    (2, 3, 2, TRUE),  -- Zeller teaches CS 101 section 2
+    (3, 1, 3, TRUE),  -- Babcock teaches CS 201
+    (4, 2, 4, TRUE),  -- Moscola teaches CS 330
+    (5, 2, 5, TRUE),  -- Moscola teaches CS 335
+    (6, 3, 6, TRUE),  -- Zeller teaches CS 340
+    (7, 1, 7, TRUE),  -- Babcock teaches CS 360
+    (8, 3, 8, TRUE),  -- Zeller teaches CS 400
+    (9, 2, 9, TRUE);  -- Moscola teaches CS 420
 
 ------------------------------------------------------------
 -- COURSE_INDICATOR (Map courses to performance indicators)

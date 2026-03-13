@@ -3,9 +3,9 @@ package com.abetappteam.abetapp.entity.Requests.Semester;
 import java.time.LocalDate;
 
 public record SemesterSearchRequest(
-        int id,
+        Integer id,
         String status,
-        int academicYear,
+        Integer academicYear,
         LocalDate startDate,
         LocalDate endDate,
         String type,

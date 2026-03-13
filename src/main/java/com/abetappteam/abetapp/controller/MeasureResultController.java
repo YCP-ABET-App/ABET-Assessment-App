@@ -3,12 +3,9 @@ package com.abetappteam.abetapp.controller;
 import com.abetappteam.abetapp.service.MeasureResultService;
 import com.abetappteam.abetapp.dto.ApiResponse;
 import com.abetappteam.abetapp.dto.MeasureResultDTO;
-import com.abetappteam.abetapp.dto.PagedResponse;
 import com.abetappteam.abetapp.entity.MeasureResult;
 import com.abetappteam.abetapp.entity.Requests.MeasureResults.MeasureResultsSearchRequest;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,8 +21,14 @@ public class MeasureResultController extends BaseController {
     private MeasureResultService service;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<MeasureResult>>> getAllMeasureResults(@RequestBody MeasureResultsSearchRequest request) {
-        logger.info("Fetching all measure results");
+    public ResponseEntity<ApiResponse<List<MeasureResult>>> getAllMeasureResults(
+        @RequestParam(required = false) Integer id,
+        @RequestParam(required = false) Integer measureId,
+        @RequestParam(required = false) Integer sectionId,
+        @RequestParam(required = false) Integer programId
+    ) {
+        MeasureResultsSearchRequest request = new MeasureResultsSearchRequest(id, measureId, sectionId, programId);
+        logger.info("Fetching measure results for request: {}", request);
         List<MeasureResult> measureResults = service.searchMeasureResults(request);
         return success(measureResults, "Measure results retrieved successfully");
     }

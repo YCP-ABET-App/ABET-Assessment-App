@@ -1,11 +1,11 @@
 package com.abetappteam.abetapp.entity.Requests.Section;
 
 public record SectionSearchRequest(
-        int id,
-        int semesterId,
-        int programId,
-        int courseId,
-        int userId
+        Integer id,
+        Integer semesterId,
+        Integer programId,
+        Integer courseId,
+        Integer userId
 ) {
 
 }

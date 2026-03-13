@@ -76,17 +76,23 @@ watch(localProgramId, async (id) => {
   currentProgramId.value = id;
   userStore.saveToStorage();
 
+  const requestObj = {
+    id : null,
+    status : null,
+    academicYear : null,
+    startDate : null,
+    endDate : null,
+    type : null,
+    name : null,
+    code : null
+  }
+
   const res = await api.get("/semesters", {
-    params: {
-      programId: id,
-      page: 0,
-      size: 50,
-      sort: "startDate",
-      direction: "desc"
-    }
+    params: requestObj
   });
 
-  semesters.value = res.data?.content ?? [];
+
+  semesters.value = res.data.data ?? [];
 
   localSemesterId.value =
     currentSemesterId.value ||

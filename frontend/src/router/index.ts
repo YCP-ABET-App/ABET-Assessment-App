@@ -4,14 +4,13 @@ import ConnectionTest from '@/components/ConnectionTest.vue'
 import HomePage from '@/components/pages/HomePage.vue'
 import SummaryPage from '@/components/pages/SummaryPage.vue'
 import FCARPage from '@/components/pages/FCARPage.vue'
-import CourseViewPage from '@/components/pages/CourseViewPage.vue'
+import SectionViewPage from '@/components/pages/SectionViewPage.vue'
 import InstructorViewPage from '@/components/pages/InstructorViewPage.vue'
 import ProgramCoursesPage from '@/components/pages/ProgramCoursesPage.vue'
 import ProgramInstructorsPage from '@/components/pages/ProgramInstructorsPage.vue'
 import LogInPage from '@/components/pages/LogIn.vue'
 import SignUpPage from '@/components/pages/SignUp.vue'
 import ExamplePage from "@/components/pages/ExamplePage.vue";
-import AboutPage from '@/components/pages/AboutPage.vue'
 import ManagementPage from "@/components/ManagementPage.vue";
 
 const routes = [
@@ -37,11 +36,6 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
-    path: '/about',
-    name: 'About',
-    component: AboutPage
-  },
-  {
     path: '/:program_id/:semester_id/summary/',
     name: 'Summary',
     component: SummaryPage,
@@ -54,9 +48,9 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
-    path: '/course/:course_id',
-    name: 'Course',
-    component: CourseViewPage,
+    path: '/section/:section_id',
+    name: 'Section',
+    component: SectionViewPage,
     meta: { requiresAuth: true }
   },
   {

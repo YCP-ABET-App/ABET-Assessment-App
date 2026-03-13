@@ -3,6 +3,7 @@ package com.abetappteam.abetapp.controller;
 import com.abetappteam.abetapp.dto.ApiResponse;
 import com.abetappteam.abetapp.dto.SectionDTO;
 import com.abetappteam.abetapp.entity.Course;
+import com.abetappteam.abetapp.entity.Requests.Course.CourseSearchRequest;
 import com.abetappteam.abetapp.entity.Requests.Section.SectionSearchRequest;
 import com.abetappteam.abetapp.entity.Requests.Section.SectionSearchResponse;
 import com.abetappteam.abetapp.entity.Section;
@@ -12,7 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.ArrayList;
 
@@ -29,24 +29,42 @@ public class SectionController extends BaseController {
     @Autowired
     private CourseService courseService;
 
-    @GetMapping("/section")
+    @GetMapping()
     public ResponseEntity<ApiResponse<SectionSearchResponse>> searchSection(
-            @RequestParam SectionSearchRequest body) {
+            @RequestParam(required = false) Integer id,
+            @RequestParam(required = false) Integer semesterId,
+            @RequestParam(required = false) Integer programId,
+            @RequestParam(required = false) Integer courseId,
+            @RequestParam(required = false) Integer userId) {
+
+        SectionSearchRequest body = new SectionSearchRequest(id, semesterId, programId, courseId, userId);
         logger.info("Fetching sections for request: {}", body);
         List<Section> sections = sectionService.searchSections(body);
 
-        List<Integer> courseIds = new ArrayList<>();
+        List<CourseSearchRequest> requests = new ArrayList<>();
 
         for(Section section : sections) {
-            courseIds.add(section.getCourseId());
+            requests.add(
+                new CourseSearchRequest(
+                    section.getCourseId(),
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    true
+                )
+            );
         }
 
-        // Todo: Add searchCourses, then uncomment
-        //List<Course> course = courseService.searchCourses(courseIds);
+        List<Course> courses = new ArrayList<>();
 
-        //SectionSearchResponse response = new SectionSearchResponse(sections, course);
+        for(CourseSearchRequest req : requests) {
+            List<Course> results = courseService.searchCourse(req);
+            courses.addAll(results);
+        }
 
-        SectionSearchResponse response = new SectionSearchResponse(sections, Collections.emptyList());
+        SectionSearchResponse response = new SectionSearchResponse(sections, courses);
 
         return success(response, "Sections retrieved successfully for course");
     }

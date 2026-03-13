@@ -129,7 +129,7 @@ async function add_measure_submit(){
     status: "InProgress",
     updatedAt: null,
     version: null
-  })
+  }) 
 
   //POST request to server
   try {

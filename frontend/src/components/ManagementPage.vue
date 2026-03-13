@@ -64,7 +64,7 @@
         </div>
 
         <div v-else-if="selectedCourseId" class="view-container">
-          <CourseViewPage :course-id="selectedCourseId" />
+          <SectionViewPage :course-id="selectedCourseId" />
         </div>
 
         <div v-else class="empty-state">
@@ -92,7 +92,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import CourseViewPage from '@/components/pages/CourseViewPage.vue'
+import SectionViewPage from '@/components/pages/SectionViewPage.vue'
 import InstructorSelector from '@/components/pages/InstructorSelector.vue'
 import api from '@/api'
 import CourseEditorModal from "@/components/CourseEditorModal.vue";
@@ -162,7 +162,11 @@ async function fetchCourses() {
     isLoading.value = true;
     error.value = null;
 
-    const res = await api.get('/courses/active/all');
+    const res = await api.get('/courses/searchCourse', {
+      params: {
+        isActive: true
+      }
+    });
     courses.value = res.data.data ?? [];
   } catch (err) {
     console.error('Error fetching courses:', err);

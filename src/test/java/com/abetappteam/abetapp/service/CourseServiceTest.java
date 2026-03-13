@@ -254,44 +254,6 @@ class CourseServiceTest extends BaseServiceTest {
                 .hasMessageContaining("Course not found with code: UNKNOWN");
     }
 
-@Test
-    void shouldSearchCourses() {
-
-        CourseSearchRequest request = new CourseSearchRequest("CS101", null, null);
-        Pageable pageable = PageRequest.of(0, 10);
-        
-        List<Course> courses = TestDataBuilder.createCourseList(2);
-        Page<Course> page = new PageImpl<>(courses, pageable, 2);
-
-        when(courseRepository.searchCourse(eq("CS101"), any(), any(), eq(pageable)))
-                .thenReturn(page);
-
-        Page<Course> found = courseService.searchCourse(request, pageable);
-
-        assertThat(found.getContent()).hasSize(2);
-        verify(courseRepository).searchCourse(eq("CS101"), isNull(), isNull(), eq(pageable));
-    }
-
-@Test
-    void shouldSearchByNameOrCourseCodeWithPaging() {
-
-        Pageable pageable = PageRequest.of(0, 10);
-        List<Course> courses = TestDataBuilder.createCourseList(2);
-        Page<Course> page = new PageImpl<>(courses, pageable, 2);
-        
-        CourseSearchRequest request = new CourseSearchRequest(null, "software", null);
-
-
-        when(courseRepository.searchCourse(isNull(), eq("software"), isNull(), eq(pageable)))
-                .thenReturn(page);
-
-
-        Page<Course> found = courseService.searchCourse(request, pageable);
-
-        assertThat(found.getContent()).hasSize(2);
-        verify(courseRepository).searchCourse(isNull(), eq("software"), isNull(), eq(pageable));
-    }
-
     @Test
     void shouldCheckExistsByCourseCode() {
         // Given

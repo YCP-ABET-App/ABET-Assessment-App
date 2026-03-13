@@ -32,9 +32,9 @@ public class SemesterController extends BaseController {
     private SemesterService semesterService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<Semester>>> getAllSemesters(@RequestBody SemesterSearchRequest request) {
+    public ResponseEntity<ApiResponse<List<Semester>>> getAllSemesters(@ModelAttribute SemesterSearchRequest request) {
         logger.info("Fetching all semesters");
-        List<Semester> semesters = semesterService.getAllSemesters(request);
+        List<Semester> semesters = semesterService.searchSemesters(request);
         return success(semesters, "Semesters retrieved successfully");
     }
 
