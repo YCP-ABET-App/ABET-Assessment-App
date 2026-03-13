@@ -2,7 +2,6 @@ package com.abetappteam.abetapp.repository;
 
 import com.abetappteam.abetapp.entity.Semester;
 import com.abetappteam.abetapp.entity.Semester.SemesterStatus;
-import com.abetappteam.abetapp.entity.Semester.SemesterType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -31,9 +30,9 @@ public interface SemesterRepository extends JpaRepository<Semester, Long> {
             "(:code IS NULL OR LOWER(s.code) LIKE LOWER(CONCAT('%', :code, '%'))) AND " +
             "(:name IS NULL OR LOWER(s.name) LIKE LOWER(CONCAT('%', :name, '%')))")
     List<Semester> searchSemesters(
-            @Param("id") int id,
+            @Param("id") Integer id,
             @Param("status") String status,
-            @Param("academicYear") int academicYear,
+            @Param("academicYear") Integer academicYear,
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate,
             @Param("type") String type,

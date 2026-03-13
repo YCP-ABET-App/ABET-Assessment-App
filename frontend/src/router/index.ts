@@ -4,7 +4,7 @@ import ConnectionTest from '@/components/ConnectionTest.vue'
 import HomePage from '@/components/pages/HomePage.vue'
 import SummaryPage from '@/components/pages/SummaryPage.vue'
 import FCARPage from '@/components/pages/FCARPage.vue'
-import CourseViewPage from '@/components/pages/CourseViewPage.vue'
+import SectionViewPage from '@/components/pages/SectionViewPage.vue'
 import InstructorViewPage from '@/components/pages/InstructorViewPage.vue'
 import ProgramCoursesPage from '@/components/pages/ProgramCoursesPage.vue'
 import ProgramInstructorsPage from '@/components/pages/ProgramInstructorsPage.vue'
@@ -48,9 +48,9 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
-    path: '/course/:course_id',
-    name: 'Course',
-    component: CourseViewPage,
+    path: '/section/:section_id',
+    name: 'Section',
+    component: SectionViewPage,
     meta: { requiresAuth: true }
   },
   {

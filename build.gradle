@@ -4,6 +4,7 @@ plugins {
     id 'java'
     id 'com.github.node-gradle.node' version '7.0.1'
     id 'jacoco'
+    id 'war'
 }
 
 version = '0.0.31-dev'
@@ -279,4 +280,12 @@ tasks.register('composeBuild', Exec) {
     description = 'Build Docker images'
     args 'compose', 'build'
     executable 'docker'
+}
+
+tasks.register('installWar', Exec) {
+    description = 'Generates the WAR file for deployment'
+    dependsOn 'war'
+    doLast {
+        println "WAR file generated at: ${buildDir}/libs/${project.name}-${version}.war"
+    }
 }

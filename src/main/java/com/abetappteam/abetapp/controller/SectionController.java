@@ -13,7 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.ArrayList;
 
@@ -30,14 +29,19 @@ public class SectionController extends BaseController {
     @Autowired
     private CourseService courseService;
 
-    @GetMapping("/section")
+    @GetMapping()
     public ResponseEntity<ApiResponse<SectionSearchResponse>> searchSection(
-            @RequestParam SectionSearchRequest body) {
+            @RequestParam(required = false) List<Integer> ids,
+            @RequestParam(required = false) Integer semesterId,
+            @RequestParam(required = false) Integer programId,
+            @RequestParam(required = false) Integer courseId,
+            @RequestParam(required = false) Integer userId) {
+
+        SectionSearchRequest body = new SectionSearchRequest(ids, semesterId, programId, courseId, userId);
         logger.info("Fetching sections for request: {}", body);
         List<Section> sections = sectionService.searchSections(body);
 
         List<CourseSearchRequest> requests = new ArrayList<>();
-        List<Course> course = new ArrayList<>();
 
         for(Section section : sections) {
             requests.add(
@@ -46,8 +50,8 @@ public class SectionController extends BaseController {
                     null,
                     null,
                     null,
-                    -1,
-                    -1,
+                    null,
+                    null,
                     true
                 )
             );

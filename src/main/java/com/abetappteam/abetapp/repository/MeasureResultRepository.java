@@ -51,10 +51,10 @@ public interface MeasureResultRepository extends JpaRepository<MeasureResult, Lo
             "AND (:measureId IS NULL OR mr.measureId = :measureId) " +
             "AND (:sectionId IS NULL OR mr.sectionId = :sectionId) " +
             "AND (:programId IS NULL OR mr.programId = :programId)")
-    List<MeasureResult> searchMeasureResults(@Param("id") int id,
-                                             @Param("measureId") int measureId,
-                                             @Param("sectionId") int sectionId,
-                                             @Param("programId") int programId);
+    List<MeasureResult> searchMeasureResults(@Param("id") Integer id,
+                                             @Param("measureId") Integer measureId,
+                                             @Param("sectionId") Integer sectionId,
+                                             @Param("programId") Integer programId);
     // Check if measure results has active sections
     @Query("SELECT COUNT(mr) > 0 FROM MeasureResult mr WHERE mr.sectionId = :sectionId AND mr.status NOT IN ('Rejected')")
     boolean hasActiveSections(@Param("sectionId") Long sectionId);

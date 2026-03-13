@@ -1,11 +1,13 @@
 package com.abetappteam.abetapp.entity.Requests.Section;
 
+import java.util.List;
+
 public record SectionSearchRequest(
-        int id,
-        int semesterId,
-        int programId,
-        int courseId,
-        int userId
+        List<Integer> ids,
+        Integer semesterId,
+        Integer programId,
+        Integer courseId,
+        Integer userId
 ) {
 
 }

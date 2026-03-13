@@ -33,9 +33,9 @@ public interface SectionProgramRepository  extends JpaRepository<SectionProgram,
 
 
     @Query("SELECT sp FROM SectionProgram sp " +
-            "WHERE sp.id = :#{#request.id()} " +
-            "AND sp.sectionId = :#{#request.sectionId()} " +
-            "AND sp.programId = :#{#request.programId()}")
+            "WHERE (:#{#request.id()} IS NULL OR sp.id = :#{#request.id()}) " +
+            "AND (:#{#request.sectionId()} IS NULL OR sp.sectionId = :#{#request.sectionId()}) " +
+            "AND (:#{#request.programId()} IS NULL OR sp.programId = :#{#request.programId()})")
     List<SectionProgram> searchSectionProgram(@Param("request") SectionProgramSearchRequest request);
 
     @Query("SELECT sp FROM SectionProgram sp WHERE sp.sectionId = :sectionId")

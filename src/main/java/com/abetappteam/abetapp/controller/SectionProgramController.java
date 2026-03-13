@@ -24,7 +24,11 @@ public class SectionProgramController extends BaseController {
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<SectionProgram>>> searchSectionProgram(
-            @RequestParam SectionProgramSearchRequest request) {
+            @RequestParam(required = false) Integer id,
+            @RequestParam(required = false) Integer sectionId,
+            @RequestParam(required = false) Integer programId
+        ) {
+        SectionProgramSearchRequest request = new SectionProgramSearchRequest(id, sectionId, programId);
 
         logger.info("Fetching SectionPrograms with request: {}", request);
 

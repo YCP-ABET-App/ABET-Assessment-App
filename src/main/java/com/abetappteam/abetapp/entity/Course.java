@@ -31,7 +31,7 @@ public class Course extends BaseEntity {
     private Double threshold = 70.00;
 
     @Column(name = "mirror_id")
-    private int mirrorId;
+    private Integer mirrorId;
 
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
@@ -92,10 +92,10 @@ public class Course extends BaseEntity {
         this.threshold = threshold;
     }
 
-    public int getMirrorId() {
+    public Integer getMirrorId() {
         return mirrorId;
     }
-    public void setMirrorId(int mirrorId) {
+    public void setMirrorId(Integer mirrorId) {
         this.mirrorId = mirrorId;
     }
 
