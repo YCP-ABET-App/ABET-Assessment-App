@@ -60,7 +60,11 @@ async function loadCourseData() {
 
   try {
     // Get indicator IDs for this course
-    const indicatorIdsRes = await api.get(`/courses/${props.course.id}/indicators`);
+    const indicatorIdsRes = await api.get(`/searchCourse`, {
+      params: {
+        courseId: props.course.id
+      }
+    });
     const indicatorIds = indicatorIdsRes.data as number[];
 
     if (indicatorIds.length === 0) {

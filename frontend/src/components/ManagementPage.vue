@@ -162,7 +162,11 @@ async function fetchCourses() {
     isLoading.value = true;
     error.value = null;
 
-    const res = await api.get('/courses/active/all');
+    const res = await api.get('/courses/searchCourse', {
+      params: {
+        isActive: true
+      }
+    });
     courses.value = res.data.data ?? [];
   } catch (err) {
     console.error('Error fetching courses:', err);
