@@ -31,13 +31,13 @@ public class SectionController extends BaseController {
 
     @GetMapping()
     public ResponseEntity<ApiResponse<SectionSearchResponse>> searchSection(
-            @RequestParam(required = false) Integer id,
+            @RequestParam(required = false) List<Integer> ids,
             @RequestParam(required = false) Integer semesterId,
             @RequestParam(required = false) Integer programId,
             @RequestParam(required = false) Integer courseId,
             @RequestParam(required = false) Integer userId) {
 
-        SectionSearchRequest body = new SectionSearchRequest(id, semesterId, programId, courseId, userId);
+        SectionSearchRequest body = new SectionSearchRequest(ids, semesterId, programId, courseId, userId);
         logger.info("Fetching sections for request: {}", body);
         List<Section> sections = sectionService.searchSections(body);
 

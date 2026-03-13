@@ -35,7 +35,7 @@ public interface SectionRepository  extends JpaRepository<Section, Long>
     @Query("SELECT DISTINCT s FROM Section s " +
        "LEFT JOIN SectionProgram sp ON s.id = sp.sectionId " +
        "LEFT JOIN SectionUser su ON s.id = su.sectionId " +
-       "WHERE (:#{#request.id()} IS NULL OR s.id = :#{#request.id()}) " +
+       "WHERE (:#{#request.ids()} IS NULL OR s.id in :#{#request.ids()}) " +
        "AND (:#{#request.semesterId()} IS NULL OR s.semesterId = :#{#request.semesterId()}) " +
        "AND (:#{#request.courseId()} IS NULL OR s.courseId = :#{#request.courseId()}) " +
        "AND (:#{#request.programId()} IS NULL OR sp.programId = :#{#request.programId()}) " +

@@ -29,7 +29,6 @@ export const useUserStore = defineStore('user', () => {
   const programs = ref<ProgramAccess[]>([]);
   const currentProgramId = ref<number | null>(null);
   const currentSemesterId = ref<number | null>(null);
-  const currentCourseId = ref<number | null>(null);
 
   const isLoading = ref(false);
   const error = ref<string | null>(null);
@@ -209,9 +208,6 @@ const isInstructor = computed(() => {
       localStorage.setItem("currentSemesterId", String(currentSemesterId.value));
     }
 
-    if(currentCourseId.value !== null) {
-      localStorage.setItem("currentCourseId", String(currentCourseId.value));
-    }
 
     if (theme.value) {
       localStorage.setItem('theme', theme.value)
@@ -241,7 +237,6 @@ const isInstructor = computed(() => {
     programs,
     currentProgramId,
     currentSemesterId,
-    currentCourseId,
     isLoading,
     error,
     theme,

@@ -71,7 +71,7 @@ public class CourseService extends BaseService<Course, Long, CourseRepository> {
     @Transactional(readOnly = true)
     public List<Course> searchCourse(CourseSearchRequest request) {
         logger.info("Service: searching courses with request: {}", request);
-        return repository.searchCourse(
+        List<Course> result =  repository.searchCourse(
                 request.id(),
                 request.courseCode(),
                 request.courseName(),
@@ -80,6 +80,9 @@ public class CourseService extends BaseService<Course, Long, CourseRepository> {
                 request.mirrorId(),
                 request.isActive()
         );
+
+        System.out.print("Resulting Courses: " + result);
+        return result;
     }
 
     @Transactional

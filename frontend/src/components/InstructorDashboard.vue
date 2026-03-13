@@ -16,12 +16,12 @@ interface ProgramUser {
   role: string;
 }
 
-interface RawCourse {
+interface RawSection {
   id: number;
   courseCode: string;
 }
 
-interface Measure {
+interface MeasureResults {
   id: number;
   courseIndicatorId: number;
   description: string;
@@ -41,13 +41,13 @@ interface Measure {
   version: number | null;
 }
 
-interface InstructorDashboardCourse {
+interface InstructorDashboardSection {
   id: number;
   courseCode: string;
   instructorName: string;
   measuresCompleted: number;
   measuresTotal: number;
-  measures: Measure[];
+  measures: MeasureResults[];
   expanded: boolean;
 }
 
@@ -60,7 +60,7 @@ const { currentProgramId: programId, currentSemesterId: semesterId } = storeToRe
 // ------------------------------
 // STATE
 // ------------------------------
-const courses = ref<InstructorDashboardCourse[]>([]);
+const sections = ref<InstructorDashboardSection[]>([]);
 const programUserId = ref<number | null>(null);
 const isLoading = ref<boolean>(false);
 const errorMessage = ref<string | null>(null);
@@ -81,14 +81,17 @@ async function loadProgramUserId() {
 }
 
 // ------------------------------
-// LOAD MEASURES FOR A COURSE
+// LOAD MEASURE RESULTS FOR A SECTION
 // ------------------------------
-async function loadCourseMeasures(courseId: number): Promise<Measure[]> {
+async function loadSectionMeasureResults(sectionId: number): Promise<MeasureResults[]> {
   try {
-    const res = await api.get(`/measure/byCourse/${courseId}`);
-    return res.data.data as Measure[];
+    const res = await api.get(`/measure-result`, { params: {
+      sectionId: sectionId
+    }});
+
+    return res.data.data as MeasureResults[];
   } catch (err) {
-    console.error(`Failed to load measures for course ${courseId}:`, err);
+    console.error(`Failed to load measures for course`);
     return [];
   }
 }
@@ -96,65 +99,102 @@ async function loadCourseMeasures(courseId: number): Promise<Measure[]> {
 // ------------------------------
 // LOAD INSTRUCTOR COURSE LIST
 // ------------------------------
-async function loadInstructorCourses() {
-  if (!programUserId.value || !semesterId.value) return;
+async function loadInstructorSections() {
+  if (!programUserId.value || !semesterId.value || !userStore.userId) return;
 
-  const cRes = await api.get("/section", {
+  // First, query the section user table to find what sections are assigned to the user
+  console.log("Loading sections for user id: ", userStore.userId)
+  let sectionUserRes = null;
+  try{
+    sectionUserRes = await api.get("/section-user", { params:
+        {
+          userId: userStore.userId
+        }
+    });
+  } finally {
+    console.log("Section User Results: ", sectionUserRes)
+  }
+
+  // Extract section IDs from the section user results
+  const sectionUserData = sectionUserRes?.data?.data ?? [];
+
+  if(sectionUserData.length === 0) {
+    console.warn("No sections found for user");
+    return;
+  }
+
+  let sectionIds: any[] = [];
+
+  sectionUserData.forEach((su: any) => {
+    console.log(`SectionUser - id: ${su.id}, sectionId: ${su.sectionId}, userId: ${su.userId}`)
+
+    sectionIds.push(su.sectionId);
+  })
+
+
+  const sectionRes = await api.get("/section", {
     params: {
-      semesterId: semesterId.value
+      ids: sectionIds
     },
   });
 
-  const rawCourses = cRes.data.data as RawCourse[];
+  console.log("Section Results: ", sectionRes)
 
+  // Parse out sections and courses from the response, assemble section titles
+
+  const responseData = sectionRes.data.data;
+
+  const rawSections = responseData.sections;
+  const rawCourses = responseData.courses;
+
+  console.log(rawSections)
   console.log(rawCourses)
 
-  const results: InstructorDashboardCourse[] = [];
+  const results: InstructorDashboardSection[] = [];
 
-  for (const course of rawCourses) {
-    const completenessRes = await api.get(`/courses/${course.id}/completeness`);
-    const comp = completenessRes.data.data;
+  rawSections.forEach((section: any) => {
+
+    const course = rawCourses.find((c: any) => c.id === section.courseId);
+    if (!course) {
+      console.warn(`No course found for section ${section.id}`);
+      return;
+    }
 
     results.push({
-      id: course.id,
-      courseCode: course.courseCode,
+      id: section.id,
+      courseCode: `${course.course_name}  ${section.section_number}`,
       instructorName: `${userStore.user?.firstName} ${userStore.user?.lastName}`,
-      measuresCompleted: comp.completedMeasures,
-      measuresTotal: comp.totalMeasures,
+      measuresCompleted: section.completedMeasures,
+      measuresTotal: section.totalMeasures,
       measures: [],
       expanded: false,
     });
-  }
+  });
 
-  courses.value = results;
+  sections.value = results;
 }
 
 // ------------------------------
-// TOGGLE COURSE EXPANSION
+// TOGGLE SECTION EXPANSION
 // ------------------------------
-async function toggleCourse(course: InstructorDashboardCourse) {
-  course.expanded = !course.expanded;
+async function toggleSection(section: InstructorDashboardSection) {
+  section.expanded = !section.expanded;
 
   // Load measures if expanding and not already loaded
-  if (course.expanded && course.measures.length === 0) {
-    course.measures = await loadCourseMeasures(course.id);
+  if (section.expanded && section.measures.length === 0) {
+    section.measures = await loadSectionMeasureResults(section.id);
   }
 }
 
 // ------------------------------
-// REFRESH MEASURES FOR A COURSE
+// REFRESH MEASURE RESULTS FOR A SECTION
 // ------------------------------
-async function refreshCourseMeasures(courseId: number) {
-  const course = courses.value.find(c => c.id === courseId);
-  if (!course) return;
+async function refreshSectionMeasureResults(sectionId: number) {
+  const section = sections.value.find(s => s.id === sectionId);
+  if (!section) return;
 
-  course.measures = await loadCourseMeasures(courseId);
+  section.measures = await loadSectionMeasureResults(sectionId);
 
-  // Refresh completeness
-  const completenessRes = await api.get(`/courses/${courseId}/completeness`);
-  const comp = completenessRes.data.data;
-  course.measuresCompleted = comp.completedMeasures;
-  course.measuresTotal = comp.totalMeasures;
 }
 
 // ------------------------------
@@ -176,7 +216,7 @@ async function reload() {
 
   try {
     await loadProgramUserId();
-    await loadInstructorCourses();
+    await loadInstructorSections();
   } catch (err) {
     console.error(err);
     errorMessage.value = "Failed to load instructor dashboard";
@@ -187,10 +227,10 @@ async function reload() {
 
 onMounted(reload);
 
-// Reload when program ID or semester ID changes
+// Reload when program ID or semester ID or course ID changes
 watch([programId, semesterId], () => {
-  // Reset courses when semester changes to avoid showing stale data
-  courses.value = [];
+  // Reset sections when semester changes to avoid showing stale data
+  sections.value = [];
   reload();
 });
 </script>
@@ -203,45 +243,45 @@ watch([programId, semesterId], () => {
       {{ errorMessage }}
     </div>
 
-    <div v-else-if="!programId || !semesterId">
+    <div v-else-if="!programId || !semesterId ">
       <p class="info-message">
-        Please select a program and semester from the navigation menu to view your courses.
+        Please select a program and semester from the navigation menu to view your sections.
       </p>
     </div>
 
-    <div v-else-if="courses.length === 0">
-      <p>No courses assigned for the current semester.</p>
+    <div v-else-if="sections.length === 0">
+      <p>No sections created for the current course.</p>
     </div>
 
-    <div v-else class="courses-container">
+    <div v-else class="section-container">
       <BaseCard
-        v-for="course in courses"
-        :key="course.id"
-        class="course-card"
+        v-for="section in sections"
+        :key="section.id"
+        class="section-card"
       >
-        <div class="course-header" @click="toggleCourse(course)">
-          <div class="course-info">
-            <h3>{{ course.courseCode }}</h3>
+        <div class="section-header" @click="toggleSection(section)">
+          <div class="section-info">
+            <h3>{{ section.courseCode }}</h3>
           </div>
-          <div class="course-stats">
+          <div class="section-stats">
             <span class="measures-count">
-              {{ course.measuresCompleted }} / {{ course.measuresTotal }} measures completed
+              {{ section.measuresCompleted }} / {{ section.measuresTotal }} measures completed
             </span>
-            <button class="expand-button" :class="{ expanded: course.expanded }">
-              {{ course.expanded ? '▼' : '▶' }}
+            <button class="expand-button" :class="{ expanded: section.expanded }">
+              {{ section.expanded ? '▼' : '▶' }}
             </button>
           </div>
         </div>
 
-        <div v-if="course.expanded" class="measures-container">
-          <div v-if="course.measures.length === 0" class="no-measures">
+        <div v-if="section.expanded" class="measures-container">
+          <div v-if="section.measures.length === 0" class="no-measures">
             No measures found for this course.
           </div>
           <MeasureListing
-            v-for="measure in course.measures"
+            v-for="measure in section.measures"
             :key="measure.id"
             :measure_prop="measure"
-            @refresh="refreshCourseMeasures(course.id)"
+            @refresh="refreshSectionMeasureResults(section.id)"
           />
         </div>
       </BaseCard>
@@ -274,19 +314,19 @@ watch([programId, semesterId], () => {
   text-align: center;
 }
 
-.courses-container {
+.sections-container {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
 }
 
-.course-card {
+.section-card {
   background-color: rgb(36, 36, 36);
   border-radius: 0.75rem;
   overflow: hidden;
 }
 
-.course-header {
+.section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -295,11 +335,11 @@ watch([programId, semesterId], () => {
   transition: background-color 0.2s;
 }
 
-.course-header:hover {
+.section-header:hover {
   background-color: rgb(43, 43, 43);
 }
 
-.course-info h3 {
+.section-info h3 {
   margin: 0 0 0.25rem 0;
   font-size: 1.125rem;
   color: white;
@@ -311,7 +351,7 @@ watch([programId, semesterId], () => {
   font-size: 0.8125rem;
 }
 
-.course-stats {
+.section-stats {
   display: flex;
   align-items: center;
   gap: 0.75rem;
