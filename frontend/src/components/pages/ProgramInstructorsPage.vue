@@ -179,9 +179,9 @@
           </div>
         </section>
 
-        <!-- Courses -->
+        <!-- Sections -->
         <section class="detail-section">
-          <h3>Courses ({{ currentSemesterCourses.length }})</h3>
+          <h3>Sections ({{ currentSemesterCourses.length }})</h3>
 
           <div v-if="loadingMeasures" class="loading-measures">
             <p>Loading measures data...</p>
@@ -250,7 +250,7 @@
       </template>
 
       <div class="course-modal-content">
-        <!-- Course Information -->
+        <!-- Section Information -->
         <section class="detail-section">
           <h3>Course Information</h3>
           <div class="info-card">
@@ -344,6 +344,21 @@ const toast = useToast() as {
 // User store for semester filtering
 const userStore = useUserStore();
 const { currentSemesterId } = storeToRefs(userStore);
+
+interface Section {
+  id: number;
+  sectionNumber?: string;
+  courseName?: string;
+  formattedName?: string;
+  courseDescription?: string;
+
+  // Semester info
+  semesterId?: number;
+  semester?: {
+    id: number;
+    name?: string;
+  };
+}
 
 interface Course {
   id: number;
@@ -463,12 +478,12 @@ const currentSemesterCourses = computed(() => {
 /* -----------------------------
  * Load measures for courses
  * ----------------------------- */
-async function loadMeasuresForCourses(courses: Course[]): Promise<Course[]> {
+async function loadMeasuresForCourses(sections: Section[]): Promise<Section[]> {
   return await Promise.all(
-    courses.map(async (course) => {
+    sections.map(async (section) => {
       try {
         // Get measures for each indicator
-        const measuresRes = await api.get(`/measure/byCourse/${course.id}`);
+        const measuresRes = await api.get(`/measure-result`, {params: {sectionId: section.id}});
         const allMeasures = measuresRes.data.data ?? [];
 
         // Count completed measures
@@ -480,13 +495,13 @@ async function loadMeasuresForCourses(courses: Course[]): Promise<Course[]> {
         }).length;
 
         return {
-          ...course,
+          ...section,
           measuresTotal: allMeasures.length,
           measuresCompleted: measuresCompleted
         };
       } catch (err) {
-        console.error(`Error loading measures for course ${course.id}:`, err);
-        return { ...course, measuresTotal: undefined, measuresCompleted: undefined };
+        console.error(`Error loading measures for section ${section.id}:`, err);
+        return { ...section, measuresTotal: undefined, measuresCompleted: undefined };
       }
     })
   );
@@ -510,38 +525,35 @@ async function loadProgramInstructors() {
     const loaded = await Promise.all(
       programUsers.map(async (pu: ProgramUser) => {
         try {
-          console.log(pu);
           const userRes = await api.get(`/users/${pu.userId}`);
           const user = userRes.data.data;
-          console.log(user);
           // Fetch all sections for this instructor (API doesn't support semester filter)
-          const coursesRes = await api.get(`/section`, {
+          const sectionRes = await api.get(`/section`, {
             params: { userId: pu.userId }
           });
-          console.log(coursesRes.data.data)
-          const allCourses = coursesRes.data.data.courses ?? [];
+          const allSections = sectionRes.data.data.sections ?? [];
 
           // Debug: Log if there are duplicates
-          const courseIds = allCourses.map((c: Course) => c.id);
-          const uniqueCourseIds = new Set(courseIds);
-          if (courseIds.length !== uniqueCourseIds.size) {
+          const sectionIds = allSections.map((c: Section) => c.id);
+          const uniqueSectionIds = new Set(sectionIds);
+          if (sectionIds.length !== uniqueSectionIds.size) {
             console.warn(
-              `Instructor ${user.firstName} ${user.lastName} has duplicate courses from API:`,
-              allCourses.filter((c: Course, index: number) =>
-                courseIds.indexOf(c.id) !== index
+              `Instructor ${user.firstName} ${user.lastName} has duplicate sections from API:`,
+              allSections.filter((c: Course, index: number) =>
+                sectionIds.indexOf(c.id) !== index
               )
             );
           }
 
-          const coursesWithMeasures = await loadMeasuresForCourses(allCourses);
+          const sectionsWithMeasures = await loadMeasuresForCourses(allSections);
 
           // Count only courses from current semester
           const currentSemesterCount = currentSemesterId.value
-            ? allCourses.filter((c: Course) => {
-              const courseSemesterId = c.semesterId || c.semester?.id;
+            ? allSections.filter((s: Section) => {
+              const courseSemesterId = s.semesterId || s.semester?.id;
               return courseSemesterId === currentSemesterId.value;
             }).length
-            : allCourses.length;
+            : allSections.length;
 
           return {
             programUserId: pu.id,
@@ -550,8 +562,8 @@ async function loadProgramInstructors() {
             lastName: user.lastName,
             email: user.email,
             role: pu.adminStatus ? "ADMIN" : "INSTRUCTOR",
-            courseCount: currentSemesterCount,
-            courses: coursesWithMeasures
+            sectionCount: currentSemesterCount,
+            sections: sectionsWithMeasures
           };
         } catch {
           return null;
