@@ -503,20 +503,23 @@ async function loadProgramInstructors() {
 
   try {
     const res = await api.get(`/program/${props.programId}/users`);
+    console.log(res);
     const programUsers = res.data.data ?? [];
+    console.log(programUsers)
 
     const loaded = await Promise.all(
       programUsers.map(async (pu: ProgramUser) => {
         try {
+          console.log(pu);
           const userRes = await api.get(`/users/${pu.userId}`);
           const user = userRes.data.data;
-
+          console.log(user);
           // Fetch all sections for this instructor (API doesn't support semester filter)
           const coursesRes = await api.get(`/section`, {
             params: { userId: pu.userId }
           });
-
-          const allCourses = coursesRes.data.data ?? [];
+          console.log(coursesRes.data.data)
+          const allCourses = coursesRes.data.data.courses ?? [];
 
           // Debug: Log if there are duplicates
           const courseIds = allCourses.map((c: Course) => c.id);
