@@ -159,10 +159,12 @@ async function loadInstructorSections() {
       console.warn(`No course found for section ${section.id}`);
       return;
     }
+    console.log("Course: ", course)
+    console.log("Section: ", section)
 
     results.push({
       id: section.id,
-      courseCode: `${course.course_name}  ${section.section_number}`,
+      courseCode: `${course.courseCode} ${course.courseName} ${section.sectionNumber}`,
       instructorName: `${userStore.user?.firstName} ${userStore.user?.lastName}`,
       measuresCompleted: section.completedMeasures,
       measuresTotal: section.totalMeasures,
