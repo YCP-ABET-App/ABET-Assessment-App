@@ -3,6 +3,7 @@ import { ref, watch, onMounted } from "vue";
 import api from "@/api";
 import BaseCard from "@/components/ui/BaseCard.vue";
 import CourseInspectModal from "./CourseInspectModal.vue";
+import NewCourseModal from "./NewCourseModal.vue";
 
 interface Course {
   id: number
@@ -22,6 +23,23 @@ const error = ref<string | null>(null);
 const courses = ref<Course[]>([]);
 
 const selectedCourse = ref<Course | null>(null);
+
+const isNewCourseModalOpen = ref(false);
+
+async function saveNewCourse(data: any) {
+  try {
+    await api.post("/courses", {
+      courseCode: data.courseCode,
+      courseName: data.courseName,
+      courseDescription: data.courseDescription,
+      studentCount: data.studentCount,
+      isActive: true
+    });
+    loadCourses(); // Refresh the list
+  } catch (err) {
+    console.error("Failed to save course:", err);
+  }
+}
 
 async function loadCourses() {
   if (!props.programId || !props.semesterId) {
@@ -68,6 +86,7 @@ function selectCourse(course: Course) {
     </div>
 
     <div v-else class="course-grid">
+
       <BaseCard
         v-for="course in courses"
         :key="course.id"
@@ -83,12 +102,32 @@ function selectCourse(course: Course) {
           </div>
         </div>
       </BaseCard>
+
+      <BaseCard
+        variant="bordered"
+        hoverable
+        class="course-card add-new-card"
+        @click="isNewCourseModalOpen = true"
+      >
+        <div class="add-new-content">
+          <span class="plus-icon">+</span>
+          <span class="add-text">New Course</span>
+        </div>
+      </BaseCard>
+
     </div>
 
     <CourseInspectModal
       :course="selectedCourse"
       @close="selectedCourse = null"
     />
+
+    <NewCourseModal
+      :is-open="isNewCourseModalOpen"
+      @close="isNewCourseModalOpen = false"
+      @submitted="saveNewCourse"
+    />
+
   </section>
 </template>
 
