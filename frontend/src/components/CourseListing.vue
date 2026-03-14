@@ -37,17 +37,15 @@ async function loadCourses() {
   error.value = null;
 
   try {
-    const res = await api.get(`/courses/active`, {
+    const res = await api.get(`/courses/searchCourse`, {
       params: {
-        semesterId: props.semesterId,
-        page: 0,
-        size: 200
+        isActive: true
       }
     });
 
-    console.log("ACTIVE COURSE RESPONSE:", res.data);
+    console.log("ACTIVE COURSE RESPONSE:", res);
 
-    courses.value = res.data?.content ?? [];
+    courses.value = res.data?.data ?? [];
 
     console.log("COURSES SET TO:", courses.value);
 
