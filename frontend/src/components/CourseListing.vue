@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, watch, onMounted } from "vue";
-import { useRouter } from "vue-router";
 import api from "@/api";
 import BaseCard from "@/components/ui/BaseCard.vue";
+import CourseInspectModal from "./CourseInspectModal.vue";
 
 interface Course {
   id: number
@@ -17,70 +17,37 @@ const props = defineProps<{
   semesterId: number | null
 }>();
 
-const router = useRouter();
-
 const loading = ref(false);
 const error = ref<string | null>(null);
 const courses = ref<Course[]>([]);
 
+const selectedCourse = ref<Course | null>(null);
 
-/* -----------------------------------------------------------
- * Load courses (requires programId + semesterId)
- * ----------------------------------------------------------- */
 async function loadCourses() {
   if (!props.programId || !props.semesterId) {
     courses.value = [];
     return;
   }
-
   loading.value = true;
   error.value = null;
-
   try {
     const res = await api.get(`/courses/searchCourse`, {
-      params: {
-        isActive: true
-      }
+      params: { isActive: true }
     });
-
-    console.log("ACTIVE COURSE RESPONSE:", res);
-
     courses.value = res.data?.data ?? [];
-
-    console.log("COURSES SET TO:", courses.value);
-
   } catch (err) {
-    console.error("Failed to load courses:", err);
     error.value = "Failed to load courses";
-  }
-  finally {
+  } finally {
     loading.value = false;
   }
 }
 
-
-/* -----------------------------------------------------------
- * Watch for BOTH programId and semesterId
- * ----------------------------------------------------------- */
-watch(
-  () => [props.programId, props.semesterId],
-  () => {
-    loadCourses();
-  }
-);
-
-
-/* -----------------------------------------------------------
- * Initial fetch
- * ----------------------------------------------------------- */
+watch(() => [props.programId, props.semesterId], loadCourses);
 onMounted(loadCourses);
 
-
-/* -----------------------------------------------------------
- * Course navigation
- * ----------------------------------------------------------- */
+// 3. UPDATE this function to set the ref instead of navigating
 function selectCourse(course: Course) {
-  router.push(`/course/${course.id}`);
+  selectedCourse.value = course;
 }
 </script>
 
@@ -97,7 +64,7 @@ function selectCourse(course: Course) {
     </div>
 
     <div v-else-if="courses.length === 0" class="empty-state">
-      <p>No active courses found for this semester.</p>
+      <p>No active courses found.</p>
     </div>
 
     <div v-else class="course-grid">
@@ -110,19 +77,18 @@ function selectCourse(course: Course) {
         @click="selectCourse(course)"
       >
         <div class="course-card-content">
-          <div class="course-code">
-            {{ course.courseCode }}
-          </div>
-
+          <div class="course-code">{{ course.courseCode }}</div>
           <div class="course-info">
             <h3 class="course-name">{{ course.courseName }}</h3>
-            <p v-if="course.courseDescription" class="course-description">
-              {{ course.courseDescription }}
-            </p>
           </div>
         </div>
       </BaseCard>
     </div>
+
+    <CourseInspectModal
+      :course="selectedCourse"
+      @close="selectedCourse = null"
+    />
   </section>
 </template>
 

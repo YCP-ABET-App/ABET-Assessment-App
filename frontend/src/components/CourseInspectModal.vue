@@ -59,34 +59,38 @@ async function loadCourseData() {
   indicatorsWithMeasures.value = [];
 
   try {
-    // Get indicator IDs for this course
-    const indicatorIdsRes = await api.get(`/searchCourse`, {
+    const indicatorIdsRes = await api.get(`/courses/searchCourse`, {
       params: {
         courseId: props.course.id
       }
     });
-    const indicatorIds = indicatorIdsRes.data as number[];
+
+    const res = await api.get(`/courses/searchCourse`, { // Added "const res ="
+      params: { courseId: props.course.id }
+    });
+    const rawData = res.data?.data ?? res.data ?? [];
+
+    // 3. Ensure we are working with an array of numbers
+    // This helps TypeScript understand exactly what 'indicatorId' is
+    const indicatorIds: number[] = Array.isArray(rawData)
+      ? rawData.map((item: any) => typeof item === 'object' ? item.id : item)
+      : [];
 
     if (indicatorIds.length === 0) {
       loading.value = false;
       return;
     }
 
-    // Fetch each indicator's details and measures
+    // Now indicatorId won't be red because TypeScript knows indicatorIds is number[]
     const indicatorPromises = indicatorIds.map(async (indicatorId) => {
       try {
-        // Get indicator details
         const indicatorRes = await api.get(`/performance-indicators/${indicatorId}`);
         const indicator = indicatorRes.data.data as PerformanceIndicator;
 
-        // Get measures for this indicator
         const measuresRes = await api.get(`/measure/byIndicator/${indicatorId}`);
         const measures = measuresRes.data.data as Measure[];
 
-        return {
-          indicator,
-          measures
-        };
+        return { indicator, measures };
       } catch (err) {
         console.error(`Error loading indicator ${indicatorId}:`, err);
         return null;
@@ -246,7 +250,6 @@ function calculatePercentage(met: number, exceeded: number, total: number): numb
                 </span>
               </div>
 
-              <!-- Measure Data -->
               <div
                 v-if="measure.studentsMet !== null || measure.studentsExceeded !== null"
                 class="measure-data"
@@ -277,13 +280,11 @@ function calculatePercentage(met: number, exceeded: number, total: number): numb
                 </div>
               </div>
 
-              <!-- Observation -->
               <div v-if="measure.observation" class="measure-observation">
                 <strong>Observation:</strong>
                 <p>{{ measure.observation }}</p>
               </div>
 
-              <!-- Recommended Action -->
               <div v-if="measure.recommendedAction" class="measure-action">
                 <strong>Recommended Action:</strong>
                 <p>{{ measure.recommendedAction }}</p>
@@ -291,7 +292,6 @@ function calculatePercentage(met: number, exceeded: number, total: number): numb
             </div>
           </div>
 
-          <!-- No Measures -->
           <div v-else class="no-measures">
             <p>No measures defined for this indicator.</p>
           </div>
@@ -299,7 +299,6 @@ function calculatePercentage(met: number, exceeded: number, total: number): numb
       </div>
     </div>
 
-    <!-- FOOTER SLOT -->
     <template #footer>
       <button class="btn-close" @click="emit('close')">Close</button>
     </template>
