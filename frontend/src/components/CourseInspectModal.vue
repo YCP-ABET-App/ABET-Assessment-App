@@ -173,18 +173,22 @@ function calculatePercentage(met: number, exceeded: number, total: number): numb
   >
 
     <!-- HEADER CONTENT (inline, not a slot) -->
-    <div class="modal-header-content">
+<!--    <div class="modal-header-content">-->
+<!--      <h2>{{ course?.courseName }}</h2>-->
+<!--      <BaseButton-->
+<!--        variant="primary"-->
+<!--        size="sm"-->
+<!--        @click="$router.push(`/course/${course?.id}`)"-->
+<!--      >-->
+<!--        {{ course?.courseCode }}-->
+<!--      </BaseButton>-->
+<!--    </div>-->
+
+    <div class="course-code-badge">
       <h2>{{ course?.courseName }}</h2>
-      <BaseButton
-        variant="primary"
-        size="sm"
-        @click="$router.push(`/course/${course?.id}`)"
-      >
-        {{ course?.courseCode }}
-      </BaseButton>
+      {{ course?.courseCode }}
     </div>
 
-    <!-- BODY CONTENT (default slot instead of #body) -->
 
     <!-- Loading State -->
     <div v-if="loading" class="loading-container">
