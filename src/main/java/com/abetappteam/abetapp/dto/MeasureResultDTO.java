@@ -25,9 +25,9 @@ public class MeasureResultDTO {
     public MeasureResultDTO() {
     }
 
-    public MeasureResultDTO(Long id, Long measureId, Long sectionId, Long programId, Integer met, Integer exceeded,
-            Integer below, String observation, String status, String rejectionNote, Boolean active) {
-        this.id = id;
+    public MeasureResultDTO(Long measureId, Long sectionId, Long programId, Integer met, Integer exceeded,
+            Integer below, String observation, String status, String rejectionNote) {
+
         this.measureId = measureId;
         this.sectionId = sectionId;
         this.programId = programId;
