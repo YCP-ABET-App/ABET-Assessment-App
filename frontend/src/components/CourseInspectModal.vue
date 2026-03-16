@@ -12,6 +12,7 @@ interface Course {
   courseName: string;
   courseDescription?: string;
   studentCount?: number;
+  threshold?: number;
 }
 
 interface PerformanceIndicator {
@@ -127,6 +128,35 @@ watch(
 );
 
 /* -----------------------------------------------
+ * Delete Logic
+ * ----------------------------------------------- */
+const deleting = ref(false);
+
+async function deleteCourse() {
+  if (!props.course) return;
+
+  const confirmed = window.confirm(
+    `Are you sure you want to delete ${props.course.courseCode}? This action cannot be undone.`
+  );
+  if (!confirmed) return;
+
+  deleting.value = true;
+  error.value = null;
+
+  try {
+    await api.delete(`/courses/${props.course.id}`);
+
+    emit("close");
+    window.location.reload();
+  } catch (err: any) {
+    console.error("Failed to delete course:", err);
+    error.value = err?.response?.data?.message || "Failed to delete course. Please try again.";
+  } finally {
+    deleting.value = false;
+  }
+}
+
+/* -----------------------------------------------
  * Helper functions
  * ----------------------------------------------- */
 function getStatusClass(status: string): string {
@@ -209,6 +239,9 @@ function calculatePercentage(met: number, exceeded: number, total: number): numb
         </p>
         <p v-if="course?.studentCount" class="student-count">
           <strong>Student Count:</strong> {{ course.studentCount }}
+        </p>
+        <p v-if="course?.threshold !== undefined && course?.threshold !== null" class="threshold">
+          <strong>Threshold:</strong> {{ course.threshold }}
         </p>
       </section>
 
@@ -304,7 +337,25 @@ function calculatePercentage(met: number, exceeded: number, total: number): numb
     </div>
 
     <template #footer>
-      <button class="btn-close" @click="emit('close')">Close</button>
+      <div class="footer-container">
+        <BaseButton
+          variant="danger"
+          @click="deleteCourse"
+          :disabled="loading || deleting"
+          class="btn-action btn-delete"
+        >
+          <span v-if="deleting">Deleting...</span>
+          <span v-else>Delete Course</span>
+        </BaseButton>
+
+        <button
+          class="btn-action btn-close"
+          @click="emit('close')"
+          :disabled="deleting"
+        >
+          Close
+        </button>
+      </div>
     </template>
 
   </BaseModal>
@@ -569,22 +620,58 @@ function calculatePercentage(met: number, exceeded: number, total: number): numb
   font-style: italic;
 }
 
-/* Footer Button */
-.btn-close {
-  background: var(--color-primary);
-  color: white;
-  border: none;
-  padding: 0.625rem 1.5rem;
+/* Container to push buttons to opposite sides */
+.footer-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  gap: 1rem; /* Adds a safety gap */
+}
+
+/* Shared sizing for both buttons */
+.btn-action {
+  padding: 0.625rem 1.5rem; /* Matches your existing .btn-close padding */
   border-radius: 0.375rem;
   font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
+  height: 40px; /* Forces identical height */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 140px; /* Ensures buttons look balanced */
 }
 
-.btn-close:hover {
+/* Specific Delete styles */
+.btn-delete {
+  background-color: transparent;
+  color: #dc3545; /* Standard red */
+  border: 1px solid #dc3545;
+}
+
+.btn-delete:hover:not(:disabled) {
+  background-color: #dc3545;
+  color: white;
+}
+
+.btn-close {
+  background: var(--color-primary);
+  color: white;
+  border: none;
+}
+
+.btn-close:hover:not(:disabled) {
   background: var(--color-primary-dark);
 }
+
+.btn-action:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+
 
 /* Responsive */
 @media (max-width: 768px) {
