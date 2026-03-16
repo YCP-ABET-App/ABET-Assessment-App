@@ -1,6 +1,7 @@
 package com.abetappteam.abetapp.controller;
 
 import com.abetappteam.abetapp.config.TestSecurityConfig;
+import com.abetappteam.abetapp.entity.Course;
 import com.abetappteam.abetapp.entity.Program;
 import com.abetappteam.abetapp.dto.ProgramDTO;
 import com.abetappteam.abetapp.entity.ProgramUser;
@@ -61,16 +62,16 @@ public class ProgramControllerUnitTest {
 
     @Test
     void shouldGetAllPrograms() throws Exception {
-        //Given
+        // Given
         List<Program> programs = List.of(testProgram);
         Page<Program> page = new PageImpl<>(programs, PageRequest.of(0, 20), 1);
 
         when(programService.findAll(any(PageRequest.class))).thenReturn(page);
 
-        //When/Then
+        // When/Then
         mockMvc.perform(get("/api/program")
-                        .param("page", "0")
-                        .param("size", "20"))
+                .param("page", "0")
+                .param("size", "20"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isArray())
                 .andExpect(jsonPath("$.content.length()").value(1))
@@ -81,27 +82,27 @@ public class ProgramControllerUnitTest {
 
     @Test
     void shouldCreateProgram() throws Exception {
-        //Given
+        // Given
         when(programService.create(any(ProgramDTO.class))).thenReturn(testProgram);
 
-        //When/Then
+        // When/Then
         mockMvc.perform(post("/api/program")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(testDTO)))
-                    .andExpect(status().isCreated())
-                    .andExpect(jsonPath("$.success").value(true))
-                    .andExpect(jsonPath("$.message").value("Resource created successfully"))
-                    .andExpect(jsonPath("$.data.id").value(1))
-                    .andExpect(jsonPath("$.data.name").value("EU Testing"));
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(testDTO)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("Resource created successfully"))
+                .andExpect(jsonPath("$.data.id").value(1))
+                .andExpect(jsonPath("$.data.name").value("EU Testing"));
         verify(programService, times(1)).create(any(ProgramDTO.class));
     }
 
     @Test
     void shouldGetProgrambyId() throws Exception {
-        //Given
+        // Given
         when(programService.findById(1L)).thenReturn(testProgram);
 
-        //When/Then
+        // When/Then
         mockMvc.perform(get("/api/program/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
@@ -136,8 +137,8 @@ public class ProgramControllerUnitTest {
 
         // When/Then
         mockMvc.perform(post("/api/program")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(invalidDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(invalidDTO)))
                 .andExpect(status().isBadRequest());
 
         // Service should not be called for invalid input
@@ -151,8 +152,8 @@ public class ProgramControllerUnitTest {
 
         // When/Then
         mockMvc.perform(put("/api/program/1")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(testDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(testDTO)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Program updated successfully"))
@@ -218,12 +219,12 @@ public class ProgramControllerUnitTest {
         when(programService.addUserToProgram(10L, 1L, true)).thenReturn(programUser);
 
         var body = """
-            {"userId":10,"isAdmin":true}
-            """;
+                {"userId":10,"isAdmin":true}
+                """;
 
         mockMvc.perform(post("/api/program/1/users")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(body))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.data.userId").value(10))
                 .andExpect(jsonPath("$.data.adminStatus").value(true));
@@ -235,19 +236,19 @@ public class ProgramControllerUnitTest {
     void shouldUpdateUserRole() throws Exception {
         // Given
         Long programId = 1L;
-        Long programUserId = 20L;  // This is the ProgramUser ID, not User ID
+        Long programUserId = 20L; // This is the ProgramUser ID, not User ID
 
         ProgramUser mockProgramUser = new ProgramUser();
         mockProgramUser.setId(programUserId);
         mockProgramUser.setProgramId(programId);
-        mockProgramUser.setUserId(1L);  // The actual user ID
+        mockProgramUser.setUserId(1L); // The actual user ID
         mockProgramUser.setAdminStatus(false);
 
         ProgramUser updatedProgramUser = new ProgramUser();
         updatedProgramUser.setId(programUserId);
         updatedProgramUser.setProgramId(programId);
         updatedProgramUser.setUserId(1L);
-        updatedProgramUser.setAdminStatus(true);  // After update
+        updatedProgramUser.setAdminStatus(true); // After update
 
         // Mock the new methods instead of the old updateUserRole method
         when(programService.findProgramUserById(programUserId))
@@ -257,8 +258,8 @@ public class ProgramControllerUnitTest {
 
         // When/Then
         mockMvc.perform(put("/api/program/{programId}/users/{programUserId}", programId, programUserId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"isAdmin\":true}"))  // or use "adminStatus"
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"isAdmin\":true}")) // or use "adminStatus"
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.adminStatus").value(true));
@@ -288,4 +289,23 @@ public class ProgramControllerUnitTest {
         verify(programService).getRoleInProgram(10L, 1L);
     }
 
+    @Test
+    void shouldGetActiveCoursesInProgram() throws Exception {
+        Course course = new Course();
+        course.setId(1L);
+        course.setCourseCode("CS101");
+        course.setCourseName("Intro to CS");
+        course.setCourseDescription("desc");
+        course.setIsActive(true);
+
+        when(programService.getCoursesInProgram(1L)).thenReturn(List.of(course));
+
+        mockMvc.perform(get("/api/program/1/courses/active"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("Active courses retrieved successfully"))
+                .andExpect(jsonPath("$.data[0].courseCode").value("CS101"));
+
+        verify(programService).getCoursesInProgram(1L);
+    }
 }
