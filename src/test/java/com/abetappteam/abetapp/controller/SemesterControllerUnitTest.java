@@ -30,6 +30,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
@@ -123,6 +124,7 @@ class SemesterControllerUnitTest extends BaseControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(toJson(testSemesterDTO)))
                 .andDo(print())
+                .andDo(print())
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.id").value(1));
@@ -133,6 +135,7 @@ class SemesterControllerUnitTest extends BaseControllerTest {
     @Test
     void shouldReturnBadRequestForInvalidSemester() throws Exception {
         // Given - DTO with missing required fields
+        SemesterDTO invalidDTO = new SemesterDTO(null, null, null, null, null, null, null, null, null);
         SemesterDTO invalidDTO = new SemesterDTO(null, null, null, null, null, null, null, null, null);
         invalidDTO.setName(null); // Invalid - name is required
         invalidDTO.setCode(null); // Invalid - code is required
@@ -155,6 +158,7 @@ class SemesterControllerUnitTest extends BaseControllerTest {
         mockMvc.perform(put("/api/semesters/1")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(toJson(testSemesterDTO)))
+                .andDo(print())
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))

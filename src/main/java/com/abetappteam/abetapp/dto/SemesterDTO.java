@@ -37,6 +37,7 @@ public class SemesterDTO {
     public SemesterDTO(String name, String code, LocalDate startDate,
         LocalDate endDate, Integer academicYear, String type, Long programId, String description, Boolean isCurrent){
             this.name = name;
+            this.code = code;
             this.startDate = startDate;
             this.endDate = endDate;
             this.academicYear = academicYear;
