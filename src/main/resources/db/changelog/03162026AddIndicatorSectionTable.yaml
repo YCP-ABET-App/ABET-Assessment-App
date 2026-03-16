@@ -6,7 +6,7 @@ databaseChangeLog:
         - onFail: MARK_RAN
           not:
             tableExists:
-              tableName: indicator_section
+              tableName: section_indicator
       changes:
         - createTable:
             tableName: section_indicator
