@@ -14,10 +14,11 @@ const formData = ref({
   courseName: "",
   courseDescription: "",
   studentCount: 0,
+  threshold: 0
 });
 
 function handleClose() {
-  formData.value = { courseCode: "", courseName: "", courseDescription: "", studentCount: 0 };
+  formData.value = { courseCode: "", courseName: "", courseDescription: "", studentCount: 0, threshold: 0 };
   emit("close");
 }
 
@@ -52,6 +53,11 @@ function submitForm() {
       <div class="form-group">
         <label>Student Count</label>
         <input v-model.number="formData.studentCount" type="number" />
+      </div>
+
+      <div class="form-group">
+        <label>Threshold</label>
+        <input v-model.number="formData.threshold" type="number" />
       </div>
     </div>
 

@@ -12,6 +12,7 @@ interface Course {
   courseName: string;
   courseDescription?: string;
   studentCount?: number;
+  threshold?: number;
 }
 
 interface PerformanceIndicator {
@@ -209,6 +210,9 @@ function calculatePercentage(met: number, exceeded: number, total: number): numb
         </p>
         <p v-if="course?.studentCount" class="student-count">
           <strong>Student Count:</strong> {{ course.studentCount }}
+        </p>
+        <p v-if="course?.threshold !== undefined && course?.threshold !== null" class="threshold">
+          <strong>Threshold:</strong> {{ course.threshold }}
         </p>
       </section>
 
