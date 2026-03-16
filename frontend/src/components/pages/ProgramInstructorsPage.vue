@@ -511,9 +511,9 @@ async function loadProgramInstructors() {
           const userRes = await api.get(`/users/${pu.userId}`);
           const user = userRes.data.data;
 
-          // Fetch all courses for this instructor (API doesn't support semester filter)
-          const coursesRes = await api.get(`/courses/instructor`, {
-            params: { programUserId: pu.id }
+          // Fetch all sections for this instructor (API doesn't support semester filter)
+          const coursesRes = await api.get(`/section`, {
+            params: { userId: pu.userId }
           });
 
           const allCourses = coursesRes.data.data ?? [];
