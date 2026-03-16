@@ -16,37 +16,16 @@ interface ProgramUser {
   role: string;
 }
 
-interface RawSection {
-  id: number;
-  courseCode: string;
-}
-
-interface MeasureResults {
-  id: number;
-  met: number;
-  exceeded: number;
-  below: number;
-  observation: string;
-  status: string;
-
-  measureId: number;
-  measure: {
-    id: number;
-    measureDescription: string;
-    metDescription: string;
-    belowDescription: string;
-    exceededDescription: string;
-  }
-}
-
 interface InstructorDashboardSection {
   id: number;
   courseCode: string;
   instructorName: string;
-  measuresCompleted: number;
-  measuresTotal: number;
-  measures: MeasureResults[];
-  expanded: boolean;
+  indicators: SectionIndicatorInfo[]; // changed from tuple to array
+}
+
+interface SectionIndicatorInfo {
+  sectionId: number;
+  indicatorStatus: boolean;
 }
 
 // ------------------------------
@@ -78,23 +57,6 @@ async function loadProgramUserId() {
   programUserId.value = me.id;
 }
 
-// ------------------------------
-// LOAD MEASURE RESULTS FOR A SECTION
-// ------------------------------
-async function loadSectionMeasureResults(sectionId: number): Promise<MeasureResults[]> {
-  try {
-    const res = await api.get(`/measure-result`, { params: {
-      sectionId: sectionId
-    }});
-
-    console.log(res)
-
-    return res.data.data as MeasureResults[];
-  } catch (err) {
-    console.error(`Failed to load measures for course`);
-    return [];
-  }
-}
 
 // ------------------------------
 // LOAD INSTRUCTOR COURSE LIST
@@ -131,6 +93,7 @@ async function loadInstructorSections() {
     sectionIds.push(su.sectionId);
   })
 
+  const indicatorData = await loadInstructorIndicatorData(sectionIds);
 
   const sectionRes = await api.get("/section", {
     params: {
@@ -158,41 +121,44 @@ async function loadInstructorSections() {
       return;
     }
 
+    const indicators = (indicatorData || []).filter((i: SectionIndicatorInfo) => i.sectionId === section.id).map((i: SectionIndicatorInfo) => ({
+      sectionId: i.sectionId,
+      indicatorStatus: i.indicatorStatus
+    }));
+
     results.push({
       id: section.id,
       courseCode: `${course.courseCode} ${course.courseName} ${section.sectionNumber}`,
       instructorName: `${userStore.user?.firstName} ${userStore.user?.lastName}`,
-      measuresCompleted: section.completedMeasures,
-      measuresTotal: section.totalMeasures,
-      measures: [],
-      expanded: false,
+      indicators: indicators
     });
   });
 
   sections.value = results;
 }
 
-// ------------------------------
-// TOGGLE SECTION EXPANSION
-// ------------------------------
-async function toggleSection(section: InstructorDashboardSection) {
-  section.expanded = !section.expanded;
 
-  // Load measures if expanding and not already loaded
-  if (section.expanded && section.measures.length === 0) {
-    section.measures = await loadSectionMeasureResults(section.id);
-  }
-}
+async function loadInstructorIndicatorData(sectionIds : any[] = []) : Promise<SectionIndicatorInfo[]> {
 
-// ------------------------------
-// REFRESH MEASURE RESULTS FOR A SECTION
-// ------------------------------
-async function refreshSectionMeasureResults(sectionId: number) {
-  const section = sections.value.find(s => s.id === sectionId);
-  if (!section) return;
+  // Query the section indicator table for all indicators in the section
+  const sectionIndicatorRes = await api.get("/section-indicator", {
+    params: {
+      ids: sectionIds
+    }
+  });
 
-  section.measures = await loadSectionMeasureResults(sectionId);
+  let sectionIndicatorData: SectionIndicatorInfo[] = [];
 
+  (sectionIndicatorRes.data?.data || []).forEach((indicator: any) => {
+    const info: SectionIndicatorInfo = {
+      sectionId: Number(indicator.sectionId),
+      indicatorStatus: Boolean(indicator.isComplete)
+    };
+
+    sectionIndicatorData.push(info);
+  })
+
+  return sectionIndicatorData;
 }
 
 // ------------------------------
@@ -267,7 +233,13 @@ watch([programId, semesterId], () => {
           </div>
         </div>
         <!-- TODO: Add here the aggregate data for how many indicators for a section have been completed-->
-
+        <div class="section-header">
+          <div class="section-stats">
+            <p class="measures-count">
+              {{ section.indicators.filter(i => i.indicatorStatus).length }} / {{ section.indicators.length }} indicators complete
+            </p>
+          </div>
+        </div>
       </BaseCard>
     </div>
   </section>
