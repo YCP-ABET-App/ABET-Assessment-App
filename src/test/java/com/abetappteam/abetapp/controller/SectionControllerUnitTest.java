@@ -56,10 +56,8 @@ class SectionControllerUnitTest extends BaseControllerTest {
         testCourse.setCourseDescription("Test course");
         testCourse.setIsActive(true);
 
-        testDTO = new SectionDTO(0, null, 0, 0, null);
+        testDTO = new SectionDTO("001", 1, 1, null);
         testDTO.setSectionNumber("001");
-        testDTO.setCourseId(1);
-        testDTO.setSemesterId(1);
     }
 
     @Test
