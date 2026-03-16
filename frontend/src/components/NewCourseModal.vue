@@ -37,7 +37,7 @@ function submitForm() {
     <div class="form-container">
       <div class="form-group">
         <label>Course Code</label>
-        <input v-model="formData.courseCode" type="text" placeholder="CS101" />
+        <input v-model="formData.courseCode" type="text" placeholder="CS 101" />
       </div>
 
       <div class="form-group">
