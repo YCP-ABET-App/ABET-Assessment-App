@@ -77,7 +77,7 @@ public class UsersControllerUnitTest {
                 testUser.setTitle("Dr.");
                 testUser.setActive(true);
 
-                testDTO = new UsersDTO();
+                testDTO = new UsersDTO("NewEmail@gmail.com", "NewPassword", "NewFirstName", "NewLastName", "NewTitle", true);
                 testDTO.setEmail("NewEmail@gmail.com");
                 testDTO.setPasswordHash("NewPassword");
                 testDTO.setFirstName("NewFirstName");
@@ -160,7 +160,7 @@ public class UsersControllerUnitTest {
         @Test
         void shouldReturnBadRequestForInvalidUser() throws Exception {
                 // Given - DTO with missing required fields and invalid fields
-                UsersDTO invalidDTO = new UsersDTO();
+                UsersDTO invalidDTO = new UsersDTO("email", null, null, null, "V;vmiiQ94S$npW0g+6A2UpEB3bW.nvm)F&$#S2dfrK?pC!P]xuU", true);
                 invalidDTO.setFirstName(null); // Invalid - first name is required
                 invalidDTO.setLastName(null); // Invalid - last name is required
                 invalidDTO.setTitle("V;vmiiQ94S$npW0g+6A2UpEB3bW.nvm)F&$#S2dfrK?pC!P]xuU"); // Invalid - title cannot be

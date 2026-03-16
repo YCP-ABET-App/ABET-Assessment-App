@@ -21,34 +21,46 @@ public class Section extends BaseEntity {
     @Column(name = "semester_id", nullable = false)
     private int semesterId;
 
-    public Section(){super();}
+    public Section() {
+        super();
+    }
 
     public Section(
-        String sectionNumber,
-        int courseId,
-        int semesterId
-    ) {
+            String sectionNumber,
+            int courseId,
+            int semesterId) {
         this.sectionNumber = sectionNumber;
         this.courseId = courseId;
         this.semesterId = semesterId;
     }
 
     // Getters and Setters
-    public String getSectionNumber(){return sectionNumber;}
+    public String getSectionNumber() {
+        return sectionNumber;
+    }
 
-    public int getCourseId(){return courseId;}
+    public int getCourseId() {
+        return courseId;
+    }
 
-    public int getSemesterId(){return semesterId;}
+    public int getSemesterId() {
+        return semesterId;
+    }
 
-    public void setSectionNumber(String sectionNumber){this.sectionNumber = sectionNumber;}
+    public void setSectionNumber(String sectionNumber) {
+        this.sectionNumber = sectionNumber;
+    }
 
-    public void setCourseId(int courseId){this.courseId = courseId;}
+    public void setCourseId(int courseId) {
+        this.courseId = courseId;
+    }
 
-    public void setSemesterId(int semesterId){this.semesterId = semesterId;}
+    public void setSemesterId(int semesterId) {
+        this.semesterId = semesterId;
+    }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return "Section{" +
                 "id=" + getId() +
                 ", sectionNumber='" + sectionNumber + '\'' +
