@@ -36,7 +36,7 @@ public class MeasureController extends BaseController{
     //Create a new measure
     @PostMapping
     public ResponseEntity<ApiResponse<Measure>> createMeasure(@Valid @RequestBody MeasureDTO dto) {
-        logger.info("Creating new measure: ", dto.getId());
+        logger.info("Creating new measure: ", dto.getDescription());
         Measure measure = service.create(dto);
         return created(measure);
     }
