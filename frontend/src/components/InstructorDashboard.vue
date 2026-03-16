@@ -65,7 +65,6 @@ async function loadInstructorSections() {
   if (!programUserId.value || !semesterId.value || !userStore.userId) return;
 
   // First, query the section user table to find what sections are assigned to the user
-  console.log("Loading sections for user id: ", userStore.userId)
   let sectionUserRes = null;
   try{
     sectionUserRes = await api.get("/section-user", { params:
@@ -88,7 +87,6 @@ async function loadInstructorSections() {
   let sectionIds: any[] = [];
 
   sectionUserData.forEach((su: any) => {
-    console.log(`SectionUser - id: ${su.id}, sectionId: ${su.sectionId}, userId: ${su.userId}`)
 
     sectionIds.push(su.sectionId);
   })
@@ -97,11 +95,11 @@ async function loadInstructorSections() {
 
   const sectionRes = await api.get("/section", {
     params: {
-      ids: sectionIds
+      ids: sectionIds,
+      semesterId: semesterId.value
     },
   });
 
-  console.log("Section Results: ", sectionRes)
 
   // Parse out sections and courses from the response, assemble section titles
 
