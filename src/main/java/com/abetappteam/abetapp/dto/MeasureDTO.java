@@ -8,16 +8,13 @@ public class MeasureDTO {
 
     @NotBlank(message = "Description of Measure is required")
     private String description;
-
     private String recAction;
-
     private String status;
-
     private Boolean active;
 
     //Constructor
-    public MeasureDTO(Long id, Long courseIndicatorId, String description, String observation, String recAction, String fcar, 
-    Integer met, Integer exceeded, Integer below, String status, Boolean active){
+    public MeasureDTO(Long courseIndicatorId, String description, String recAction,
+    String status, Boolean active){
 
         this.courseIndicatorId = courseIndicatorId;
         this.description = description;

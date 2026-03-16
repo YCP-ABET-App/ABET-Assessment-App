@@ -92,10 +92,7 @@ public class TestDataBuilder {
      * Create an invalid Course DTO (for validation tests)
      */
     public static CourseDTO createInvalidCourseDTO() {
-        CourseDTO dto = new CourseDTO();
-        dto.setCourseCode(null); // Invalid - required
-        dto.setCourseName(""); // Invalid - blank
-        dto.setCourseDescription(null); // Invalid - required
+        CourseDTO dto = new CourseDTO(null, "", null, 15, .5);
         return dto;
     }
 
@@ -198,25 +195,16 @@ public class TestDataBuilder {
     // Create custom user dto
     public static UsersDTO createUsersDTO(String email, String passwordHash, String firstName, String lastName,
             String title, Boolean active) {
-        UsersDTO dto = new UsersDTO();
-        dto.setEmail(email);
-        dto.setPasswordHash(passwordHash);
-        dto.setFirstName(firstName);
-        dto.setLastName(lastName);
-        dto.setTitle(title);
-        dto.setActive(active);
+        UsersDTO dto = new UsersDTO(email, passwordHash, firstName, lastName, title, active);
+
         return dto;
     }
 
     // Create invalid user dto
     public static UsersDTO createInvalidUsersDTO() {
-        UsersDTO dto = new UsersDTO();
-        dto.setEmail("email"); // Must be a valid email address
-        dto.setPasswordHash(null); // Can't be null
-        dto.setFirstName(""); // Can't be empty
-        dto.setLastName(null); // Can't be null
-        dto.setTitle("Thisisaveryverylongtitlethatgoesoverthelimitthatwassetforhowlongatitlteshouldbe"); // Too Long
-        dto.setActive(true);
+        UsersDTO dto = new UsersDTO("email", null, "", null,
+                "Thisisaveryverylongtitlethatgoesoverthelimitthatwassetforhowlongatitlteshouldbe", true);
+
         return dto;
     }
 
@@ -259,10 +247,8 @@ public class TestDataBuilder {
 
     // Create custom ProgramDTO
     public static ProgramDTO createProgramDTO(String name, String institution, Boolean active) {
-        ProgramDTO dto = new ProgramDTO();
-        dto.setName(name);
-        dto.setInstitution(institution);
-        dto.setActive(active);
+        ProgramDTO dto = new ProgramDTO(name, institution, active);
+
         return dto;
     }
 
@@ -345,16 +331,8 @@ public class TestDataBuilder {
      */
     public static SemesterDTO createSemesterDTO(String name, String code, LocalDate startDate, LocalDate endDate,
             Integer academicYear, String type, Long programId, String description, Boolean isCurrent) {
-        SemesterDTO dto = new SemesterDTO();
-        dto.setName(name);
-        dto.setCode(code);
-        dto.setStartDate(startDate);
-        dto.setEndDate(endDate);
-        dto.setAcademicYear(academicYear);
-        dto.setType(type);
-        dto.setProgramId(programId);
-        dto.setDescription(description);
-        dto.setIsCurrent(isCurrent);
+        SemesterDTO dto = new SemesterDTO(name, code, startDate, endDate, academicYear, type, programId, description, isCurrent);
+
         return dto;
     }
 
@@ -456,14 +434,8 @@ public class TestDataBuilder {
     //Create Custom MeasureDTO
     public static MeasureDTO createMeasureDTO(Long id, Long courseIndicatorId, String description, String observation, String recAction, String fcar,
     Integer met, Integer exceeded, Integer below, String status, Boolean active){
-        MeasureDTO measureDTO = new MeasureDTO();
-        measureDTO.setId(id);
-        measureDTO.setCourseIndicatorId(courseIndicatorId);
-        measureDTO.setDescription(description);
-        measureDTO.setRecommendedAction(recAction);
-        measureDTO.setFCar(fcar);
-        measureDTO.setStatus(status);
-        measureDTO.setActive(active);
+        MeasureDTO measureDTO = new MeasureDTO(courseIndicatorId, description, recAction, status, active);
+
         return measureDTO;
     }
 
@@ -535,13 +507,10 @@ public class TestDataBuilder {
 
     //Create custom OutcomeDTO
     public static OutcomeDTO createOutcomeDTO(Integer number, String description, Long semesterId, Integer value, String evaluation, Boolean active){
-        OutcomeDTO dto = new OutcomeDTO();
-        dto.setNumber(number);
-        dto.setDescription(description);
-        dto.setSemesterId(semesterId);
-        dto.setValue(value);
-        dto.setEvaluation(evaluation);
-        dto.setActive(active);
+        OutcomeDTO dto = new OutcomeDTO(number, description, evaluation, semesterId, active);
+
+        // dto.setValue(value);
+
         return dto;
     }
 

@@ -53,7 +53,7 @@ public class ProgramControllerUnitTest {
         testProgram.setName("EU Testing");
         testProgram.setInstitution("Example University");
 
-        testDTO = new ProgramDTO();
+        testDTO = new ProgramDTO("New Program", "New Institution", true);
         testDTO.setName("New Program");
         testDTO.setInstitution("New Institution");
         testDTO.setActive(true);
@@ -129,7 +129,7 @@ public class ProgramControllerUnitTest {
     @Test
     void shouldReturnBadRequestForInvalidProgram() throws Exception {
         // Given - DTO with missing required fields and invalid fields
-        ProgramDTO invalidDTO = new ProgramDTO();
+        ProgramDTO invalidDTO = new ProgramDTO(null, null, true);
         invalidDTO.setName(null);
         invalidDTO.setInstitution(null);
         invalidDTO.setActive(true);
