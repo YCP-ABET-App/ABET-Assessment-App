@@ -23,22 +23,20 @@ interface RawSection {
 
 interface MeasureResults {
   id: number;
-  courseIndicatorId: number;
-  description: string;
-  observation: string | null;
-  recommendedAction: string | null;
-  fcar: string | null;
-  studentsMet: number | null;
-  studentsExceeded: number | null;
-  studentsBelow: number | null;
-  createdAt: string;
-  active: boolean;
-  deleted: boolean;
-  deletedAt: string | null;
-  new: boolean;
-  status: string | null;
-  updatedAt: string | null;
-  version: number | null;
+  met: number;
+  exceeded: number;
+  below: number;
+  observation: string;
+  status: string;
+
+  measureId: number;
+  measure: {
+    id: number;
+    measureDescription: string;
+    metDescription: string;
+    belowDescription: string;
+    exceededDescription: string;
+  }
 }
 
 interface InstructorDashboardSection {
@@ -88,6 +86,8 @@ async function loadSectionMeasureResults(sectionId: number): Promise<MeasureResu
     const res = await api.get(`/measure-result`, { params: {
       sectionId: sectionId
     }});
+
+    console.log(res)
 
     return res.data.data as MeasureResults[];
   } catch (err) {
@@ -147,8 +147,6 @@ async function loadInstructorSections() {
   const rawSections = responseData.sections;
   const rawCourses = responseData.courses;
 
-  console.log(rawSections)
-  console.log(rawCourses)
 
   const results: InstructorDashboardSection[] = [];
 
@@ -159,8 +157,6 @@ async function loadInstructorSections() {
       console.warn(`No course found for section ${section.id}`);
       return;
     }
-    console.log("Course: ", course)
-    console.log("Section: ", section)
 
     results.push({
       id: section.id,
@@ -241,6 +237,8 @@ watch([programId, semesterId], () => {
   <section v-if="!isLoading" class="instructor-dashboard">
     <h1>Instructor Dashboard</h1>
 
+    <h3>Your Assigned Sections</h3>
+
     <div v-if="errorMessage" class="error">
       {{ errorMessage }}
     </div>
@@ -255,37 +253,20 @@ watch([programId, semesterId], () => {
       <p>No sections created for the current course.</p>
     </div>
 
-    <div v-else class="section-container">
+    <div v-else class="section-grid">
       <BaseCard
         v-for="section in sections"
         :key="section.id"
         class="section-card"
+        variant="elevated"
+        hoverable
       >
-        <div class="section-header" @click="toggleSection(section)">
-          <div class="section-info">
+        <div class="section-card-content">
+          <div class="section-course-code">
             <h3>{{ section.courseCode }}</h3>
           </div>
-          <div class="section-stats">
-            <span class="measures-count">
-              {{ section.measuresCompleted }} / {{ section.measuresTotal }} measures completed
-            </span>
-            <button class="expand-button" :class="{ expanded: section.expanded }">
-              {{ section.expanded ? '▼' : '▶' }}
-            </button>
-          </div>
         </div>
-
-        <div v-if="section.expanded" class="measures-container">
-          <div v-if="section.measures.length === 0" class="no-measures">
-            No measures found for this course.
-          </div>
-          <MeasureListing
-            v-for="measure in section.measures"
-            :key="measure.id"
-            :measure_prop="measure"
-            @refresh="refreshSectionMeasureResults(section.id)"
-          />
-        </div>
+        <!-- TODO: Add here the aggregate data for how many indicators for a section have been completed-->
       </BaseCard>
     </div>
   </section>
@@ -296,6 +277,45 @@ watch([programId, semesterId], () => {
 </template>
 
 <style scoped>
+.section-course-code {
+  align-items: start;
+  text-align: center;
+}
+
+.section-card-content {
+  display: flex;
+  flex-direction: row;
+  gap: 0.5rem;
+  align-items: center;
+  height: 100%;
+}
+
+.section-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+  gap: 1.25rem;
+}
+
+.section-card :deep(.base-card) {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg-secondary);
+}
+
+/* Make card-body expand to fill available space */
+.section-card :deep(.card-body) {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.section-card {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  height: 100%;
+}
+
 .instructor-dashboard {
   margin: 2rem;
 }
@@ -355,6 +375,7 @@ watch([programId, semesterId], () => {
 
 .section-stats {
   display: flex;
+  text-align: center;
   align-items: center;
   gap: 0.75rem;
 }
