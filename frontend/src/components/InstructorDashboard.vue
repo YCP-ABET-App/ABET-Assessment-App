@@ -267,6 +267,7 @@ watch([programId, semesterId], () => {
           </div>
         </div>
         <!-- TODO: Add here the aggregate data for how many indicators for a section have been completed-->
+
       </BaseCard>
     </div>
   </section>
