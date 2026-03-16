@@ -14,8 +14,8 @@ public class MeasureResultDTO {
 
     // Constructors
 
-    public MeasureResultDTO(Long id, Long measureId, Long sectionId, Long programId, Integer met, Integer exceeded,
-            Integer below, String observation, String status, String rejectionNote, Boolean active) {
+    public MeasureResultDTO(Long measureId, Long sectionId, Long programId, Integer met, Integer exceeded,
+            Integer below, String observation, String status, String rejectionNote) {
 
         this.measureId = measureId;
         this.sectionId = sectionId;
