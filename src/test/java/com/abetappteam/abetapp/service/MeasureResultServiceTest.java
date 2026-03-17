@@ -35,7 +35,15 @@ public class MeasureResultServiceTest extends BaseServiceTest {
         testMeasureResult = new MeasureResult(1L, 1L, 1L, 10, 5, 3, "Test Observation", null, "InProgress");
         testMeasureResult.setId(1L);
 
-        testDTO = new MeasureResultDTO(1L, 1L, 1L, 10, 5,3, "Test Observation", "InProgress", null);
+        testDTO = new MeasureResultDTO();
+        testDTO.setMeasureId(1L);
+        testDTO.setSectionId(1L);
+        testDTO.setProgramId(1L);
+        testDTO.setStudentsMet(10);
+        testDTO.setStudentsExceeded(5);
+        testDTO.setStudentsBelow(3);
+        testDTO.setObservation("Test Observation");
+        testDTO.setStatus("InProgress");
     }
 
     @Test

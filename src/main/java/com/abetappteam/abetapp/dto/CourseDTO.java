@@ -5,6 +5,8 @@ import jakarta.validation.constraints.NotNull;
 
 public class CourseDTO {
 
+    private Long id;
+
     @NotBlank(message = "Course code is required")
     private String courseCode;
 
@@ -21,8 +23,10 @@ public class CourseDTO {
     private Boolean isActive;
 
     // Constructors
-    public CourseDTO(String courseCode, String courseName, String courseDescription, Integer studentCount, Double threshold) {
+    public CourseDTO() {
+    }
 
+    public CourseDTO(String courseCode, String courseName, String courseDescription, Integer studentCount, Double threshold) {
         this.courseCode = courseCode;
         this.courseName = courseName;
         this.courseDescription = courseDescription;
@@ -32,6 +36,13 @@ public class CourseDTO {
     }
 
     // Getters and setters
+    public Long getId() {
+        return id;
+    }
+    public void setId(Long id) {
+        this.id = id;
+    }
+
     public String getCourseCode() {
         return courseCode;
     }
@@ -77,7 +88,7 @@ public class CourseDTO {
     @Override
     public String toString() {
         return "CourseDTO{" +
-
+                "id=" + id +
                 ", courseCode='" + courseCode + '\'' +
                 ", courseName='" + courseName + '\'' +
                 ", courseDescription='" + courseDescription + '\'' +

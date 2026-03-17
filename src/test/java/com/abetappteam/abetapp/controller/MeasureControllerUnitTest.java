@@ -63,7 +63,12 @@ public class MeasureControllerUnitTest {
         testMeasure.setStatus("InProgress");
         testMeasure.setActive(true);
 
-        testDTO = new MeasureDTO(1L, "New Description", null, "InReview", true);
+        testDTO = new MeasureDTO();
+        testDTO.setId(1l);
+        testDTO.setDescription("New Description");
+        testDTO.setCourseIndicatorId(1l);
+        testDTO.setStatus("InReview");
+        testDTO.setActive(true);
 
         testIndicator = new CourseIndicator();
         testIndicator.setId(1l);

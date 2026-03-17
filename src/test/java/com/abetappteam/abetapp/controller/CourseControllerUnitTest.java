@@ -55,8 +55,11 @@ class CourseControllerUnitTest extends BaseControllerTest {
         testCourse.setStudentCount(28);
         testCourse.setIsActive(true);
 
-        testCourseDTO = new CourseDTO("CS401", "Software Engineering", "An introduction to software engineering principles", 28, .5);
-
+        testCourseDTO = new CourseDTO();
+        testCourseDTO.setCourseCode("CS401");
+        testCourseDTO.setCourseName("Software Engineering");
+        testCourseDTO.setCourseDescription("An introduction to software engineering principles");
+        testCourseDTO.setStudentCount(28);
     }
 
 //    @Test
@@ -108,9 +111,9 @@ class CourseControllerUnitTest extends BaseControllerTest {
     @Test
     void shouldReturnBadRequestForInvalidCourse() throws Exception {
         // Given - DTO with missing required fields
-        CourseDTO invalidDTO = new CourseDTO(null, null , null , null , null);
-//        invalidDTO.setCourseName(null); // Invalid - courseName is required
-//        invalidDTO.setCourseCode(null); // Invalid - courseCode is required
+        CourseDTO invalidDTO = new CourseDTO();
+        invalidDTO.setCourseName(null); // Invalid - courseName is required
+        invalidDTO.setCourseCode(null); // Invalid - courseCode is required
 
         // When/Then
         mockMvc.perform(post("/api/courses")

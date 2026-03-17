@@ -47,7 +47,10 @@ class PerformanceIndicatorServiceTest extends BaseServiceTest {
         testIndicator.setStudentOutcomeId(1L);
         testIndicator.setIsActive(true);
 
-        testIndicatorDTO = new PerformanceIndicatorDTO("An ability to identify, formulate, and solve complex engineering problems", 1, 1L);
+        testIndicatorDTO = new PerformanceIndicatorDTO();
+        testIndicatorDTO.setDescription("An ability to identify, formulate, and solve complex engineering problems");
+        testIndicatorDTO.setIndicatorNumber(1);
+        testIndicatorDTO.setStudentOutcomeId(1L);
     }
 
     @Test
@@ -111,8 +114,10 @@ class PerformanceIndicatorServiceTest extends BaseServiceTest {
     @Test
     void shouldUpdatePerformanceIndicator() {
         // Given
-        PerformanceIndicatorDTO updateDTO = new PerformanceIndicatorDTO("Updated description", 1, 1L);
-
+        PerformanceIndicatorDTO updateDTO = new PerformanceIndicatorDTO();
+        updateDTO.setDescription("Updated description");
+        updateDTO.setIndicatorNumber(1); // Same number
+        updateDTO.setStudentOutcomeId(1L);
 
         when(performanceIndicatorRepository.findById(1L)).thenReturn(Optional.of(testIndicator));
         when(performanceIndicatorRepository.save(any(PerformanceIndicator.class))).thenReturn(testIndicator);
@@ -129,8 +134,10 @@ class PerformanceIndicatorServiceTest extends BaseServiceTest {
     @Test
     void shouldCheckForDuplicateWhenUpdatingIndicatorNumber() {
         // Given
-        PerformanceIndicatorDTO updateDTO = new PerformanceIndicatorDTO("Updated Description", 2, 1L);
-
+        PerformanceIndicatorDTO updateDTO = new PerformanceIndicatorDTO();
+        updateDTO.setDescription("Updated description");
+        updateDTO.setIndicatorNumber(2); // Different number
+        updateDTO.setStudentOutcomeId(1L);
 
         when(performanceIndicatorRepository.findById(1L)).thenReturn(Optional.of(testIndicator));
         when(performanceIndicatorRepository.existsByIndicatorNumberAndStudentOutcomeId(2, 1L)).thenReturn(false);
@@ -148,7 +155,10 @@ class PerformanceIndicatorServiceTest extends BaseServiceTest {
     @Test
     void shouldThrowConflictWhenUpdatingToDuplicateIndicatorNumber() {
         // Given
-        PerformanceIndicatorDTO updateDTO = new PerformanceIndicatorDTO("Updated Description", 2, 1L);
+        PerformanceIndicatorDTO updateDTO = new PerformanceIndicatorDTO();
+        updateDTO.setDescription("Updated description");
+        updateDTO.setIndicatorNumber(2); // Different number
+        updateDTO.setStudentOutcomeId(1L);
 
         when(performanceIndicatorRepository.findById(1L)).thenReturn(Optional.of(testIndicator));
         when(performanceIndicatorRepository.existsByIndicatorNumberAndStudentOutcomeId(2, 1L)).thenReturn(true);
