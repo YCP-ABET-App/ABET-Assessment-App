@@ -28,6 +28,7 @@ const section_obj = ref({
 const semester_name = ref('');
 const instructors = ref<Instructor[]>([]);
 const indicator_ids: Ref<number[]> = ref([]);
+const course_indicator_ids: Ref<number[]> = ref([]); //These IDs are 
 
 // Modal state
 const selectedInstructor = ref<Instructor | null>(null);
@@ -99,6 +100,7 @@ async function fetch_indicator_ids() {
     const { data } = await api.get(`/course-indicators/by-course/${section_obj.value.course_id}`);
     for (const entry of data.data){
       indicator_ids.value.push(entry.indicatorId);
+      course_indicator_ids.value.push(entry.id);
     }
   } catch (error) {
     console.error('Error fetching or parsing course data:', error);
@@ -135,10 +137,10 @@ async function initialize() {
   await fetch_semester_data();
 
   //Fetch Instructor IDs
-  fetch_instructor_ids();
+  await fetch_instructor_ids();
 
   //Fetch Indicator IDs
-  fetch_indicator_ids();
+  await fetch_indicator_ids();
 }
 
 initialize();
@@ -204,9 +206,9 @@ initialize();
     <section class="detail-section">
       <h3>Performance Indicators</h3>
 
-      <div class="indicator-list">
-        <BaseCard v-for="piid in indicator_ids" :key="piid" variant="default" class="indicator-card">
-          <IndicatorListing :piid="piid" :course_id="section_id" :instructor_id="instructors[0].id"/>
+      <div class="indicator-list" v-if="indicator_ids.length > 0">
+        <BaseCard v-for="i in indicator_ids.length" :key="i" variant="default" class="indicator-card">
+          <IndicatorListing :piid="indicator_ids[i - 1]" :section_id="section_id" :instructor_id="instructors[0].id" :course_indicator_id="course_indicator_ids[i - 1]"/>
         </BaseCard>
       </div>
     </section>
