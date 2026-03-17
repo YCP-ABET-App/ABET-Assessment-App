@@ -51,7 +51,8 @@ public class ImporterService {
 
                     // ========== COURSE ==========
                     Course course = getOrCreateCourse(
-                            c.getCourseCode().trim().toUpperCase());
+                            c.getCourseCode().trim().toUpperCase(),
+                            semester.getId());
 
                     // ========== COURSE INDICATOR ==========
                     CourseIndicator ci = courseIndicatorService.getOrCreate(course.getId(), pi.getId());
@@ -150,12 +151,12 @@ public class ImporterService {
         }
 
         // If not found, create new outcome
-        OutcomeDTO dto = new OutcomeDTO(
-                o.getNumber(),
-                ("Imported outcome " + o.getNumber()),
-                (o.getStatus() != null ? o.getStatus() : "Pending"),
-                semesterId,
-                true);
+        OutcomeDTO dto = new OutcomeDTO();
+        dto.setNumber(o.getNumber());
+        dto.setDescription("Imported outcome " + o.getNumber());
+        dto.setEvaluation(o.getStatus() != null ? o.getStatus() : "Pending");
+        dto.setSemesterId(semesterId);
+        dto.setActive(true);
 
         return outcomeService.create(dto);
     }
@@ -176,11 +177,10 @@ public class ImporterService {
         }
 
         // If not found, create new indicator
-        PerformanceIndicatorDTO dto = new PerformanceIndicatorDTO(
-                ("Imported indicator " + indicatorNumber),
-                indicatorNumber,
-                outcomeId
-        );
+        PerformanceIndicatorDTO dto = new PerformanceIndicatorDTO();
+        dto.setIndicatorNumber(indicatorNumber);
+        dto.setDescription("Imported indicator " + indicatorNumber);
+        dto.setStudentOutcomeId(outcomeId);
         dto.setIsActive(true);
 
         return indicatorService.createPerformanceIndicator(dto);
@@ -190,7 +190,7 @@ public class ImporterService {
      * Find or create a course for the given semester.
      * Matches by course code (case-insensitive).
      */
-    private Course getOrCreateCourse(String code) {
+    private Course getOrCreateCourse(String code, Long semesterId) {
         // Try to find an existing course in this semester
         Course course = courseService.findByCourseCode(code);
 
@@ -199,13 +199,11 @@ public class ImporterService {
         }
 
         // Create new course
-        CourseDTO dto = new CourseDTO(
-                code,
-                code,
-                ("Imported course " + code),
-                0,
-                0.0
-        );
+        CourseDTO dto = new CourseDTO();
+        dto.setCourseCode(code);
+        dto.setCourseName(code);
+        dto.setCourseDescription("Imported course " + code);
+        dto.setStudentCount(0);
         dto.setIsActive(true);
 
         return courseService.createCourse(dto);

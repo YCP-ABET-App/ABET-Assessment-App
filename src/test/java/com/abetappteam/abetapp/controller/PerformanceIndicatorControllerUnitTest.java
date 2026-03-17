@@ -61,10 +61,10 @@ class PerformanceIndicatorControllerUnitTest extends BaseControllerTest {
         indicator.setStudentOutcomeId(1L);
         indicator.setIsActive(true);
 
-        dto = new PerformanceIndicatorDTO("Indicator 1", 1, 1L);
+        dto = new PerformanceIndicatorDTO();
         dto.setDescription("Indicator 1");
         dto.setIndicatorNumber(1);
-        //dto.setStudentOutcomeId(1L);
+        dto.setStudentOutcomeId(1L);
     }
 
     // ---------------------------------------------------------------------

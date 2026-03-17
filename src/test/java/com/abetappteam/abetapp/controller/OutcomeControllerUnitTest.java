@@ -56,9 +56,9 @@ public class OutcomeControllerUnitTest {
         testOutcome.setEvaluation("Test Evaluation");
         testOutcome.setActive(true);
 
-        testDTO = new OutcomeDTO(1, "New description", "New Evaluation", 1L, true);
+        testDTO = new OutcomeDTO();
         testDTO.setNumber(1);
-        //testDTO.setSemesterId(1l);
+        testDTO.setSemesterId(1l);
         testDTO.setDescription("New Description");
         testDTO.setEvaluation("New Evaluation");
         testOutcome.setActive(true);
