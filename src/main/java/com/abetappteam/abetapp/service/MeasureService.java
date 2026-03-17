@@ -38,15 +38,13 @@ public class MeasureService extends BaseService<Measure, Long, MeasureRepository
     @Transactional
     public Measure create(MeasureDTO dto){
         Measure measure = new Measure();
-        measure.setId(dto.getId());
         measure.setCourseIndicatorId(dto.getCourseIndicatorId());
         measure.setDescription(dto.getDescription());
-        measure.setFcar(dto.getFCar());
         measure.setRecommendedAction(dto.getRecommendedAction());
         measure.setStatus(dto.getStatus());
         measure.setActive(dto.getActive());
 
-        logger.info("Creating new measure: {}", dto.getId());
+        logger.info("Creating new measure: {}");
         return repository.save(measure);
     }
 
@@ -55,10 +53,8 @@ public class MeasureService extends BaseService<Measure, Long, MeasureRepository
     public Measure update(Long id, MeasureDTO dto){
         Measure measure = findById(id);
 
-        measure.setId(dto.getId());
         measure.setCourseIndicatorId(dto.getCourseIndicatorId());
         measure.setDescription(dto.getDescription());
-        measure.setFcar(dto.getFCar());
         measure.setRecommendedAction(dto.getRecommendedAction());
         measure.setStatus(dto.getStatus());
         if(dto.getActive() != null){
