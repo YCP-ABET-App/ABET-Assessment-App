@@ -45,7 +45,10 @@
               {{ instructor.email }}
             </p>
             <p class="instructor-meta">
-              {{ instructor.courseCount }} course{{ instructor.courseCount !== 1 ? 's' : '' }}
+              <template v-if="instructor.role !== 'ADMIN'">
+                {{ instructor.sectionCount }} section{{ instructor.sectionCount !== 1 ? 's' : '' }}
+              </template>
+
               <span v-if="instructor.role === 'ADMIN'" class="role-badge">Admin</span>
             </p>
           </div>
@@ -371,14 +374,11 @@ interface Course {
 interface Instructor {
   programUserId: number;
   userId: number;
-
   firstName: string;
   lastName: string;
   email: string;
-
   role: "ADMIN" | "INSTRUCTOR";
-
-  courseCount: number;
+  sectionCount: number;
   courses: Course[];
 }
 
@@ -523,7 +523,7 @@ async function loadProgramInstructors() {
           const coursesRes = await api.get(`/section`, {
             params: { userId: pu.userId }
           });
-          const allCourses = coursesRes.data?.data || [];
+          const allSections = coursesRes.data?.data || [];
 
           return {
             programUserId: pu.id,
@@ -532,8 +532,8 @@ async function loadProgramInstructors() {
             lastName: userData.lastName,
             email: userData.email,
             role: pu.adminStatus ? "ADMIN" : "INSTRUCTOR",
-            courseCount: allCourses.length,
-            courses: allCourses
+            sectionCount: allSections.length,
+            courses: allSections
           } as Instructor;
         } catch (err) {
           console.error(`Failed to fetch details for User ${pu.userId}:`, err);
