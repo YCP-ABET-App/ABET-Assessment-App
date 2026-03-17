@@ -45,7 +45,7 @@
               {{ instructor.email }}
             </p>
             <p class="instructor-meta">
-              {{ instructor.sectionCount }} section{{ instructor.sectionCount !== 1 ? 's' : '' }}
+              {{ instructor.courseCount }} course{{ instructor.courseCount !== 1 ? 's' : '' }}
               <span v-if="instructor.role === 'ADMIN'" class="role-badge">Admin</span>
             </p>
           </div>
@@ -179,15 +179,15 @@
           </div>
         </section>
 
-        <!-- Sections -->
+        <!-- Courses -->
         <section class="detail-section">
-          <h3>Sections ({{ currentSemesterSections.length }})</h3>
+          <h3>Courses ({{ currentSemesterCourses.length }})</h3>
 
           <div v-if="loadingMeasures" class="loading-measures">
             <p>Loading measures data...</p>
           </div>
 
-          <div v-else-if="currentSemesterSections.length > 0">
+          <div v-else-if="currentSemesterCourses.length > 0">
             <table class="courses-table">
               <thead>
               <tr>
@@ -198,27 +198,28 @@
               </thead>
               <tbody>
               <tr
-                v-for="section in currentSemesterSections"
-                :key="section.id"
-                class="course-row clickable">
-<!--                @click="showSectionDetails(section)"-->
-<!--                <td>{{ course.courseCode || course.course_code }}</td>-->
-<!--                <td>{{ course.courseName || course.course_name || '—' }}</td>-->
-<!--                <td>-->
-<!--                  <span v-if="course.measuresCompleted !== undefined && course.measuresTotal !== undefined">-->
-<!--                    <span class="measures-count">-->
-<!--                      {{ course.measuresCompleted }}/{{ course.measuresTotal }}-->
-<!--                    </span>-->
-<!--                    <span class="progress-percent">-->
-<!--                      ({{ course.measuresTotal && course.measuresTotal > 0-->
-<!--                      ? Math.round(-->
-<!--                        ((course.measuresCompleted || 0) / course.measuresTotal) * 100-->
-<!--                      )-->
-<!--                      : 0 }}%)-->
-<!--                    </span>-->
-<!--                  </span>-->
-<!--                  <span v-else class="no-data">—</span>-->
-<!--                </td>-->
+                v-for="course in currentSemesterCourses"
+                :key="course.id"
+                class="course-row clickable"
+                @click="showCourseDetails(course)"
+              >
+                <td>{{ course.courseCode || course.course_code }}</td>
+                <td>{{ course.courseName || course.course_name || '—' }}</td>
+                <td>
+                  <span v-if="course.measuresCompleted !== undefined && course.measuresTotal !== undefined">
+                    <span class="measures-count">
+                      {{ course.measuresCompleted }}/{{ course.measuresTotal }}
+                    </span>
+                    <span class="progress-percent">
+                      ({{ course.measuresTotal && course.measuresTotal > 0
+                      ? Math.round(
+                        ((course.measuresCompleted || 0) / course.measuresTotal) * 100
+                      )
+                      : 0 }}%)
+                    </span>
+                  </span>
+                  <span v-else class="no-data">—</span>
+                </td>
               </tr>
               </tbody>
             </table>
@@ -249,7 +250,7 @@
       </template>
 
       <div class="course-modal-content">
-        <!-- Section Information -->
+        <!-- Course Information -->
         <section class="detail-section">
           <h3>Course Information</h3>
           <div class="info-card">
@@ -344,12 +345,16 @@ const toast = useToast() as {
 const userStore = useUserStore();
 const { currentSemesterId } = storeToRefs(userStore);
 
-interface Section {
+interface Course {
   id: number;
-  sectionNumber?: string;
+  courseCode?: string;
   courseName?: string;
-  formattedName?: string;
   courseDescription?: string;
+
+  // API fallback naming (snake_case)
+  course_code?: string;
+  course_name?: string;
+  course_description?: string;
 
   // Semester info
   semesterId?: number;
@@ -357,6 +362,10 @@ interface Section {
     id: number;
     name?: string;
   };
+
+  // Measures progress fields
+  measuresCompleted?: number;
+  measuresTotal?: number;
 }
 
 interface Instructor {
@@ -369,8 +378,8 @@ interface Instructor {
 
   role: "ADMIN" | "INSTRUCTOR";
 
-  sectionCount: number;
-  sections: Section[];
+  courseCount: number;
+  courses: Course[];
 }
 
 interface ProgramUser {
@@ -404,7 +413,7 @@ const loading = ref(false);
 const error = ref<string | null>(null);
 const loadingMeasures = ref(false);
 const showCourseModal = ref(false);
-const selectedSection = ref<Section | null>(null);
+const selectedCourse = ref<Course | null>(null);
 
 // Editing state
 const isEditingInfo = ref(false);
@@ -423,34 +432,61 @@ const roleOptions = [
 ];
 
 /* -----------------------------
- * Computed: Filter sections by current semester
+ * Computed: Filter courses by current semester
  * ----------------------------- */
-const currentSemesterSections = computed(() => {
+const currentSemesterCourses = computed(() => {
   if (!selectedInstructor.value) {
     return [];
   }
 
   if (!currentSemesterId.value) {
-    return selectedInstructor.value.sections || [];
+    return selectedInstructor.value.courses || [];
   }
 
-  const filtered = (selectedInstructor.value.sections || []).filter(section => {
-    const courseSemesterId = section.semesterId || section.semester?.id;
+  const filtered = (selectedInstructor.value.courses || []).filter(course => {
+    const courseSemesterId = course.semesterId || course.semester?.id;
     return courseSemesterId === currentSemesterId.value;
   });
 
-  // Debug: Check for duplicates in filtered results
-  const sectionIds = filtered.map(s => s.id);
-  const uniqueSectionIds = new Set(sectionIds);
-  if (sectionIds.length !== uniqueSectionIds.size) {
+  const courseIds = filtered.map(c => c.id);
+  const uniqueCourseIds = new Set(courseIds);
+  if (courseIds.length !== uniqueCourseIds.size) {
     console.warn(
       'Duplicate courses detected after filtering for current semester:',
-      filtered.filter((s, index) => sectionIds.indexOf(s.id) !== index)
+      filtered.filter((c, index) => courseIds.indexOf(c.id) !== index)
     );
   }
 
   return filtered;
 });
+
+
+async function loadMeasuresForCourses(courses: Course[]): Promise<Course[]> {
+  return await Promise.all(
+    courses.map(async (course) => {
+      try {
+        const measuresRes = await api.get(`/measure/byCourse/${course.id}`);
+        const allMeasures = measuresRes.data.data ?? [];
+
+        const measuresCompleted = allMeasures.filter((m: any) => {
+          return (m.observation && m.observation.trim()) ||
+            (m.recommendedAction && m.recommendedAction.trim()) ||
+            (m.fcar && m.fcar.trim());
+        }).length;
+
+        return {
+          ...course,
+          measuresTotal: allMeasures.length,
+          measuresCompleted: measuresCompleted
+        };
+      } catch (err) {
+        console.error(`Error loading measures for course ${course.id}:`, err);
+        return { ...course, measuresTotal: 0, measuresCompleted: 0 };
+      }
+    })
+  );
+}
+
 
 /* -----------------------------
  * Load instructors for program
@@ -481,36 +517,13 @@ async function loadProgramInstructors() {
       programUsers.map(async (pu: any) => {
         try {
           const userRes = await api.get(`/users/${pu.userId}`);
-          const user = userRes.data.data;
-          // Fetch all sections for this instructor (API doesn't support semester filter)
-          const sectionRes = await api.get(`/section`, {
+          const userData = userRes.data?.data || userRes.data;
+
+
+          const coursesRes = await api.get(`/section`, {
             params: { userId: pu.userId }
           });
-          const allSections = sectionRes.data.data.sections ?? [];
-
-          // Debug: Log if there are duplicates
-          const sectionIds = allSections.map((c: Section) => c.id);
-          const uniqueSectionIds = new Set(sectionIds);
-          if (sectionIds.length !== uniqueSectionIds.size) {
-            console.warn(
-              `Instructor ${user.firstName} ${user.lastName} has duplicate sections from API:`,
-              allSections.filter((s: Section, index: number) =>
-                sectionIds.indexOf(s.id) !== index
-              )
-            );
-          }
-
-          console.log(sectionIds)
-          console.log(allSections)
-          console.log(currentSemesterId.value)
-
-          // Count only sections from current semester
-          const currentSemesterCount = currentSemesterId.value
-            ? allSections.filter((s: Section) => {
-              const sectionSemesterId = s.semesterId || s.semester?.id;
-              return sectionSemesterId === currentSemesterId.value;
-            }).length
-            : allSections.length;
+          const allCourses = coursesRes.data?.data || [];
 
           return {
             programUserId: pu.id,
@@ -519,10 +532,11 @@ async function loadProgramInstructors() {
             lastName: userData.lastName,
             email: userData.email,
             role: pu.adminStatus ? "ADMIN" : "INSTRUCTOR",
-            sectionCount: currentSemesterCount,
-            sections: allSections
-          };
-        } catch {
+            courseCount: allCourses.length,
+            courses: allCourses
+          } as Instructor;
+        } catch (err) {
+          console.error(`Failed to fetch details for User ${pu.userId}:`, err);
           return null;
         }
       })
@@ -539,6 +553,29 @@ async function loadProgramInstructors() {
     loading.value = false;
   }
 }
+/* -----------------------------
+ * Reload measures when modal opens
+ * ----------------------------- */
+async function reloadMeasuresForInstructor(instructor: Instructor) {
+  if (!instructor.courses || instructor.courses.length === 0) return;
+
+  loadingMeasures.value = true;
+
+  try {
+    const updatedCourses = await loadMeasuresForCourses(instructor.courses);
+    instructor.courses = updatedCourses;
+
+    const idx = instructors.value.findIndex(i => i.programUserId === instructor.programUserId);
+    if (idx !== -1) {
+      instructors.value[idx].courses = updatedCourses;
+    }
+  } catch (err) {
+    console.error("Error reloading measures:", err);
+  } finally {
+    loadingMeasures.value = false;
+  }
+}
+
 /* -----------------------------
  * Editing functions
  * ----------------------------- */
@@ -654,16 +691,18 @@ function closeModal() {
 function showInstructorDetails(instructor: Instructor) {
   selectedInstructor.value = instructor;
   showModal.value = true;
+  isEditingInfo.value = false;
+  reloadMeasuresForInstructor(instructor);
+  console.log("Viewing details for:", instructor.firstName, instructor.lastName);
 }
-
-function showCourseDetails(section: Section) {
-  selectedSection.value = section;
+function showCourseDetails(course: Course) {
+  selectedCourse.value = course;
   showCourseModal.value = true;
 }
 
 function closeCourseModal() {
   showCourseModal.value = false;
-  selectedSection.value = null;
+  selectedCourse.value = null;
 }
 </script>
 
