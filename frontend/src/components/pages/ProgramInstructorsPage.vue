@@ -384,6 +384,7 @@ interface Instructor {
 
 interface ProgramUser {
   id: number;
+  programId: number;
   userId: number;
   adminStatus: boolean;
 }
@@ -447,7 +448,6 @@ const currentSemesterCourses = computed(() => {
     return courseSemesterId === currentSemesterId.value;
   });
 
-  // Debug: Check for duplicates in filtered results
   const courseIds = filtered.map(c => c.id);
   const uniqueCourseIds = new Set(courseIds);
   if (courseIds.length !== uniqueCourseIds.size) {
@@ -460,22 +460,17 @@ const currentSemesterCourses = computed(() => {
   return filtered;
 });
 
-/* -----------------------------
- * Load measures for courses
- * ----------------------------- */
+
 async function loadMeasuresForCourses(courses: Course[]): Promise<Course[]> {
   return await Promise.all(
     courses.map(async (course) => {
       try {
-        // Get measures for each indicator
         const measuresRes = await api.get(`/measure/byCourse/${course.id}`);
         const allMeasures = measuresRes.data.data ?? [];
 
-        // Count completed measures
         const measuresCompleted = allMeasures.filter((m: any) => {
           return (m.observation && m.observation.trim()) ||
             (m.recommendedAction && m.recommendedAction.trim()) ||
-            (m.recommended_action && m.recommended_action.trim()) ||
             (m.fcar && m.fcar.trim());
         }).length;
 
@@ -486,71 +481,62 @@ async function loadMeasuresForCourses(courses: Course[]): Promise<Course[]> {
         };
       } catch (err) {
         console.error(`Error loading measures for course ${course.id}:`, err);
-        return { ...course, measuresTotal: undefined, measuresCompleted: undefined };
+        return { ...course, measuresTotal: 0, measuresCompleted: 0 };
       }
     })
   );
 }
 
+
 /* -----------------------------
  * Load instructors for program
  * ----------------------------- */
 async function loadProgramInstructors() {
-  if (!props.programId) return;
+  if (!props.programId) {
+    console.warn("No programId provided to component.");
+    return;
+  }
 
   loading.value = true;
   error.value = null;
 
   try {
     const res = await api.get(`/program/${props.programId}/users`);
-    const programUsers = res.data.data ?? [];
+
+    const programUsers = res.data?.data || [];
+
+    console.log("Found raw program users:", programUsers);
+
+    if (!Array.isArray(programUsers) || programUsers.length === 0) {
+      console.warn("API returned success, but the data array was empty.");
+      instructors.value = [];
+      return;
+    }
 
     const loaded = await Promise.all(
-      programUsers.map(async (pu: ProgramUser) => {
+      programUsers.map(async (pu: any) => {
         try {
           const userRes = await api.get(`/users/${pu.userId}`);
-          const user = userRes.data.data;
+          const userData = userRes.data?.data || userRes.data;
 
-          // Fetch all sections for this instructor (API doesn't support semester filter)
+
           const coursesRes = await api.get(`/section`, {
             params: { userId: pu.userId }
           });
-
-          const allCourses = coursesRes.data.data ?? [];
-
-          // Debug: Log if there are duplicates
-          const courseIds = allCourses.map((c: Course) => c.id);
-          const uniqueCourseIds = new Set(courseIds);
-          if (courseIds.length !== uniqueCourseIds.size) {
-            console.warn(
-              `Instructor ${user.firstName} ${user.lastName} has duplicate courses from API:`,
-              allCourses.filter((c: Course, index: number) =>
-                courseIds.indexOf(c.id) !== index
-              )
-            );
-          }
-
-          const coursesWithMeasures = await loadMeasuresForCourses(allCourses);
-
-          // Count only courses from current semester
-          const currentSemesterCount = currentSemesterId.value
-            ? allCourses.filter((c: Course) => {
-              const courseSemesterId = c.semesterId || c.semester?.id;
-              return courseSemesterId === currentSemesterId.value;
-            }).length
-            : allCourses.length;
+          const allCourses = coursesRes.data?.data || [];
 
           return {
             programUserId: pu.id,
             userId: pu.userId,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            email: user.email,
+            firstName: userData.firstName,
+            lastName: userData.lastName,
+            email: userData.email,
             role: pu.adminStatus ? "ADMIN" : "INSTRUCTOR",
-            courseCount: currentSemesterCount,
-            courses: coursesWithMeasures
-          };
-        } catch {
+            courseCount: allCourses.length,
+            courses: allCourses
+          } as Instructor;
+        } catch (err) {
+          console.error(`Failed to fetch details for User ${pu.userId}:`, err);
           return null;
         }
       })
@@ -558,14 +544,15 @@ async function loadProgramInstructors() {
 
     instructors.value = loaded.filter((x): x is Instructor => x !== null);
 
-  } catch (err) {
-    console.error("Error loading instructors:", err);
-    error.value = "Failed to load instructors";
+    console.log("Final instructors list for UI:", instructors.value);
+
+  } catch (err: any) {
+    console.error("Fetch Error:", err);
+    error.value = "Failed to load instructors.";
   } finally {
     loading.value = false;
   }
 }
-
 /* -----------------------------
  * Reload measures when modal opens
  * ----------------------------- */
@@ -701,12 +688,13 @@ function closeModal() {
   loadingMeasures.value = false;
 }
 
-function showInstructorDetails(i: Instructor) {
-  selectedInstructor.value = i;
+function showInstructorDetails(instructor: Instructor) {
+  selectedInstructor.value = instructor;
   showModal.value = true;
-  reloadMeasuresForInstructor(i);
+  isEditingInfo.value = false;
+  reloadMeasuresForInstructor(instructor);
+  console.log("Viewing details for:", instructor.firstName, instructor.lastName);
 }
-
 function showCourseDetails(course: Course) {
   selectedCourse.value = course;
   showCourseModal.value = true;
