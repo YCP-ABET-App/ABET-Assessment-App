@@ -214,81 +214,87 @@ class CourseControllerUnitTest extends BaseControllerTest {
 
         verify(courseService).removeInstructor(1L, 2L);
     }
-// TODO: Come through and refactor these tests with updated search code
-//    @Test
-//    void shouldGetInstructors() throws Exception {
-//        // Use search endpoint to return the course and assert data contains the course
-//        List<Course> list = List.of(testCourse);
-//        when(courseService.searchCourse(any(CourseSearchRequest.class))).thenReturn(list);
-//
-//        mockMvc.perform(get("/api/courses/searchCourse")
-//                .param("courseCode", "CS401"))
-//                .andExpect(status().isOk())
-//                .andExpect(jsonPath("$.success").value(true))
-//                .andExpect(jsonPath("$.data[0].id").value(1))
-//                .andExpect(jsonPath("$.data[0].courseCode").value("CS401"));
-//
-//        verify(courseService).searchCourse(any(CourseSearchRequest.class));
-//    }
-//
-//    @Test
-//    void shouldGetIndicators() throws Exception {
-//        // Use search endpoint to return the course and assert data contains the course
-//        List<Course> list = List.of(testCourse);
-//        when(courseService.searchCourse(any(CourseSearchRequest.class))).thenReturn(list);
-//
-//        mockMvc.perform(get("/api/courses/searchCourse")
-//                .param("courseCode", "CS401"))
-//                .andExpect(status().isOk())
-//                .andExpect(jsonPath("$.success").value(true))
-//                .andExpect(jsonPath("$.data[0].id").value(1))
-//                .andExpect(jsonPath("$.data[0].courseCode").value("CS401"));
-//
-//        verify(courseService).searchCourse(any(CourseSearchRequest.class));
-//    }
-//
-//    @Test
-//    void shouldGetCourseIndicatorByCourseAndIndicator() throws Exception {
-//        // Use search endpoint to return course as the primary result for this test
-//        List<Course> list = List.of(testCourse);
-//        when(courseService.searchCourse(any(CourseSearchRequest.class))).thenReturn(list);
-//
-//        mockMvc.perform(get("/api/courses/searchCourse")
-//                .param("courseCode", "CS401"))
-//                .andExpect(status().isOk())
-//                .andExpect(jsonPath("$.success").value(true))
-//                .andExpect(jsonPath("$.data[0].id").value(1));
-//
-//        verify(courseService).searchCourse(any(CourseSearchRequest.class));
-//    }
-//
-//    @Test
-//    void shouldGetCourseIndicatorById() throws Exception {
-//        List<Course> list = List.of(testCourse);
-//        when(courseService.searchCourse(any(CourseSearchRequest.class))).thenReturn(list);
-//
-//        mockMvc.perform(get("/api/courses/searchCourse")
-//                .param("courseCode", "CS401"))
-//                .andExpect(status().isOk())
-//                .andExpect(jsonPath("$.success").value(true))
-//                .andExpect(jsonPath("$.data[0].id").value(1));
-//
-//        verify(courseService).searchCourse(any(CourseSearchRequest.class));
-//    }
-//
-//    @Test
-//    void shouldGetCourseIdAndIndicatorId() throws Exception {
-//        List<Course> list = List.of(testCourse);
-//        when(courseService.searchCourse(any(CourseSearchRequest.class))).thenReturn(list);
-//
-//        mockMvc.perform(get("/api/courses/searchCourse")
-//                .param("courseCode", "CS401"))
-//                .andExpect(status().isOk())
-//                .andExpect(jsonPath("$.success").value(true))
-//                .andExpect(jsonPath("$.data[0].id").value(1))
-//                .andExpect(jsonPath("$.data[0].courseCode").value("CS401"));
-//
-//        verify(courseService).searchCourse(any(CourseSearchRequest.class));
-//    }
+
+    @Test
+    void shouldAssignIndicator() throws Exception {
+        mockMvc.perform(post("/api/courses/1/indicators/10"))
+                .andExpect(status().isOk());
+
+        verify(courseService, times(1)).assignIndicator(1L, 10L);
+    }
+
+    @Test
+    void shouldRemoveIndicator() throws Exception {
+        mockMvc.perform(delete("/api/courses/1/indicators/10"))
+                .andExpect(status().isOk());
+
+        verify(courseService, times(1)).removeIndicator(1L, 10L);
+    }
+
+    @Test
+    void shouldSearchCourseWithFilters() throws Exception {
+        // Given
+        List<Course> list = List.of(testCourse);
+        when(courseService.searchCourse(any(CourseSearchRequest.class))).thenReturn(list);
+
+
+        mockMvc.perform(get("/api/courses/searchCourse")
+                        .param("courseCode", "CS401")
+                        .param("isActive", "true"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data[0].courseCode").value("CS401"));
+
+        verify(courseService).searchCourse(any(CourseSearchRequest.class));
+    }
+
+    @Test
+    void shouldReturnErrorForInvalidIdFormat() throws Exception {
+
+        mockMvc.perform(put("/api/courses/-1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(testCourseDTO)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void shouldSearchCoursesWithFilters() throws Exception {
+        List<Course> list = List.of(testCourse);
+        when(courseService.searchCourse(any(CourseSearchRequest.class))).thenReturn(list);
+
+        mockMvc.perform(get("/api/courses/searchCourse")
+                        .param("courseCode", "CS401")
+                        .param("isActive", "true"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data[0].courseCode").value("CS401"));
+
+        verify(courseService).searchCourse(any(CourseSearchRequest.class));
+    }
+
+    @Test
+    void shouldAssignIndicatorToCourse() throws Exception {
+        mockMvc.perform(post("/api/courses/1/indicators/10"))
+                .andExpect(status().isOk());
+
+        verify(courseService).assignIndicator(1L, 10L);
+    }
+
+    @Test
+    void shouldRemoveIndicatorFromCourse() throws Exception {
+        mockMvc.perform(delete("/api/courses/1/indicators/10"))
+                .andExpect(status().isOk());
+
+        verify(courseService).removeIndicator(1L, 10L);
+    }
+
+    @Test
+    void shouldAssignInstructorToCourse() throws Exception {
+        mockMvc.perform(post("/api/courses/1/instructors/5"))
+                .andExpect(status().isOk());
+
+        verify(courseService).assignInstructor(1L, 5L);
+    }
+
 
 }

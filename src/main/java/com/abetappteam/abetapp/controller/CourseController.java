@@ -39,9 +39,9 @@ public class CourseController extends BaseController {
             @RequestParam(required = false) Integer student_count,
             @RequestParam(required = false) Integer mirrorId,
             @RequestParam(required = false) boolean isActive
-        ) {
+            ) {
         CourseSearchRequest request = new CourseSearchRequest(id, courseCode, courseName, courseDescription, student_count, mirrorId, isActive);
-        
+
         logger.info("Search request received for: {}", request);
 
         List<Course> courses = courseService.searchCourse(request);

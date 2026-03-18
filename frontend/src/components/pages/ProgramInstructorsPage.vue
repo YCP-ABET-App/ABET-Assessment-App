@@ -45,7 +45,7 @@
               {{ instructor.email }}
             </p>
             <p class="instructor-meta">
-              {{ instructor.courseCount }} course{{ instructor.courseCount !== 1 ? 's' : '' }}
+              {{ instructor.sectionCount }} section{{ instructor.sectionCount !== 1 ? 's' : '' }}
               <span v-if="instructor.role === 'ADMIN'" class="role-badge">Admin</span>
             </p>
           </div>
@@ -179,47 +179,31 @@
           </div>
         </section>
 
-        <!-- Courses -->
+        <!-- Sections -->
         <section class="detail-section">
-          <h3>Courses ({{ currentSemesterCourses.length }})</h3>
+          <h3>Sections ({{ currentSemesterSections.length }})</h3>
 
           <div v-if="loadingMeasures" class="loading-measures">
             <p>Loading measures data...</p>
           </div>
 
-          <div v-else-if="currentSemesterCourses.length > 0">
+          <div v-else-if="currentSemesterSections.length > 0">
             <table class="courses-table">
               <thead>
               <tr>
-                <th>Course Code</th>
-                <th>Course Name</th>
-                <th>Measures Progress</th>
+                <th>Section Name</th>
+                <th>Indicator Progress</th>
               </tr>
               </thead>
               <tbody>
               <tr
-                v-for="course in currentSemesterCourses"
-                :key="course.id"
-                class="course-row clickable"
-                @click="showCourseDetails(course)"
-              >
-                <td>{{ course.courseCode || course.course_code }}</td>
-                <td>{{ course.courseName || course.course_name || '—' }}</td>
-                <td>
-                  <span v-if="course.measuresCompleted !== undefined && course.measuresTotal !== undefined">
-                    <span class="measures-count">
-                      {{ course.measuresCompleted }}/{{ course.measuresTotal }}
-                    </span>
-                    <span class="progress-percent">
-                      ({{ course.measuresTotal && course.measuresTotal > 0
-                      ? Math.round(
-                        ((course.measuresCompleted || 0) / course.measuresTotal) * 100
-                      )
-                      : 0 }}%)
-                    </span>
-                  </span>
-                  <span v-else class="no-data">—</span>
-                </td>
+                v-for="section in currentSemesterSections"
+                :key="section.id"
+                class="course-row clickable">
+                                <td>{{ section.formattedName }}</td>
+                                <td>
+                                  <span class="no-data">—</span>
+                                </td>
               </tr>
               </tbody>
             </table>
@@ -238,19 +222,19 @@
       </template>
     </BaseModal>
 
-    <!-- Course Details Modal -->
+    <!-- Section Details Modal -->
     <BaseModal
       v-model:isOpen="showCourseModal"
-      v-if="selectedCourse"
+      v-if="selectedSection"
       @close="closeCourseModal"
       size="lg"
     >
       <template #header>
-        <h2>{{ selectedCourse.courseCode || selectedCourse.course_code }}</h2>
+        <h2>{{ selectedSection.formattedName }}</h2>
       </template>
 
       <div class="course-modal-content">
-        <!-- Course Information -->
+        <!-- Section Information -->
         <section class="detail-section">
           <h3>Course Information</h3>
           <div class="info-card">
@@ -258,13 +242,13 @@
               <div class="info-field">
                 <span class="field-label">COURSE CODE</span>
                 <span class="field-value">
-                  {{ selectedCourse.courseCode || selectedCourse.course_code }}
+                  {{ selectedSection.formattedName }}
                 </span>
               </div>
               <div class="info-field">
                 <span class="field-label">COURSE NAME</span>
                 <span class="field-value">
-                  {{ selectedCourse.courseName || selectedCourse.course_name || '—' }}
+                  {{ selectedSection.formattedName || '—' }}
                 </span>
               </div>
             </div>
@@ -272,46 +256,46 @@
               <div class="info-field info-field-wide">
                 <span class="field-label">DESCRIPTION</span>
                 <span class="field-value">
-                  {{ selectedCourse.courseDescription || selectedCourse.course_description || 'No description available' }}
+                  {{ selectedSection.formattedName || 'No description available' }}
                 </span>
               </div>
             </div>
           </div>
         </section>
-
+<!--        TODO: Decide if this should be indicator progress instead-->
         <!-- Measures Progress -->
         <section class="detail-section">
-          <h3>Measures Progress</h3>
-          <div class="measures-summary">
-            <div class="progress-card">
-              <div class="progress-label">Total Measures</div>
-              <div class="progress-value">{{ selectedCourse.measuresTotal || 0 }}</div>
-            </div>
-            <div class="progress-card">
-              <div class="progress-label">Completed</div>
-              <div class="progress-value completed">{{ selectedCourse.measuresCompleted || 0 }}</div>
-            </div>
-            <div class="progress-card">
-              <div class="progress-label">Completion Rate</div>
-              <div class="progress-value">
-                {{ selectedCourse.measuresTotal && selectedCourse.measuresTotal > 0
-                ? Math.round(((selectedCourse.measuresCompleted || 0) / selectedCourse.measuresTotal) * 100)
-                : 0 }}%
-              </div>
-            </div>
-          </div>
+<!--          <h3>Measures Progress</h3>-->
+<!--          <div class="measures-summary">-->
+<!--            <div class="progress-card">-->
+<!--              <div class="progress-label">Total Measures</div>-->
+<!--              <div class="progress-value">{{ selectedCourse.measuresTotal || 0 }}</div>-->
+<!--            </div>-->
+<!--            <div class="progress-card">-->
+<!--              <div class="progress-label">Completed</div>-->
+<!--              <div class="progress-value completed">{{ selectedCourse.measuresCompleted || 0 }}</div>-->
+<!--            </div>-->
+<!--            <div class="progress-card">-->
+<!--              <div class="progress-label">Completion Rate</div>-->
+<!--              <div class="progress-value">-->
+<!--                {{ selectedCourse.measuresTotal && selectedCourse.measuresTotal > 0-->
+<!--                ? Math.round(((selectedCourse.measuresCompleted || 0) / selectedCourse.measuresTotal) * 100)-->
+<!--                : 0 }}%-->
+<!--              </div>-->
+<!--            </div>-->
+<!--          </div>-->
 
           <!-- Progress Bar -->
-          <div class="progress-bar-container">
-            <div
-              class="progress-bar-fill"
-              :style="{
-                width: selectedCourse.measuresTotal && selectedCourse.measuresTotal > 0
-                  ? `${Math.round(((selectedCourse.measuresCompleted || 0) / selectedCourse.measuresTotal) * 100)}%`
-                  : '0%'
-              }"
-            ></div>
-          </div>
+<!--          <div class="progress-bar-container">-->
+<!--            <div-->
+<!--              class="progress-bar-fill"-->
+<!--              :style="{-->
+<!--                width: selectedCourse.measuresTotal && selectedCourse.measuresTotal > 0-->
+<!--                  ? `${Math.round(((selectedCourse.measuresCompleted || 0) / selectedCourse.measuresTotal) * 100)}%`-->
+<!--                  : '0%'-->
+<!--              }"-->
+<!--            ></div>-->
+<!--          </div>-->
         </section>
       </div>
 
@@ -345,16 +329,12 @@ const toast = useToast() as {
 const userStore = useUserStore();
 const { currentSemesterId } = storeToRefs(userStore);
 
-interface Course {
+interface Section {
   id: number;
-  courseCode?: string;
+  sectionNumber?: string;
   courseName?: string;
+  formattedName?: string;
   courseDescription?: string;
-
-  // API fallback naming (snake_case)
-  course_code?: string;
-  course_name?: string;
-  course_description?: string;
 
   // Semester info
   semesterId?: number;
@@ -362,10 +342,6 @@ interface Course {
     id: number;
     name?: string;
   };
-
-  // Measures progress fields
-  measuresCompleted?: number;
-  measuresTotal?: number;
 }
 
 interface Instructor {
@@ -378,12 +354,13 @@ interface Instructor {
 
   role: "ADMIN" | "INSTRUCTOR";
 
-  courseCount: number;
-  courses: Course[];
+  sectionCount: number;
+  sections: Section[];
 }
 
 interface ProgramUser {
   id: number;
+  programId: number;
   userId: number;
   adminStatus: boolean;
 }
@@ -412,7 +389,7 @@ const loading = ref(false);
 const error = ref<string | null>(null);
 const loadingMeasures = ref(false);
 const showCourseModal = ref(false);
-const selectedCourse = ref<Course | null>(null);
+const selectedSection = ref<Section | null>(null);
 
 // Editing state
 const isEditingInfo = ref(false);
@@ -431,66 +408,34 @@ const roleOptions = [
 ];
 
 /* -----------------------------
- * Computed: Filter courses by current semester
+ * Computed: Filter sections by current semester
  * ----------------------------- */
-const currentSemesterCourses = computed(() => {
+const currentSemesterSections = computed(() => {
   if (!selectedInstructor.value) {
     return [];
   }
 
   if (!currentSemesterId.value) {
-    return selectedInstructor.value.courses || [];
+    return selectedInstructor.value.sections || [];
   }
 
-  const filtered = (selectedInstructor.value.courses || []).filter(course => {
-    const courseSemesterId = course.semesterId || course.semester?.id;
+  const filtered = (selectedInstructor.value.sections || []).filter(section => {
+    const courseSemesterId = section.semesterId || section.semester?.id;
     return courseSemesterId === currentSemesterId.value;
   });
 
   // Debug: Check for duplicates in filtered results
-  const courseIds = filtered.map(c => c.id);
-  const uniqueCourseIds = new Set(courseIds);
-  if (courseIds.length !== uniqueCourseIds.size) {
+  const sectionIds = filtered.map(s => s.id);
+  const uniqueSectionIds = new Set(sectionIds);
+  if (sectionIds.length !== uniqueSectionIds.size) {
     console.warn(
       'Duplicate courses detected after filtering for current semester:',
-      filtered.filter((c, index) => courseIds.indexOf(c.id) !== index)
+      filtered.filter((s, index) => sectionIds.indexOf(s.id) !== index)
     );
   }
 
   return filtered;
 });
-
-/* -----------------------------
- * Load measures for courses
- * ----------------------------- */
-async function loadMeasuresForCourses(courses: Course[]): Promise<Course[]> {
-  return await Promise.all(
-    courses.map(async (course) => {
-      try {
-        // Get measures for each indicator
-        const measuresRes = await api.get(`/measure/byCourse/${course.id}`);
-        const allMeasures = measuresRes.data.data ?? [];
-
-        // Count completed measures
-        const measuresCompleted = allMeasures.filter((m: any) => {
-          return (m.observation && m.observation.trim()) ||
-            (m.recommendedAction && m.recommendedAction.trim()) ||
-            (m.recommended_action && m.recommended_action.trim()) ||
-            (m.fcar && m.fcar.trim());
-        }).length;
-
-        return {
-          ...course,
-          measuresTotal: allMeasures.length,
-          measuresCompleted: measuresCompleted
-        };
-      } catch (err) {
-        console.error(`Error loading measures for course ${course.id}:`, err);
-        return { ...course, measuresTotal: undefined, measuresCompleted: undefined };
-      }
-    })
-  );
-}
 
 /* -----------------------------
  * Load instructors for program
@@ -510,45 +455,56 @@ async function loadProgramInstructors() {
         try {
           const userRes = await api.get(`/users/${pu.userId}`);
           const user = userRes.data.data;
-
-          // Fetch all courses for this instructor (API doesn't support semester filter)
-          const coursesRes = await api.get(`/courses/instructor`, {
-            params: { programUserId: pu.id }
+          // Fetch all sections for this instructor (API doesn't support semester filter)
+          const sectionRes = await api.get(`/section`, {
+            params: {
+              userId: pu.userId,
+              semesterId: currentSemesterId.value
+            }
           });
-
-          const allCourses = coursesRes.data.data ?? [];
+          const allSections = sectionRes.data.data.sections ?? [];
+          const allCourses = sectionRes.data.data.courses ?? [];
 
           // Debug: Log if there are duplicates
-          const courseIds = allCourses.map((c: Course) => c.id);
-          const uniqueCourseIds = new Set(courseIds);
-          if (courseIds.length !== uniqueCourseIds.size) {
+          const sectionIds = allSections.map((c: Section) => c.id);
+          const uniqueSectionIds = new Set(sectionIds);
+          if (sectionIds.length !== uniqueSectionIds.size) {
             console.warn(
-              `Instructor ${user.firstName} ${user.lastName} has duplicate courses from API:`,
-              allCourses.filter((c: Course, index: number) =>
-                courseIds.indexOf(c.id) !== index
+              `Instructor ${user.firstName} ${user.lastName} has duplicate sections from API:`,
+              allSections.filter((s: Section, index: number) =>
+                sectionIds.indexOf(s.id) !== index
               )
             );
           }
 
-          const coursesWithMeasures = await loadMeasuresForCourses(allCourses);
+          let formattedSections: { id: any; sectionNumber: any; courseName: any; formattedName: string; semesterId: any; }[] = [];
 
-          // Count only courses from current semester
-          const currentSemesterCount = currentSemesterId.value
-            ? allCourses.filter((c: Course) => {
-              const courseSemesterId = c.semesterId || c.semester?.id;
-              return courseSemesterId === currentSemesterId.value;
-            }).length
-            : allCourses.length;
+          allSections.forEach((section: any) => {
+            console.log(section)
+            const course = allCourses.find((c: any) => c.id === section.courseId);
+            if (!course) {
+              console.warn(`No course found for section ${section.id}`);
+              return;
+            }
 
-          return {
+            formattedSections.push({
+              id: section.id,
+              sectionNumber: section.sectionNumber,
+              courseName: course.courseName,
+              formattedName: `${course.courseCode} ${course.courseName} ${section.sectionNumber}`,
+              semesterId: section.semesterId
+            })
+          });
+
+            return {
             programUserId: pu.id,
             userId: pu.userId,
             firstName: user.firstName,
             lastName: user.lastName,
             email: user.email,
             role: pu.adminStatus ? "ADMIN" : "INSTRUCTOR",
-            courseCount: currentSemesterCount,
-            courses: coursesWithMeasures
+            sectionCount: formattedSections.length,
+            sections: formattedSections
           };
         } catch {
           return null;
@@ -563,29 +519,6 @@ async function loadProgramInstructors() {
     error.value = "Failed to load instructors";
   } finally {
     loading.value = false;
-  }
-}
-
-/* -----------------------------
- * Reload measures when modal opens
- * ----------------------------- */
-async function reloadMeasuresForInstructor(instructor: Instructor) {
-  if (!instructor.courses || instructor.courses.length === 0) return;
-
-  loadingMeasures.value = true;
-
-  try {
-    const updatedCourses = await loadMeasuresForCourses(instructor.courses);
-    instructor.courses = updatedCourses;
-
-    const idx = instructors.value.findIndex(i => i.programUserId === instructor.programUserId);
-    if (idx !== -1) {
-      instructors.value[idx].courses = updatedCourses;
-    }
-  } catch (err) {
-    console.error("Error reloading measures:", err);
-  } finally {
-    loadingMeasures.value = false;
   }
 }
 
@@ -701,20 +634,20 @@ function closeModal() {
   loadingMeasures.value = false;
 }
 
-function showInstructorDetails(i: Instructor) {
-  selectedInstructor.value = i;
+function showInstructorDetails(instructor: Instructor) {
+  selectedInstructor.value = instructor;
   showModal.value = true;
-  reloadMeasuresForInstructor(i);
+  isEditingInfo.value = false;
+  console.log("Viewing details for:", instructor.firstName, instructor.lastName);
 }
-
-function showCourseDetails(course: Course) {
-  selectedCourse.value = course;
+function showCourseDetails(section: Section) {
+  selectedSection.value = section;
   showCourseModal.value = true;
 }
 
 function closeCourseModal() {
   showCourseModal.value = false;
-  selectedCourse.value = null;
+  selectedSection.value = null;
 }
 </script>
 

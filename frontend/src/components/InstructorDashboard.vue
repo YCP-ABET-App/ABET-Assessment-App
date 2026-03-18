@@ -16,39 +16,16 @@ interface ProgramUser {
   role: string;
 }
 
-interface RawCourse {
-  id: number;
-  courseCode: string;
-}
-
-interface Measure {
-  id: number;
-  courseIndicatorId: number;
-  description: string;
-  observation: string | null;
-  recommendedAction: string | null;
-  fcar: string | null;
-  studentsMet: number | null;
-  studentsExceeded: number | null;
-  studentsBelow: number | null;
-  createdAt: string;
-  active: boolean;
-  deleted: boolean;
-  deletedAt: string | null;
-  new: boolean;
-  status: string | null;
-  updatedAt: string | null;
-  version: number | null;
-}
-
-interface InstructorDashboardCourse {
+interface InstructorDashboardSection {
   id: number;
   courseCode: string;
   instructorName: string;
-  measuresCompleted: number;
-  measuresTotal: number;
-  measures: Measure[];
-  expanded: boolean;
+  indicators: SectionIndicatorInfo[]; // changed from tuple to array
+}
+
+interface SectionIndicatorInfo {
+  sectionId: number;
+  indicatorStatus: boolean;
 }
 
 // ------------------------------
@@ -60,7 +37,7 @@ const { currentProgramId: programId, currentSemesterId: semesterId } = storeToRe
 // ------------------------------
 // STATE
 // ------------------------------
-const courses = ref<InstructorDashboardCourse[]>([]);
+const sections = ref<InstructorDashboardSection[]>([]);
 const programUserId = ref<number | null>(null);
 const isLoading = ref<boolean>(false);
 const errorMessage = ref<string | null>(null);
@@ -80,80 +57,103 @@ async function loadProgramUserId() {
   programUserId.value = me.id;
 }
 
-// ------------------------------
-// LOAD MEASURES FOR A COURSE
-// ------------------------------
-async function loadCourseMeasures(courseId: number): Promise<Measure[]> {
-  try {
-    const res = await api.get(`/measure/byCourse/${courseId}`);
-    return res.data.data as Measure[];
-  } catch (err) {
-    console.error(`Failed to load measures for course ${courseId}:`, err);
-    return [];
-  }
-}
 
 // ------------------------------
 // LOAD INSTRUCTOR COURSE LIST
 // ------------------------------
-async function loadInstructorCourses() {
-  if (!programUserId.value || !semesterId.value) return;
+async function loadInstructorSections() {
+  if (!programUserId.value || !semesterId.value || !userStore.userId) return;
 
-  const cRes = await api.get("/courses/instructor/semester", {
+  // First, query the section user table to find what sections are assigned to the user
+  let sectionUserRes = null;
+  try{
+    sectionUserRes = await api.get("/section-user", { params:
+        {
+          userId: userStore.userId
+        }
+    });
+  } finally {
+    console.log("Section User Results: ", sectionUserRes)
+  }
+
+  // Extract section IDs from the section user results
+  const sectionUserData = sectionUserRes?.data?.data ?? [];
+
+  if(sectionUserData.length === 0) {
+    console.warn("No sections found for user");
+    return;
+  }
+
+  let sectionIds: any[] = [];
+
+  sectionUserData.forEach((su: any) => {
+    sectionIds.push(su.sectionId);
+  })
+
+  const indicatorData = await loadInstructorIndicatorData(sectionIds);
+
+  const sectionRes = await api.get("/section", {
     params: {
-      programUserId: programUserId.value,
+      ids: sectionIds,
       semesterId: semesterId.value
     },
   });
 
-  const rawCourses = cRes.data.data as RawCourse[];
+  // Parse out sections and courses from the response, assemble section titles
 
-  const results: InstructorDashboardCourse[] = [];
+  const responseData = sectionRes.data.data;
 
-  for (const course of rawCourses) {
-    const completenessRes = await api.get(`/courses/${course.id}/completeness`);
-    const comp = completenessRes.data.data;
+  const rawSections = responseData.sections;
+  const rawCourses = responseData.courses;
+
+
+  const results: InstructorDashboardSection[] = [];
+
+  rawSections.forEach((section: any) => {
+
+    const course = rawCourses.find((c: any) => c.id === section.courseId);
+    if (!course) {
+      console.warn(`No course found for section ${section.id}`);
+      return;
+    }
+
+    const indicators = (indicatorData || []).filter((i: SectionIndicatorInfo) => i.sectionId === section.id).map((i: SectionIndicatorInfo) => ({
+      sectionId: i.sectionId,
+      indicatorStatus: i.indicatorStatus
+    }));
 
     results.push({
-      id: course.id,
-      courseCode: course.courseCode,
+      id: section.id,
+      courseCode: `${course.courseCode} ${course.courseName} ${section.sectionNumber}`,
       instructorName: `${userStore.user?.firstName} ${userStore.user?.lastName}`,
-      measuresCompleted: comp.completedMeasures,
-      measuresTotal: comp.totalMeasures,
-      measures: [],
-      expanded: false,
+      indicators: indicators
     });
-  }
+  });
 
-  courses.value = results;
+  sections.value = results;
 }
 
-// ------------------------------
-// TOGGLE COURSE EXPANSION
-// ------------------------------
-async function toggleCourse(course: InstructorDashboardCourse) {
-  course.expanded = !course.expanded;
+async function loadInstructorIndicatorData(sectionIds : any[] = []) : Promise<SectionIndicatorInfo[]> {
 
-  // Load measures if expanding and not already loaded
-  if (course.expanded && course.measures.length === 0) {
-    course.measures = await loadCourseMeasures(course.id);
-  }
-}
+  // Query the section indicator table for all indicators in the section
+  const sectionIndicatorRes = await api.get("/section-indicator", {
+    params: {
+      ids: sectionIds
+    }
+  });
 
-// ------------------------------
-// REFRESH MEASURES FOR A COURSE
-// ------------------------------
-async function refreshCourseMeasures(courseId: number) {
-  const course = courses.value.find(c => c.id === courseId);
-  if (!course) return;
+  let sectionIndicatorData: SectionIndicatorInfo[] = [];
 
-  course.measures = await loadCourseMeasures(courseId);
+  (sectionIndicatorRes.data?.data || []).forEach((indicator: any) => {
+    const info: SectionIndicatorInfo = {
+      sectionId: Number(indicator.sectionId),
+      indicatorStatus: Boolean(indicator.isComplete)
+    };
 
-  // Refresh completeness
-  const completenessRes = await api.get(`/courses/${courseId}/completeness`);
-  const comp = completenessRes.data.data;
-  course.measuresCompleted = comp.completedMeasures;
-  course.measuresTotal = comp.totalMeasures;
+    sectionIndicatorData.push(info);
+  })
+
+  return sectionIndicatorData;
 }
 
 // ------------------------------
@@ -175,7 +175,7 @@ async function reload() {
 
   try {
     await loadProgramUserId();
-    await loadInstructorCourses();
+    await loadInstructorSections();
   } catch (err) {
     console.error(err);
     errorMessage.value = "Failed to load instructor dashboard";
@@ -186,10 +186,10 @@ async function reload() {
 
 onMounted(reload);
 
-// Reload when program ID or semester ID changes
+// Reload when program ID or semester ID or course ID changes
 watch([programId, semesterId], () => {
-  // Reset courses when semester changes to avoid showing stale data
-  courses.value = [];
+  // Reset sections when semester changes to avoid showing stale data
+  sections.value = [];
   reload();
 });
 </script>
@@ -198,50 +198,41 @@ watch([programId, semesterId], () => {
   <section v-if="!isLoading" class="instructor-dashboard">
     <h1>Instructor Dashboard</h1>
 
+    <h3>Your Assigned Sections</h3>
+
     <div v-if="errorMessage" class="error">
       {{ errorMessage }}
     </div>
 
-    <div v-else-if="!programId || !semesterId">
+    <div v-else-if="!programId || !semesterId ">
       <p class="info-message">
-        Please select a program and semester from the navigation menu to view your courses.
+        Please select a program and semester from the navigation menu to view your sections.
       </p>
     </div>
 
-    <div v-else-if="courses.length === 0">
-      <p>No courses assigned for the current semester.</p>
+    <div v-else-if="sections.length === 0">
+      <p>No sections created for the current course.</p>
     </div>
 
-    <div v-else class="courses-container">
+    <div v-else class="section-grid">
       <BaseCard
-        v-for="course in courses"
-        :key="course.id"
-        class="course-card"
+        v-for="section in sections"
+        :key="section.id"
+        class="section-card"
+        variant="elevated"
+        hoverable
       >
-        <div class="course-header" @click="toggleCourse(course)">
-          <div class="course-info">
-            <h3>{{ course.courseCode }}</h3>
-          </div>
-          <div class="course-stats">
-            <span class="measures-count">
-              {{ course.measuresCompleted }} / {{ course.measuresTotal }} measures completed
-            </span>
-            <button class="expand-button" :class="{ expanded: course.expanded }">
-              {{ course.expanded ? '▼' : '▶' }}
-            </button>
+        <div class="section-card-content">
+          <div class="section-course-code">
+            <h3>{{ section.courseCode }}</h3>
           </div>
         </div>
-
-        <div v-if="course.expanded" class="measures-container">
-          <div v-if="course.measures.length === 0" class="no-measures">
-            No measures found for this course.
+        <div class="section-header">
+          <div class="section-stats">
+            <p class="measures-count">
+              {{ section.indicators.filter(i => i.indicatorStatus).length }} / {{ section.indicators.length }} indicators complete
+            </p>
           </div>
-          <MeasureListing
-            v-for="measure in course.measures"
-            :key="measure.id"
-            :measure_prop="measure"
-            @refresh="refreshCourseMeasures(course.id)"
-          />
         </div>
       </BaseCard>
     </div>
@@ -253,6 +244,45 @@ watch([programId, semesterId], () => {
 </template>
 
 <style scoped>
+.section-course-code {
+  align-items: start;
+  text-align: center;
+}
+
+.section-card-content {
+  display: flex;
+  flex-direction: row;
+  gap: 0.5rem;
+  align-items: center;
+  height: 100%;
+}
+
+.section-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+  gap: 1.25rem;
+}
+
+.section-card :deep(.base-card) {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg-secondary);
+}
+
+/* Make card-body expand to fill available space */
+.section-card :deep(.card-body) {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.section-card {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  height: 100%;
+}
+
 .instructor-dashboard {
   margin: 2rem;
 }
@@ -273,19 +303,19 @@ watch([programId, semesterId], () => {
   text-align: center;
 }
 
-.courses-container {
+.sections-container {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
 }
 
-.course-card {
+.section-card {
   background-color: rgb(36, 36, 36);
   border-radius: 0.75rem;
   overflow: hidden;
 }
 
-.course-header {
+.section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -294,11 +324,11 @@ watch([programId, semesterId], () => {
   transition: background-color 0.2s;
 }
 
-.course-header:hover {
+.section-header:hover {
   background-color: rgb(43, 43, 43);
 }
 
-.course-info h3 {
+.section-info h3 {
   margin: 0 0 0.25rem 0;
   font-size: 1.125rem;
   color: white;
@@ -310,7 +340,7 @@ watch([programId, semesterId], () => {
   font-size: 0.8125rem;
 }
 
-.course-stats {
+.section-stats {
   display: flex;
   align-items: center;
   gap: 0.75rem;

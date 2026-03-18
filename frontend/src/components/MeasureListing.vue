@@ -53,35 +53,36 @@ interface Measure {
 }
 
 const complete_form_data = ref({
-  met: '',
-  exceeded: '',
-  below: '',
+  met: 0,
+  exceeded: 0,
+  below: 0,
   observation: ''
-})
+});
 
-async function complete_form_submit(){
-  //Check that met, exceeded, below are all ints
-  let newMetVal, newExceededVal, newBelowVal
-  try{
-    newMetVal = parseInt(complete_form_data.value.met)
-    newExceededVal = parseInt(complete_form_data.value.exceeded)
-    newBelowVal = parseInt(complete_form_data.value.below)
-  }
-  catch{
-    console.error("Met, Exceeded, and Below values must all be valid integers")
-    return
+async function complete_form_submit() {
+  const met = Number(complete_form_data.value.met);
+  const exceeded = Number(complete_form_data.value.exceeded);
+  const below = Number(complete_form_data.value.below);
+
+  if (Number.isNaN(met) || Number.isNaN(exceeded) || Number.isNaN(below)) {
+    console.error("Met, Exceeded, and Below values must all be valid numbers");
+    return;
   }
 
-  //Define new measure object
-  const new_measure = ref({
+  if (met < 0 || exceeded < 0 || below < 0) {
+    console.error("Values cannot be negative");
+    return;
+  }
+
+  const new_measure_payload = {
     id: measure_obj.value.id,
     courseIndicatorId: measure_obj.value.course_indicator_id,
     description: measure_obj.value.measure_description,
     observation: complete_form_data.value.observation,
     recommendedAction: measure_obj.value.recommended_action,
-    studentsMet: newMetVal as number,
-    studentsExceeded: newExceededVal as number,
-    studentsBelow: newBelowVal as number,
+    studentsMet: met,
+    studentsExceeded: exceeded,
+    studentsBelow: below,
     createdAt: measure_obj.value.created_at,
     active: measure_obj.value.is_active,
     deleted: measure_obj.value.deleted,
@@ -90,38 +91,34 @@ async function complete_form_submit(){
     status: "Complete",
     updatedAt: measure_obj.value.updated_at,
     version: measure_obj.value.version
-  })
+  }
 
-  //PUT request to server
   try {
-    const { data } = await api.put(`/measure/${measure_obj.value.id}`, new_measure.value);
+    await api.put(`/measure/${measure_obj.value.id}`, new_measure_payload);
 
-    //Update measure object
     measure_obj.value.observation = complete_form_data.value.observation
-    measure_obj.value.met = newMetVal as number
-    measure_obj.value.exceeded = newExceededVal as number
-    measure_obj.value.below = newBelowVal as number
+    measure_obj.value.met = met
+    measure_obj.value.exceeded = exceeded
+    measure_obj.value.below = below
     measure_obj.value.status = "Complete"
+
+    complete_form_data.value = {
+      met: 0,
+      exceeded: 0,
+      below: 0,
+      observation: ''
+    }
+
+    close_forms()
+    set_status()
+    calculate_chart_data()
+    emits('refresh')
+
   } catch (error) {
     console.error('Error editing measure:', error);
   }
-
-  //Reset form data
-  complete_form_data.value = {
-    met: '',
-    exceeded: '',
-    below: '',
-    observation: ''
-  }
-
-  //Close forms
-  close_forms()
-
-  //Refresh measures
-  set_status()
-  calculate_chart_data()
-  emits('refresh')
 }
+
 
 function open_edit_form(){
   completing.value = false
@@ -417,7 +414,7 @@ async function initialize(){
   }
 
   set_status()
-  
+
   //Check if the logged in user is the instructor for the section
   if (userId == props.instructor_id){
     isInstructor.value = true
@@ -482,33 +479,19 @@ calculate_chart_data()
       </div>
     </div>
 
-    <BaseModal v-model:isOpen="completing" title="Complete Measure" size="md" class="form" id="complete-form">
+    <BaseModal v-model:isOpen="completing" title="Complete Measure" size="md">
       <div class="input-grid">
-        <BaseInput
-          v-model="complete_form_data.met"
-          label="Met: "
-          placeholder="Number of students who met measure"
-          required
-        />
-        <BaseInput
-          v-model="complete_form_data.exceeded"
-          label="Exceeded: "
-          placeholder="Number of students who exceeded measure"
-          required
-        />
-        <BaseInput
-          v-model="complete_form_data.below"
-          label="Below: "
-          placeholder="Number of students who failed measure"
-          required
-        />
+        <CounterComponent v-model="complete_form_data.met" label="Met" />
+        <CounterComponent v-model="complete_form_data.exceeded" label="Exceeded" />
+        <CounterComponent v-model="complete_form_data.below" label="Below" />
+
         <BaseInput
           v-model="complete_form_data.observation"
-          label="Observation: "
-          placeholder=""
+          label="Observation"
+          placeholder="Optional notes"
         />
       </div>
-      <BaseButton variant="primary" class="submit-button" @click="complete_form_submit">Submit</BaseButton>
+      <BaseButton variant="primary" @click="complete_form_submit">Submit</BaseButton>
     </BaseModal>
 
     <BaseModal v-model:isOpen="editing" title="Edit Measure" size="md" class="form" id="complete-form">

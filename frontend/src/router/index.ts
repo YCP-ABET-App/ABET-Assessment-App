@@ -26,7 +26,7 @@ const routes = [
 {
     path: '/admin-dashboard',
     name: 'Admin Dashboard',
-    component: () => import('@/components/pages/AdminDashboardPage.vue'), 
+    component: () => import('@/components/pages/AdminDashboardPage.vue'),
     meta: { requiresAuth: true, requiresAdmin: true }
   },
   {
@@ -91,6 +91,12 @@ const routes = [
     path: '/settings',
     name: 'Settings',
     component: () => import('@/components/pages/SettingsPage.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/import-tool',
+    name: 'Import Tool',
+    component: () => import('@/components/pages/ImportToolPage.vue'),
     meta: { requiresAuth: true }
   }
 ]
