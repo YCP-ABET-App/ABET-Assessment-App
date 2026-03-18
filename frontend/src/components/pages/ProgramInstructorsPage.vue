@@ -191,9 +191,8 @@
             <table class="courses-table">
               <thead>
               <tr>
-                <th>Course Code</th>
-                <th>Course Name</th>
-                <th>Measures Progress</th>
+                <th>Section Name</th>
+                <th>Indicator Progress</th>
               </tr>
               </thead>
               <tbody>
@@ -201,24 +200,10 @@
                 v-for="section in currentSemesterSections"
                 :key="section.id"
                 class="course-row clickable">
-                <!--                @click="showSectionDetails(section)"-->
-                <!--                <td>{{ course.courseCode || course.course_code }}</td>-->
-                <!--                <td>{{ course.courseName || course.course_name || '—' }}</td>-->
-                <!--                <td>-->
-                <!--                  <span v-if="course.measuresCompleted !== undefined && course.measuresTotal !== undefined">-->
-                <!--                    <span class="measures-count">-->
-                <!--                      {{ course.measuresCompleted }}/{{ course.measuresTotal }}-->
-                <!--                    </span>-->
-                <!--                    <span class="progress-percent">-->
-                <!--                      ({{ course.measuresTotal && course.measuresTotal > 0-->
-                <!--                      ? Math.round(-->
-                <!--                        ((course.measuresCompleted || 0) / course.measuresTotal) * 100-->
-                <!--                      )-->
-                <!--                      : 0 }}%)-->
-                <!--                    </span>-->
-                <!--                  </span>-->
-                <!--                  <span v-else class="no-data">—</span>-->
-                <!--                </td>-->
+                                <td>{{ section.formattedName }}</td>
+                                <td>
+                                  <span class="no-data">—</span>
+                                </td>
               </tr>
               </tbody>
             </table>
@@ -237,15 +222,15 @@
       </template>
     </BaseModal>
 
-    <!-- Course Details Modal -->
+    <!-- Section Details Modal -->
     <BaseModal
       v-model:isOpen="showCourseModal"
-      v-if="selectedCourse"
+      v-if="selectedSection"
       @close="closeCourseModal"
       size="lg"
     >
       <template #header>
-        <h2>{{ selectedCourse.courseCode || selectedCourse.course_code }}</h2>
+        <h2>{{ selectedSection.formattedName }}</h2>
       </template>
 
       <div class="course-modal-content">
@@ -257,13 +242,13 @@
               <div class="info-field">
                 <span class="field-label">COURSE CODE</span>
                 <span class="field-value">
-                  {{ selectedCourse.courseCode || selectedCourse.course_code }}
+                  {{ selectedSection.formattedName }}
                 </span>
               </div>
               <div class="info-field">
                 <span class="field-label">COURSE NAME</span>
                 <span class="field-value">
-                  {{ selectedCourse.courseName || selectedCourse.course_name || '—' }}
+                  {{ selectedSection.formattedName || '—' }}
                 </span>
               </div>
             </div>
@@ -271,46 +256,46 @@
               <div class="info-field info-field-wide">
                 <span class="field-label">DESCRIPTION</span>
                 <span class="field-value">
-                  {{ selectedCourse.courseDescription || selectedCourse.course_description || 'No description available' }}
+                  {{ selectedSection.formattedName || 'No description available' }}
                 </span>
               </div>
             </div>
           </div>
         </section>
-
+<!--        TODO: Decide if this should be indicator progress instead-->
         <!-- Measures Progress -->
         <section class="detail-section">
-          <h3>Measures Progress</h3>
-          <div class="measures-summary">
-            <div class="progress-card">
-              <div class="progress-label">Total Measures</div>
-              <div class="progress-value">{{ selectedCourse.measuresTotal || 0 }}</div>
-            </div>
-            <div class="progress-card">
-              <div class="progress-label">Completed</div>
-              <div class="progress-value completed">{{ selectedCourse.measuresCompleted || 0 }}</div>
-            </div>
-            <div class="progress-card">
-              <div class="progress-label">Completion Rate</div>
-              <div class="progress-value">
-                {{ selectedCourse.measuresTotal && selectedCourse.measuresTotal > 0
-                ? Math.round(((selectedCourse.measuresCompleted || 0) / selectedCourse.measuresTotal) * 100)
-                : 0 }}%
-              </div>
-            </div>
-          </div>
+<!--          <h3>Measures Progress</h3>-->
+<!--          <div class="measures-summary">-->
+<!--            <div class="progress-card">-->
+<!--              <div class="progress-label">Total Measures</div>-->
+<!--              <div class="progress-value">{{ selectedCourse.measuresTotal || 0 }}</div>-->
+<!--            </div>-->
+<!--            <div class="progress-card">-->
+<!--              <div class="progress-label">Completed</div>-->
+<!--              <div class="progress-value completed">{{ selectedCourse.measuresCompleted || 0 }}</div>-->
+<!--            </div>-->
+<!--            <div class="progress-card">-->
+<!--              <div class="progress-label">Completion Rate</div>-->
+<!--              <div class="progress-value">-->
+<!--                {{ selectedCourse.measuresTotal && selectedCourse.measuresTotal > 0-->
+<!--                ? Math.round(((selectedCourse.measuresCompleted || 0) / selectedCourse.measuresTotal) * 100)-->
+<!--                : 0 }}%-->
+<!--              </div>-->
+<!--            </div>-->
+<!--          </div>-->
 
           <!-- Progress Bar -->
-          <div class="progress-bar-container">
-            <div
-              class="progress-bar-fill"
-              :style="{
-                width: selectedCourse.measuresTotal && selectedCourse.measuresTotal > 0
-                  ? `${Math.round(((selectedCourse.measuresCompleted || 0) / selectedCourse.measuresTotal) * 100)}%`
-                  : '0%'
-              }"
-            ></div>
-          </div>
+<!--          <div class="progress-bar-container">-->
+<!--            <div-->
+<!--              class="progress-bar-fill"-->
+<!--              :style="{-->
+<!--                width: selectedCourse.measuresTotal && selectedCourse.measuresTotal > 0-->
+<!--                  ? `${Math.round(((selectedCourse.measuresCompleted || 0) / selectedCourse.measuresTotal) * 100)}%`-->
+<!--                  : '0%'-->
+<!--              }"-->
+<!--            ></div>-->
+<!--          </div>-->
         </section>
       </div>
 
@@ -472,9 +457,13 @@ async function loadProgramInstructors() {
           const user = userRes.data.data;
           // Fetch all sections for this instructor (API doesn't support semester filter)
           const sectionRes = await api.get(`/section`, {
-            params: { userId: pu.userId }
+            params: {
+              userId: pu.userId,
+              semesterId: currentSemesterId.value
+            }
           });
           const allSections = sectionRes.data.data.sections ?? [];
+          const allCourses = sectionRes.data.data.courses ?? [];
 
           // Debug: Log if there are duplicates
           const sectionIds = allSections.map((c: Section) => c.id);
@@ -488,27 +477,34 @@ async function loadProgramInstructors() {
             );
           }
 
-          console.log(sectionIds)
-          console.log(allSections)
-          console.log(currentSemesterId.value)
+          let formattedSections: { id: any; sectionNumber: any; courseName: any; formattedName: string; semesterId: any; }[] = [];
 
-          // Count only sections from current semester
-          const currentSemesterCount = currentSemesterId.value
-            ? allSections.filter((s: Section) => {
-              const sectionSemesterId = s.semesterId || s.semester?.id;
-              return sectionSemesterId === currentSemesterId.value;
-            }).length
-            : allSections.length;
+          allSections.forEach((section: any) => {
+            console.log(section)
+            const course = allCourses.find((c: any) => c.id === section.courseId);
+            if (!course) {
+              console.warn(`No course found for section ${section.id}`);
+              return;
+            }
 
-          return {
+            formattedSections.push({
+              id: section.id,
+              sectionNumber: section.sectionNumber,
+              courseName: course.courseName,
+              formattedName: `${course.courseCode} ${course.courseName} ${section.sectionNumber}`,
+              semesterId: section.semesterId
+            })
+          });
+
+            return {
             programUserId: pu.id,
             userId: pu.userId,
             firstName: user.firstName,
             lastName: user.lastName,
             email: user.email,
             role: pu.adminStatus ? "ADMIN" : "INSTRUCTOR",
-            sectionCount: currentSemesterCount,
-            sections: allSections
+            sectionCount: formattedSections.length,
+            sections: formattedSections
           };
         } catch {
           return null;
