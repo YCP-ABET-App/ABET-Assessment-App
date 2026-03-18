@@ -4,12 +4,8 @@
     <div class="page-header">
       <div class="header-content">
         <h2>Instructors</h2>
-        <p
-          class="subtitle"
-          v-if="instructors.length > 0"
-        >
-          {{ instructors.length }} instructor{{ instructors.length !== 1 ? 's' : '' }}
-          in selected program
+        <p class="subtitle" v-if="instructors.length > 0">
+          {{ instructors.length }} instructor{{ instructors.length !== 1 ? 's' : '' }} in selected program
         </p>
       </div>
     </div>
@@ -36,19 +32,26 @@
           <div class="instructor-avatar">
             {{ instructor.firstName?.charAt(0) }}{{ instructor.lastName?.charAt(0) }}
           </div>
-
           <div class="instructor-info">
-            <h3 class="instructor-name">
-              {{ instructor.firstName }} {{ instructor.lastName }}
-            </h3>
-            <p class="instructor-email">
-              {{ instructor.email }}
-            </p>
+            <h3 class="instructor-name">{{ instructor.firstName }} {{ instructor.lastName }}</h3>
+            <p class="instructor-email">{{ instructor.email }}</p>
             <p class="instructor-meta">
-              {{ instructor.sectionCount }} section{{ instructor.sectionCount !== 1 ? 's' : '' }}
               <span v-if="instructor.role === 'ADMIN'" class="role-badge">Admin</span>
+              <span v-else>Instructor</span>
             </p>
           </div>
+        </div>
+      </BaseCard>
+
+      <BaseCard
+        variant="bordered"
+        hoverable
+        class="instructor-card add-new-card"
+        @click="showCreateModal = true"
+      >
+        <div class="add-new-content">
+          <span class="plus-icon">+</span>
+          <span class="add-text">New Instructor</span>
         </div>
       </BaseCard>
     </div>
@@ -305,6 +308,21 @@
         </button>
       </template>
     </BaseModal>
+
+    <BaseModal
+      v-model:isOpen="showCreateModal"
+      size="md"
+      @close="showCreateModal = false"
+    >
+      <InstructorCreation
+        :program-id="programId"
+        @success="handleCreationSuccess"
+        @cancel="showCreateModal = false"
+      />
+      <template #footer><span></span></template>
+
+    </BaseModal>
+
   </section>
 </template>
 
@@ -318,12 +336,15 @@ import BaseModal from "@/components/ui/BaseModal.vue";
 import BaseInput from "@/components/ui/BaseInput.vue";
 import BaseSelect from "@/components/ui/BaseSelect.vue";
 import { useToast } from "@/composables/use-toast";
+import InstructorCreation from "@/components/InstructorCreation.vue";
 
 const toast = useToast() as {
   success: (msg: string) => void;
   error: (msg: string) => void;
   info?: (msg: string) => void;
 };
+
+const showCreateModal = ref(false);
 
 // User store for semester filtering
 const userStore = useUserStore();
@@ -522,6 +543,7 @@ async function loadProgramInstructors() {
   }
 }
 
+
 /* -----------------------------
  * Editing functions
  * ----------------------------- */
@@ -645,6 +667,11 @@ function showCourseDetails(section: Section) {
   showCourseModal.value = true;
 }
 
+function handleCreationSuccess() {
+  showCreateModal.value = false;
+  loadProgramInstructors();
+}
+
 function closeCourseModal() {
   showCourseModal.value = false;
   selectedSection.value = null;
@@ -656,6 +683,46 @@ function closeCourseModal() {
   width: 100%;
   padding: 0.4rem 0.75rem;
 }
+
+
+.add-new-card {
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.03) !important;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100px;
+}
+
+.add-new-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.plus-icon {
+  font-size: 1.2rem;
+}
+
+.add-text {
+  font-size: 1rem;
+}
+
+.add-new-card:hover {
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: var(--color-text-primary);
+}
+
+.instructors-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+  gap: 1.25rem;
+}
+
 
 /* Clickable course rows */
 .course-row.clickable {
