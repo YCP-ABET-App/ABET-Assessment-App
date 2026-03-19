@@ -687,7 +687,7 @@ function closeCourseModal() {
 
 .add-new-card {
   cursor: pointer;
-  background: rgba(255, 255, 255, 0.03) !important;
+  background: rgba(255, 255, 255, 0.06)  !important;
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
@@ -710,11 +710,7 @@ function closeCourseModal() {
 
 .add-text {
   font-size: 1rem;
-}
-
-.add-new-card:hover {
-  background: rgba(255, 255, 255, 0.06) !important;
-  color: var(--color-text-primary);
+  color: white;
 }
 
 .instructors-grid {
@@ -1155,7 +1151,6 @@ function closeCourseModal() {
   flex-shrink: 0;
 }
 
-/* Empty State */
 .empty-state {
   text-align: center;
   padding: 3rem 2rem;

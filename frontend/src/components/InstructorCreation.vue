@@ -39,6 +39,18 @@
       </div>
 
       <div class="form-group">
+        <label class="label">Password</label>
+        <input
+          v-model="form.password"
+          type="password"
+          class="input"
+          placeholder="e.g. abc123"
+          required
+        />
+        <span v-if="errors.password" class="field-error">{{ errors.password }}</span>
+      </div>
+
+      <div class="form-group">
         <label class="label">System Role</label>
         <select v-model="form.role" class="input select-input">
           <option v-for="opt in roleOptions" :key="opt.value" :value="opt.value">
@@ -88,13 +100,15 @@ const form = reactive({
   firstName: '',
   lastName: '',
   email: '',
+  password: '',
   role: 'INSTRUCTOR' as 'ADMIN' | 'INSTRUCTOR'
 });
 
 const errors = reactive({
   firstName: '',
   lastName: '',
-  email: ''
+  email: '',
+  password: ''
 });
 
 const roleOptions = [
@@ -107,8 +121,9 @@ function validate() {
   errors.firstName = !form.firstName ? 'First name is required' : '';
   errors.lastName = !form.lastName ? 'Last name is required' : '';
   errors.email = !form.email.includes('@') ? 'Valid email is required' : '';
+  errors.password = !form.password ? 'Password is required' : '';
 
-  if (errors.firstName || errors.lastName || errors.email) isValid = false;
+  if (errors.firstName || errors.lastName || errors.email || errors.password) isValid = false;
   return isValid;
 }
 
@@ -123,12 +138,16 @@ async function submitForm() {
     const userRes = await api.post('/users', {
       firstName: form.firstName,
       lastName: form.lastName,
-      email: form.email
+      email: form.email,
+      passwordHash: form.password
     });
 
-    const newUserId = userRes.data?.data?.id;
+    const newUserId = userRes.data?.id || userRes.data?.data?.id;
 
-    // 2. Add User to this specific Program
+    if (!newUserId) {
+      throw new Error("User created but no ID returned from server");
+    }
+
     await api.post(`/program/${props.programId}/users`, {
       userId: newUserId,
       adminStatus: form.role === 'ADMIN'
