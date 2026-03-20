@@ -80,10 +80,9 @@ async function complete_form_submit() {
     description: measure_obj.value.measure_description,
     observation: complete_form_data.value.observation,
     recommendedAction: measure_obj.value.recommended_action,
-    fcar: measure_obj.value.fcar,
-    studentsMet: met, // Used your local validated 'met'
-    studentsExceeded: exceeded, // Used local 'exceeded'
-    studentsBelow: below, // Used local 'below'
+    studentsMet: met,
+    studentsExceeded: exceeded,
+    studentsBelow: below,
     createdAt: measure_obj.value.created_at,
     active: measure_obj.value.is_active,
     deleted: measure_obj.value.deleted,
@@ -144,7 +143,6 @@ async function edit_form_submit(){
     description: newDescVal,
     observation: measure_obj.value.observation,
     recommendedAction: measure_obj.value.recommended_action,
-    fcar: measure_obj.value.fcar,
     studentsMet: measure_obj.value.met,
     studentsExceeded: measure_obj.value.exceeded,
     studentsBelow: measure_obj.value.below,
@@ -229,7 +227,6 @@ async function ra_form_submit(){
     description: measure_obj.value.measure_description,
     observation: measure_obj.value.observation,
     recommendedAction: newRAVal,
-    fcar: measure_obj.value.fcar,
     studentsMet: measure_obj.value.met,
     studentsExceeded: measure_obj.value.exceeded,
     studentsBelow: measure_obj.value.below,
@@ -289,7 +286,6 @@ async function mark_complete(){
     description: measure_obj.value.measure_description,
     observation: measure_obj.value.observation,
     recommendedAction: measure_obj.value.recommended_action,
-    fcar: measure_obj.value.fcar,
     studentsMet: measure_obj.value.met,
     studentsExceeded: measure_obj.value.exceeded,
     studentsBelow: measure_obj.value.below,
@@ -332,7 +328,6 @@ const measure_obj = ref<{
   measure_description: string
   observation: string | null
   recommended_action: string | null
-  fcar: string | null
   met: number | null
   exceeded: number | null
   below: number | null
@@ -344,13 +339,13 @@ const measure_obj = ref<{
   status: "InProgress" | "Complete" | null
   updated_at: string | null
   version: number | null
+  rejection_note: string | null
 }>({
   id: NaN,
   course_indicator_id: NaN,
   measure_description: '',
   observation: null,
   recommended_action: null,
-  fcar: null,
   met: null,
   exceeded: null,
   below: null,
@@ -361,7 +356,8 @@ const measure_obj = ref<{
   new: null,
   status: null,
   updated_at: null,
-  version: null
+  version: null,
+  rejection_note: ''
 })
 
 const status = ref(NaN)
@@ -399,22 +395,22 @@ const measure_obj = ref({
 async function initialize(){
   measure_obj.value = {
     id: props.measure_prop.id,
-    course_indicator_id: props.measure_prop.courseIndicatorId,
-    measure_description: props.measure_prop.description,
+    course_indicator_id: props.measure_prop.course_indicator_id,
+    measure_description: props.measure_prop.measure_description,
     observation: props.measure_prop.observation,
-    recommended_action: props.measure_prop.recommendedAction,
-    fcar: props.measure_prop.fcar,
-    met: props.measure_prop.studentsMet,
-    exceeded: props.measure_prop.studentsExceeded,
-    below: props.measure_prop.studentsBelow,
-    created_at: props.measure_prop.createdAt,
-    is_active: props.measure_prop.active,
+    recommended_action: props.measure_prop.recommended_ction,
+    met: props.measure_prop.met,
+    exceeded: props.measure_prop.exceeded,
+    below: props.measure_prop.below,
+    created_at: props.measure_prop.created_at,
+    is_active: props.measure_prop.is_active,
     deleted: props.measure_prop.deleted,
     deleted_at: props.measure_prop.deleted_at,
     new: props.measure_prop.new,
     status: props.measure_prop.status,
-    updated_at: props.measure_prop.updatedAt,
-    version: props.measure_prop.version
+    updated_at: props.measure_prop.updated_at,
+    version: props.measure_prop.version,
+    rejection_note: props.measure_prop.rejection_note
   }
 
   set_status()
@@ -542,8 +538,8 @@ calculate_chart_data()
           <div class="view-field">
             <span class="field-label">Status:</span>
             <span v-if="status==0" class="field-value status-badge status-in-progress">In Progress</span>
-            <span v-else-if="status==1" class="field-value status-badge status-in-review">In Review</span>
-            <span v-else class="field-value status-badge status-completed">Complete</span>
+            <span v-else-if="status==1" class="field-value status-badge status-completed">Complete</span>
+            <span v-else class="field-value status-badge status-error">Error</span>
           </div>
         </div>
 

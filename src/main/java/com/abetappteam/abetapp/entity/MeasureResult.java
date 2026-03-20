@@ -32,7 +32,7 @@ public class MeasureResult extends BaseEntity {
     @Column(name = "rejection_note", length = 200)
     private String rejectionNote;
 
-    @Column(name = "status", length = 10)
+    @Column(name = "m_status", length = 10)
     private String status;
 
     // Constructors
