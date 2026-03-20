@@ -138,7 +138,7 @@ async function loadInstructorIndicatorData(sectionIds : any[] = []) : Promise<Se
   // Query the section indicator table for all indicators in the section
   const sectionIndicatorRes = await api.get("/section-indicator", {
     params: {
-      ids: sectionIds
+      sectionIds: sectionIds
     }
   });
 

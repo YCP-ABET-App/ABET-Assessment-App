@@ -202,7 +202,7 @@
                 class="course-row clickable">
                                 <td>{{ section.formattedName }}</td>
                                 <td>
-                                  <span class="no-data">—</span>
+                                  <span class="no-data">{{ section.indicators.filter(i => i.indicatorStatus).length }} / {{ section.indicators.length }}</span>
                                 </td>
               </tr>
               </tbody>
@@ -335,6 +335,7 @@ interface Section {
   courseName?: string;
   formattedName?: string;
   courseDescription?: string;
+  indicators: SectionIndicatorInfo[];
 
   // Semester info
   semesterId?: number;
@@ -376,6 +377,11 @@ interface EditErrors {
   firstName?: string;
   lastName?: string;
   email?: string;
+}
+
+interface SectionIndicatorInfo {
+  sectionId: number;
+  indicatorStatus: boolean;
 }
 
 const props = defineProps<{
@@ -477,26 +483,33 @@ async function loadProgramInstructors() {
             );
           }
 
-          let formattedSections: { id: any; sectionNumber: any; courseName: any; formattedName: string; semesterId: any; }[] = [];
+          let formattedSections: { id: any; sectionNumber: any; courseName: any; formattedName: string; semesterId: any; indicators: any; }[] = [];
 
-          allSections.forEach((section: any) => {
-            console.log(section)
+          for (const section of allSections) {
             const course = allCourses.find((c: any) => c.id === section.courseId);
             if (!course) {
               console.warn(`No course found for section ${section.id}`);
-              return;
+              continue;
             }
+
+            const indicatorData = await loadInstructorIndicatorData(section.id);
+
+            const indicators = (indicatorData || []).filter((i: SectionIndicatorInfo) => i.sectionId === section.id).map((i: SectionIndicatorInfo) => ({
+              sectionId: i.sectionId,
+              indicatorStatus: i.indicatorStatus
+            }));
 
             formattedSections.push({
               id: section.id,
               sectionNumber: section.sectionNumber,
               courseName: course.courseName,
               formattedName: `${course.courseCode} ${course.courseName} ${section.sectionNumber}`,
-              semesterId: section.semesterId
+              semesterId: section.semesterId,
+              indicators: indicators
             })
-          });
+          }
 
-            return {
+          return {
             programUserId: pu.id,
             userId: pu.userId,
             firstName: user.firstName,
@@ -521,6 +534,35 @@ async function loadProgramInstructors() {
     loading.value = false;
   }
 }
+
+async function loadInstructorIndicatorData(sectionId : number) : Promise<SectionIndicatorInfo[]> {
+
+  // Query the section indicator table for all indicators in the section
+  const sectionIndicatorRes = await api.get("/section-indicator", {
+    params: {
+      sectionIds: [sectionId]
+    }
+  });
+
+  let sectionIndicatorData: SectionIndicatorInfo[] = [];
+
+  if(sectionId == 1) {
+    console.log(sectionIndicatorRes);
+  }
+
+
+  (sectionIndicatorRes.data?.data || []).forEach((indicator: any) => {
+    const info: SectionIndicatorInfo = {
+      sectionId: Number(indicator.sectionId),
+      indicatorStatus: Boolean(indicator.isComplete)
+    };
+
+    sectionIndicatorData.push(info);
+  })
+
+  return sectionIndicatorData;
+}
+
 
 /* -----------------------------
  * Editing functions
