@@ -138,7 +138,7 @@ async function loadInstructorIndicatorData(sectionIds : any[] = []) : Promise<Se
   // Query the section indicator table for all indicators in the section
   const sectionIndicatorRes = await api.get("/section-indicator", {
     params: {
-      ids: sectionIds
+      sectionIds: sectionIds
     }
   });
 
@@ -154,6 +154,10 @@ async function loadInstructorIndicatorData(sectionIds : any[] = []) : Promise<Se
   })
 
   return sectionIndicatorData;
+}
+
+function openSectionDetails(sectionId: number) {
+  window.open(`/section/${sectionId}`, "_blank");
 }
 
 // ------------------------------
@@ -221,6 +225,7 @@ watch([programId, semesterId], () => {
         class="section-card"
         variant="elevated"
         hoverable
+        @click="openSectionDetails(section.id)"
       >
         <div class="section-card-content">
           <div class="section-course-code">

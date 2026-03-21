@@ -62,14 +62,14 @@ public class MeasureResultService extends BaseService<MeasureResult, Long, Measu
     }
 
    @Transactional
-   public List<MeasureResult> searchMeasureResults(MeasureResultsSearchRequest request) {
-       return repository.searchMeasureResults(
-               request.id(),
-               request.measureId(),
-               request.programId(),
-               request.sectionId()
-       );
-   }
+    public List<MeasureResult> searchMeasureResults(MeasureResultsSearchRequest request) {
+        return repository.searchMeasureResults(
+                request.id(),
+                request.measureId(),
+                request.sectionId(),
+                request.programId()
+        );
+    }
 
     @Transactional
     public MeasureResult createFromImport(MeasureResult mr) {

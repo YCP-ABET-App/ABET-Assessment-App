@@ -4,8 +4,12 @@
     <div class="page-header">
       <div class="header-content">
         <h2>Instructors</h2>
-        <p class="subtitle" v-if="instructors.length > 0">
-          {{ instructors.length }} instructor{{ instructors.length !== 1 ? 's' : '' }} in selected program
+        <p
+          class="subtitle"
+          v-if="instructors.length > 0"
+        >
+          {{ instructors.length }} instructor{{ instructors.length !== 1 ? 's' : '' }}
+          in selected program
         </p>
       </div>
     </div>
@@ -32,26 +36,19 @@
           <div class="instructor-avatar">
             {{ instructor.firstName?.charAt(0) }}{{ instructor.lastName?.charAt(0) }}
           </div>
+
           <div class="instructor-info">
-            <h3 class="instructor-name">{{ instructor.firstName }} {{ instructor.lastName }}</h3>
-            <p class="instructor-email">{{ instructor.email }}</p>
+            <h3 class="instructor-name">
+              {{ instructor.firstName }} {{ instructor.lastName }}
+            </h3>
+            <p class="instructor-email">
+              {{ instructor.email }}
+            </p>
             <p class="instructor-meta">
+              {{ instructor.sectionCount }} section{{ instructor.sectionCount !== 1 ? 's' : '' }}
               <span v-if="instructor.role === 'ADMIN'" class="role-badge">Admin</span>
-              <span v-else>Instructor</span>
             </p>
           </div>
-        </div>
-      </BaseCard>
-
-      <BaseCard
-        variant="bordered"
-        hoverable
-        class="instructor-card add-new-card"
-        @click="showCreateModal = true"
-      >
-        <div class="add-new-content">
-          <span class="plus-icon">+</span>
-          <span class="add-text">New Instructor</span>
         </div>
       </BaseCard>
     </div>
@@ -202,10 +199,11 @@
               <tr
                 v-for="section in currentSemesterSections"
                 :key="section.id"
-                class="course-row clickable">
+                class="course-row clickable"
+                @click="openSectionDetails(section.id)">
                                 <td>{{ section.formattedName }}</td>
                                 <td>
-                                  <span class="no-data">—</span>
+                                  <span class="no-data">{{ section.indicators.filter(i => i.indicatorStatus).length }} / {{ section.indicators.length }}</span>
                                 </td>
               </tr>
               </tbody>
@@ -265,40 +263,7 @@
             </div>
           </div>
         </section>
-<!--        TODO: Decide if this should be indicator progress instead-->
-        <!-- Measures Progress -->
         <section class="detail-section">
-<!--          <h3>Measures Progress</h3>-->
-<!--          <div class="measures-summary">-->
-<!--            <div class="progress-card">-->
-<!--              <div class="progress-label">Total Measures</div>-->
-<!--              <div class="progress-value">{{ selectedCourse.measuresTotal || 0 }}</div>-->
-<!--            </div>-->
-<!--            <div class="progress-card">-->
-<!--              <div class="progress-label">Completed</div>-->
-<!--              <div class="progress-value completed">{{ selectedCourse.measuresCompleted || 0 }}</div>-->
-<!--            </div>-->
-<!--            <div class="progress-card">-->
-<!--              <div class="progress-label">Completion Rate</div>-->
-<!--              <div class="progress-value">-->
-<!--                {{ selectedCourse.measuresTotal && selectedCourse.measuresTotal > 0-->
-<!--                ? Math.round(((selectedCourse.measuresCompleted || 0) / selectedCourse.measuresTotal) * 100)-->
-<!--                : 0 }}%-->
-<!--              </div>-->
-<!--            </div>-->
-<!--          </div>-->
-
-          <!-- Progress Bar -->
-<!--          <div class="progress-bar-container">-->
-<!--            <div-->
-<!--              class="progress-bar-fill"-->
-<!--              :style="{-->
-<!--                width: selectedCourse.measuresTotal && selectedCourse.measuresTotal > 0-->
-<!--                  ? `${Math.round(((selectedCourse.measuresCompleted || 0) / selectedCourse.measuresTotal) * 100)}%`-->
-<!--                  : '0%'-->
-<!--              }"-->
-<!--            ></div>-->
-<!--          </div>-->
         </section>
       </div>
 
@@ -308,21 +273,6 @@
         </button>
       </template>
     </BaseModal>
-
-    <BaseModal
-      v-model:isOpen="showCreateModal"
-      size="md"
-      @close="showCreateModal = false"
-    >
-      <InstructorCreation
-        :program-id="programId"
-        @success="handleCreationSuccess"
-        @cancel="showCreateModal = false"
-      />
-      <template #footer><span></span></template>
-
-    </BaseModal>
-
   </section>
 </template>
 
@@ -336,15 +286,12 @@ import BaseModal from "@/components/ui/BaseModal.vue";
 import BaseInput from "@/components/ui/BaseInput.vue";
 import BaseSelect from "@/components/ui/BaseSelect.vue";
 import { useToast } from "@/composables/use-toast";
-import InstructorCreation from "@/components/InstructorCreation.vue";
 
 const toast = useToast() as {
   success: (msg: string) => void;
   error: (msg: string) => void;
   info?: (msg: string) => void;
 };
-
-const showCreateModal = ref(false);
 
 // User store for semester filtering
 const userStore = useUserStore();
@@ -356,6 +303,7 @@ interface Section {
   courseName?: string;
   formattedName?: string;
   courseDescription?: string;
+  indicators: SectionIndicatorInfo[];
 
   // Semester info
   semesterId?: number;
@@ -397,6 +345,11 @@ interface EditErrors {
   firstName?: string;
   lastName?: string;
   email?: string;
+}
+
+interface SectionIndicatorInfo {
+  sectionId: number;
+  indicatorStatus: boolean;
 }
 
 const props = defineProps<{
@@ -458,6 +411,10 @@ const currentSemesterSections = computed(() => {
   return filtered;
 });
 
+function openSectionDetails(sectionId: number) {
+  window.open(`/section/${sectionId}`, "_blank");
+}
+
 /* -----------------------------
  * Load instructors for program
  * ----------------------------- */
@@ -498,26 +455,33 @@ async function loadProgramInstructors() {
             );
           }
 
-          let formattedSections: { id: any; sectionNumber: any; courseName: any; formattedName: string; semesterId: any; }[] = [];
+          let formattedSections: { id: any; sectionNumber: any; courseName: any; formattedName: string; semesterId: any; indicators: any; }[] = [];
 
-          allSections.forEach((section: any) => {
-            console.log(section)
+          for (const section of allSections) {
             const course = allCourses.find((c: any) => c.id === section.courseId);
             if (!course) {
               console.warn(`No course found for section ${section.id}`);
-              return;
+              continue;
             }
+
+            const indicatorData = await loadInstructorIndicatorData(section.id);
+
+            const indicators = (indicatorData || []).filter((i: SectionIndicatorInfo) => i.sectionId === section.id).map((i: SectionIndicatorInfo) => ({
+              sectionId: i.sectionId,
+              indicatorStatus: i.indicatorStatus
+            }));
 
             formattedSections.push({
               id: section.id,
               sectionNumber: section.sectionNumber,
               courseName: course.courseName,
               formattedName: `${course.courseCode} ${course.courseName} ${section.sectionNumber}`,
-              semesterId: section.semesterId
+              semesterId: section.semesterId,
+              indicators: indicators
             })
-          });
+          }
 
-            return {
+          return {
             programUserId: pu.id,
             userId: pu.userId,
             firstName: user.firstName,
@@ -541,6 +505,34 @@ async function loadProgramInstructors() {
   } finally {
     loading.value = false;
   }
+}
+
+async function loadInstructorIndicatorData(sectionId : number) : Promise<SectionIndicatorInfo[]> {
+
+  // Query the section indicator table for all indicators in the section
+  const sectionIndicatorRes = await api.get("/section-indicator", {
+    params: {
+      sectionIds: [sectionId]
+    }
+  });
+
+  let sectionIndicatorData: SectionIndicatorInfo[] = [];
+
+  if(sectionId == 1) {
+    console.log(sectionIndicatorRes);
+  }
+
+
+  (sectionIndicatorRes.data?.data || []).forEach((indicator: any) => {
+    const info: SectionIndicatorInfo = {
+      sectionId: Number(indicator.sectionId),
+      indicatorStatus: Boolean(indicator.isComplete)
+    };
+
+    sectionIndicatorData.push(info);
+  })
+
+  return sectionIndicatorData;
 }
 
 
@@ -667,11 +659,6 @@ function showCourseDetails(section: Section) {
   showCourseModal.value = true;
 }
 
-function handleCreationSuccess() {
-  showCreateModal.value = false;
-  loadProgramInstructors();
-}
-
 function closeCourseModal() {
   showCourseModal.value = false;
   selectedSection.value = null;
@@ -683,42 +670,6 @@ function closeCourseModal() {
   width: 100%;
   padding: 0.4rem 0.75rem;
 }
-
-
-.add-new-card {
-  cursor: pointer;
-  background: rgba(255, 255, 255, 0.06)  !important;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100px;
-}
-
-.add-new-content {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  color: var(--color-text-secondary);
-  font-weight: 500;
-}
-
-.plus-icon {
-  font-size: 1.2rem;
-}
-
-.add-text {
-  font-size: 1rem;
-  color: white;
-}
-
-.instructors-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
-  gap: 1.25rem;
-}
-
 
 /* Clickable course rows */
 .course-row.clickable {
@@ -1151,6 +1102,7 @@ function closeCourseModal() {
   flex-shrink: 0;
 }
 
+/* Empty State */
 .empty-state {
   text-align: center;
   padding: 3rem 2rem;
