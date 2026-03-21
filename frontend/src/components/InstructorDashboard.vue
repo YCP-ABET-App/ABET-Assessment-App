@@ -156,6 +156,10 @@ async function loadInstructorIndicatorData(sectionIds : any[] = []) : Promise<Se
   return sectionIndicatorData;
 }
 
+function openSectionDetails(sectionId: number) {
+  window.open(`/section/${sectionId}`, "_blank");
+}
+
 // ------------------------------
 // COMBINED LOADER
 // ------------------------------
@@ -221,6 +225,7 @@ watch([programId, semesterId], () => {
         class="section-card"
         variant="elevated"
         hoverable
+        @click="openSectionDetails(section.id)"
       >
         <div class="section-card-content">
           <div class="section-course-code">

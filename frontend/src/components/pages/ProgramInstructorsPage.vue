@@ -199,7 +199,8 @@
               <tr
                 v-for="section in currentSemesterSections"
                 :key="section.id"
-                class="course-row clickable">
+                class="course-row clickable"
+                @click="openSectionDetails(section.id)">
                                 <td>{{ section.formattedName }}</td>
                                 <td>
                                   <span class="no-data">{{ section.indicators.filter(i => i.indicatorStatus).length }} / {{ section.indicators.length }}</span>
@@ -262,40 +263,7 @@
             </div>
           </div>
         </section>
-<!--        TODO: Decide if this should be indicator progress instead-->
-        <!-- Measures Progress -->
         <section class="detail-section">
-<!--          <h3>Measures Progress</h3>-->
-<!--          <div class="measures-summary">-->
-<!--            <div class="progress-card">-->
-<!--              <div class="progress-label">Total Measures</div>-->
-<!--              <div class="progress-value">{{ selectedCourse.measuresTotal || 0 }}</div>-->
-<!--            </div>-->
-<!--            <div class="progress-card">-->
-<!--              <div class="progress-label">Completed</div>-->
-<!--              <div class="progress-value completed">{{ selectedCourse.measuresCompleted || 0 }}</div>-->
-<!--            </div>-->
-<!--            <div class="progress-card">-->
-<!--              <div class="progress-label">Completion Rate</div>-->
-<!--              <div class="progress-value">-->
-<!--                {{ selectedCourse.measuresTotal && selectedCourse.measuresTotal > 0-->
-<!--                ? Math.round(((selectedCourse.measuresCompleted || 0) / selectedCourse.measuresTotal) * 100)-->
-<!--                : 0 }}%-->
-<!--              </div>-->
-<!--            </div>-->
-<!--          </div>-->
-
-          <!-- Progress Bar -->
-<!--          <div class="progress-bar-container">-->
-<!--            <div-->
-<!--              class="progress-bar-fill"-->
-<!--              :style="{-->
-<!--                width: selectedCourse.measuresTotal && selectedCourse.measuresTotal > 0-->
-<!--                  ? `${Math.round(((selectedCourse.measuresCompleted || 0) / selectedCourse.measuresTotal) * 100)}%`-->
-<!--                  : '0%'-->
-<!--              }"-->
-<!--            ></div>-->
-<!--          </div>-->
         </section>
       </div>
 
@@ -442,6 +410,10 @@ const currentSemesterSections = computed(() => {
 
   return filtered;
 });
+
+function openSectionDetails(sectionId: number) {
+  window.open(`/section/${sectionId}`, "_blank");
+}
 
 /* -----------------------------
  * Load instructors for program
