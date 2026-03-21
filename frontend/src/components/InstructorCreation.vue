@@ -57,14 +57,14 @@
       <div class="form-group">
         <label class="label">Password</label>
         <input
-          v-model="form.password"
+          v-model="form.password_hash"
           type="password"
           class="input"
-          :class="{ 'input-error': errors.password }"
+          :class="{ 'input-error': errors.password_hash }"
           placeholder="abc123"
         />
-        <span v-if="errors.password" class="field-error">
-          {{ errors.password }}
+        <span v-if="errors.password_hash" class="field-error">
+          {{ errors.password_hash }}
         </span>
       </div>
 
@@ -117,7 +117,7 @@ const form = reactive({
   name_first: '',
   name_last: '',
   email: '',
-  password: '',
+  password_hash: '',
   role: 'INSTRUCTOR' as 'ADMIN' | 'INSTRUCTOR'
 });
 
@@ -125,7 +125,7 @@ const errors = reactive({
   name_first: '',
   name_last: '',
   email: '',
-  password: ''
+  password_hash: ''
 });
 
 function validate() {
@@ -135,7 +135,7 @@ function validate() {
   errors.name_first = '';
   errors.name_last = '';
   errors.email = '';
-  errors.password = '';
+  errors.password_hash = '';
 
   if (!form.name_first.trim()) {
     errors.name_first = 'First name is required';
@@ -152,8 +152,8 @@ function validate() {
     isValid = false;
   }
 
-  if (form.password.length < 4) {
-    errors.password = 'Password must be at least 4 characters';
+  if (form.password_hash.length < 4) {
+    errors.password_hash = 'Password must be at least 4 characters';
     isValid = false;
   }
 
@@ -172,23 +172,21 @@ async function submitForm() {
       firstName: form.name_first.trim(),
       lastName: form.name_last.trim(),
       email: form.email.trim().toLowerCase(),
-      passwordHash: form.password,
-      name_title: form.name_title.trim()
+      passwordHash: form.password_hash,
+      title: form.name_title.trim()
     };
 
     const userRes = await api.post('/users', userPayload);
 
-    // Extract ID from common response patterns
     const newUserId = userRes.data?.id || userRes.data?.data?.id;
 
     if (!newUserId) {
       throw new Error("User created but ID was not found in response.");
     }
 
-    // Step 2: Link User to Program
     await api.post(`/program/${props.programId}/users`, {
       userId: newUserId,
-      adminStatus: form.role === 'ADMIN'
+      isAdmin: form.role === 'ADMIN'
     });
 
     toast.success("Instructor added successfully!");
