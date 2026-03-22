@@ -667,6 +667,34 @@ onMounted(() => {
   if (props.programId) loadProgramInstructors();
 });
 
+
+async function deleteInstructor() {
+  if (!selectedInstructor.value) return;
+
+  const name = `${selectedInstructor.value.firstName} ${selectedInstructor.value.lastName}`;
+  const confirmed = window.confirm(
+    `Are you sure you want to remove ${name} from this program?`
+  );
+
+  if (!confirmed) return;
+
+  saving.value = true;
+  try {
+    await api.delete(`/program/${props.programId}/users/${selectedInstructor.value.programUserId}`);
+
+    toast.success(`${name} removed from program.`);
+
+    await loadProgramInstructors();
+    isEditingInfo.value = false;
+    showModal.value = false;
+  } catch (err: any) {
+    console.error("Delete error:", err);
+    toast.error(err.response?.data?.message || "Failed to remove instructor.");
+  } finally {
+    saving.value = false;
+  }
+}
+
 function closeModal() {
   showModal.value = false;
   selectedInstructor.value = null;
