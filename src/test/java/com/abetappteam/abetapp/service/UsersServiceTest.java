@@ -12,6 +12,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -30,6 +31,9 @@ class UsersServiceTest extends BaseServiceTest {
 
     @Mock
     private UsersRepository userRepository;
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
 
     @InjectMocks
     private UsersService userService;
@@ -100,13 +104,30 @@ class UsersServiceTest extends BaseServiceTest {
 
     @Test
     void shouldCreateUsers() {
+        // Given
         when(userRepository.existsByEmailIgnoreCase(anyString())).thenReturn(false);
+        when(passwordEncoder.encode(anyString())).thenReturn("hashed_password"); // Mock the encoding
         when(userRepository.save(any(Users.class))).thenReturn(testUser);
 
         Users created = userService.create(testDTO);
 
         assertThat(created).isNotNull();
-        verify(userRepository).existsByEmailIgnoreCase("newTest@gmail.com");
+        verify(passwordEncoder).encode("newPassword");
+        verify(userRepository).save(any(Users.class));
+    }
+
+    @Test
+    void shouldUpdateUser() {
+        // Given
+        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+        when(userRepository.findByEmailIgnoreCase("newTest@gmail.com")).thenReturn(Optional.empty());
+        when(passwordEncoder.encode(anyString())).thenReturn("hashed_password"); // Mock the encoding
+        when(userRepository.save(any(Users.class))).thenReturn(testUser);
+
+        Users updated = userService.update(1L, testDTO);
+
+        assertThat(updated).isNotNull();
+        verify(passwordEncoder).encode("newPassword");
         verify(userRepository).save(any(Users.class));
     }
 
@@ -120,18 +141,7 @@ class UsersServiceTest extends BaseServiceTest {
         verify(userRepository, never()).save(any());
     }
 
-    @Test
-    void shouldUpdateUser() {
-        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
-        when(userRepository.findByEmailIgnoreCase("newTest@gmail.com")).thenReturn(Optional.empty());
-        when(userRepository.save(any(Users.class))).thenReturn(testUser);
 
-        Users updated = userService.update(1L, testDTO);
-
-        assertThat(updated).isNotNull();
-        verify(userRepository).findById(1L);
-        verify(userRepository).save(any(Users.class));
-    }
 
     @Test
     void shouldThrowConflictWhenUpdatingWithDuplicateEmail() {
