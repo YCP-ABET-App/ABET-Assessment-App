@@ -136,7 +136,6 @@ class SemesterControllerUnitTest extends BaseControllerTest {
     void shouldReturnBadRequestForInvalidSemester() throws Exception {
         // Given - DTO with missing required fields
         SemesterDTO invalidDTO = new SemesterDTO(null, null, null, null, null, null, null, null, null);
-        SemesterDTO invalidDTO = new SemesterDTO(null, null, null, null, null, null, null, null, null);
         invalidDTO.setName(null); // Invalid - name is required
         invalidDTO.setCode(null); // Invalid - code is required
 
