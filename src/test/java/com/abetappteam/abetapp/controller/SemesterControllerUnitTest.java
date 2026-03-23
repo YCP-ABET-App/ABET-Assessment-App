@@ -29,6 +29,8 @@ import java.util.HashMap;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
@@ -60,16 +62,10 @@ class SemesterControllerUnitTest extends BaseControllerTest {
         testSemester.setDescription("Fall Semester 2025");
         testSemester.setIsCurrent(false);
 
-        testSemesterDTO = new SemesterDTO();
-        testSemesterDTO.setName("Fall 2025");
-        testSemesterDTO.setCode("FALL-2025");
-        testSemesterDTO.setStartDate(LocalDate.of(2025, 8, 25));
-        testSemesterDTO.setEndDate(LocalDate.of(2025, 12, 15));
-        testSemesterDTO.setAcademicYear(2025);
-        testSemesterDTO.setType("FALL");
-        testSemesterDTO.setProgramId(1L);
-        testSemesterDTO.setDescription("Fall Semester 2025");
-        testSemesterDTO.setIsCurrent(false);
+        testSemesterDTO = new SemesterDTO("Fall 2025", "FALL-2025",
+                LocalDate.of(2025, 8, 25),
+                (LocalDate.of(2025, 12, 15)),
+                2025, "FALL", 1L, "Fall Semester 2025", false);
     }
 
     // TODO: Come through and refactor these tests with updated search code
@@ -127,6 +123,8 @@ class SemesterControllerUnitTest extends BaseControllerTest {
         mockMvc.perform(post("/api/semesters")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(toJson(testSemesterDTO)))
+                .andDo(print())
+                .andDo(print())
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.id").value(1));
@@ -137,7 +135,7 @@ class SemesterControllerUnitTest extends BaseControllerTest {
     @Test
     void shouldReturnBadRequestForInvalidSemester() throws Exception {
         // Given - DTO with missing required fields
-        SemesterDTO invalidDTO = new SemesterDTO();
+        SemesterDTO invalidDTO = new SemesterDTO(null, null, null, null, null, null, null, null, null);
         invalidDTO.setName(null); // Invalid - name is required
         invalidDTO.setCode(null); // Invalid - code is required
 
@@ -159,6 +157,8 @@ class SemesterControllerUnitTest extends BaseControllerTest {
         mockMvc.perform(put("/api/semesters/1")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(toJson(testSemesterDTO)))
+                .andDo(print())
+                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Semester updated successfully"));

@@ -12,6 +12,9 @@ public class Measure extends BaseEntity {
     @Column(name = "course_indicator_id", nullable = false)
     private Long courseIndicatorId;
 
+    @Column(name = "semester_id", nullable = false)
+    private Long semesterId;
+
     // Description (required)
     @NotBlank(message = "Description of Measure is required")
     @Column(name = "measure_description", nullable = false, length = 3000)
@@ -35,11 +38,13 @@ public class Measure extends BaseEntity {
 
     public Measure(
             Long courseIndicatorId,
+            Long semesterId,
             String description,
             String recommendedAction,
             Boolean active
     ) {
         this.courseIndicatorId = courseIndicatorId;
+        this.semesterId = semesterId;
         this.description = description;
         this.recommendedAction = recommendedAction;
         this.active = active;
@@ -52,15 +57,20 @@ public class Measure extends BaseEntity {
     public Long getCourseIndicatorId() {
         return courseIndicatorId;
     }
-
     public void setCourseIndicatorId(Long courseIndicatorId) {
         this.courseIndicatorId = courseIndicatorId;
+    }
+
+    public Long getSemesterId() {
+        return semesterId;
+    }
+    public void setSemesterId(Long semesterId) {
+        this.semesterId = semesterId;
     }
 
     public String getDescription() {
         return description;
     }
-
     public void setDescription(String description) {
         this.description = description;
     }
@@ -68,7 +78,6 @@ public class Measure extends BaseEntity {
     public String getRecommendedAction() {
         return recommendedAction;
     }
-
     public void setRecommendedAction(String recommendedAction) {
         this.recommendedAction = recommendedAction;
     }
@@ -76,7 +85,6 @@ public class Measure extends BaseEntity {
     public Boolean getActive() {
         return active;
     }
-
     public void setActive(Boolean active) {
         this.active = active;
     }
@@ -90,6 +98,7 @@ public class Measure extends BaseEntity {
         return "Measure{" +
                 "id=" + getId() +
                 ", courseIndicatorId=" + courseIndicatorId +
+                ", semesterId=" + semesterId +
                 ", description='" + description + '\'' +
                 ", recommendedAction='" + recommendedAction + '\'' +
                 ", active=" + active +

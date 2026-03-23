@@ -16,6 +16,7 @@ public interface MeasureRepository extends JpaRepository<Measure, Long>{
         List<Measure> searchMeasures(
                 @Param("id") Integer id,
                 @Param("courseIndicatorId") Integer courseIndicatorId,
+                @Param("semesterId") Integer semesterId,
                 @Param("active") Boolean active
         );
 
