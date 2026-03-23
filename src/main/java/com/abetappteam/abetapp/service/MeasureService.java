@@ -4,14 +4,20 @@ import java.util.List;
 import java.util.ArrayList;
 
 import com.abetappteam.abetapp.entity.Requests.Measure.MeasureSearchRequest;
+import com.abetappteam.abetapp.entity.Requests.Section.SectionSearchRequest;
+import com.abetappteam.abetapp.entity.Requests.SectionProgram.SectionProgramSearchRequest;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.abetappteam.abetapp.entity.Measure;
+import com.abetappteam.abetapp.entity.Section;
+import com.abetappteam.abetapp.entity.SectionProgram;
 import com.abetappteam.abetapp.entity.Course;
 import com.abetappteam.abetapp.entity.CourseIndicator;
 import com.abetappteam.abetapp.dto.MeasureDTO;
+import com.abetappteam.abetapp.dto.MeasureResultDTO;
 import com.abetappteam.abetapp.repository.CourseIndicatorRepository;
 import com.abetappteam.abetapp.repository.CourseRepository;
 import com.abetappteam.abetapp.repository.MeasureRepository;
@@ -21,6 +27,15 @@ public class MeasureService extends BaseService<Measure, Long, MeasureRepository
     
     private final CourseIndicatorRepository courseIndicatorRepository;
     private final CourseRepository courseRepository;
+
+    @Autowired
+    private SectionService sectionService;
+    @Autowired
+    private CourseIndicatorService courseIndicatorService;
+    @Autowired
+    private SectionProgramService sectionProgramService;
+    @Autowired
+    private MeasureResultService measureResultService;
     
     @Autowired
     public MeasureService(MeasureRepository repository, CourseIndicatorRepository courseIndicatorRepository, CourseRepository courseRepository){
@@ -36,16 +51,50 @@ public class MeasureService extends BaseService<Measure, Long, MeasureRepository
 
     //Create new Measure
     @Transactional
-    public Measure create(MeasureDTO dto){
+    public Measure create(MeasureDTO dto) {
+        // 1. Create and Save the Measure first
         Measure measure = new Measure();
-        measure.setId(dto.getId());
         measure.setCourseIndicatorId(dto.getCourseIndicatorId());
         measure.setDescription(dto.getDescription());
         measure.setRecommendedAction(dto.getRecommendedAction());
         measure.setActive(dto.getActive());
 
-        logger.info("Creating new measure: {}", dto.getId());
-        return repository.save(measure);
+        // saveAndFlush pushes the insert to the DB immediately so we get the ID back
+        measure = repository.saveAndFlush(measure);
+        Long measureId = measure.getId();
+        logger.info("Created Measure with ID: {}", measureId);
+
+        // 2. Retrieve the Course ID from the CourseIndicator
+        CourseIndicator ci = courseIndicatorService.findById(measure.getCourseIndicatorId());
+
+        // 3. Find relevant Sections
+        SectionSearchRequest sectionSearchRequest = new SectionSearchRequest(
+            null, null, null, ci.getCourseId().intValue(), null
+        );
+        List<Section> sections = sectionService.searchSections(sectionSearchRequest);
+
+        // 4. Loop through Sections and Programs to create Results
+        for (Section section : sections) {
+            SectionProgramSearchRequest spSearchRequest = new SectionProgramSearchRequest(
+                null, section.getId().intValue(), null
+            );
+            List<SectionProgram> sectionPrograms = sectionProgramService.searchSectionProgram(spSearchRequest);
+
+            for (SectionProgram sp : sectionPrograms) {
+                MeasureResultDTO resultDto = new MeasureResultDTO(
+                    null, 
+                    measureId,          
+                    section.getId(), 
+                    sp.getProgramId().longValue(), 
+                    null, null, null, null, 
+                    "InProgress",        
+                    null, true
+                );
+                measureResultService.create(resultDto);
+            }
+        }
+
+        return measure;
     }
 
     //Update Existing Measure
