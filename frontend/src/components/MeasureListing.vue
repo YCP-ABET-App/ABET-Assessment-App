@@ -114,6 +114,7 @@ async function edit_form_submit(){
   const new_measure = ref({
     id: measure_obj.value.measure_id,
     courseIndicatorId: measure_obj.value.course_indicator_id,
+    semesterId: measure_obj.value.semester_id,
     description: newDescVal,
     recommendedAction: measure_obj.value.recommended_action,
     active: measure_obj.value.is_active
@@ -284,6 +285,7 @@ const measure_obj = ref<{
   section_id: number
   program_id: number
   course_indicator_id: number
+  semester_id: number
   measure_description: string
   observation: string | null
   recommended_action: string | null
@@ -305,6 +307,7 @@ const measure_obj = ref<{
   section_id: NaN,
   program_id: NaN,
   course_indicator_id: NaN,
+  semester_id: NaN,
   measure_description: '',
   observation: null,
   recommended_action: null,
@@ -343,6 +346,7 @@ async function initialize(){
     section_id: props.measure_prop.section_id,
     program_id: props.measure_prop.program_id,
     course_indicator_id: props.measure_prop.course_indicator_id,
+    semester_id: props.measure_prop.semester_id,
     measure_description: props.measure_prop.measure_description,
     observation: props.measure_prop.observation,
     recommended_action: props.measure_prop.recommended_ction,

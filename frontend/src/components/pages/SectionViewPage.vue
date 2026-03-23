@@ -208,7 +208,7 @@ initialize();
 
       <div class="indicator-list" v-if="indicator_ids.length > 0">
         <BaseCard v-for="i in indicator_ids.length" :key="i" variant="default" class="indicator-card">
-          <IndicatorListing :piid="indicator_ids[i - 1]" :section_id="section_id" :instructor_id="instructors[0].id" :course_indicator_id="course_indicator_ids[i - 1]"/>
+          <IndicatorListing :piid="indicator_ids[i - 1]" :section_id="section_id" :instructor_id="instructors[0].id" :course_indicator_id="course_indicator_ids[i - 1]" :semester_id="section_obj.semester_id"/>
         </BaseCard>
       </div>
     </section>
