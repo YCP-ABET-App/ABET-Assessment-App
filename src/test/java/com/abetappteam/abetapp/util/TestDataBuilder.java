@@ -396,45 +396,44 @@ public class TestDataBuilder {
         return semester;
     }
 
-    //MEASURE TEST DATA
+    // MEASURE TEST DATA
 
-    //Create Measure
+    // Create Measure
     public static Measure createMeasure(){
-        return createMeasure(1l, "Example Description", "Example Recommended Action", "Example Fcar",
-         "InProgress", true);
+        return createMeasure(1l, 1l,"Example Description", "Example Recommended Action",
+         true);
     }
 
     //Create Custom Measure
-    public static Measure createMeasure(Long courseIndicatorId, String description, String recAction, String fcar,
-     String status, Boolean active) {
+    public static Measure createMeasure(Long courseIndicatorId, Long semesterId, String description, String recAction,
+     Boolean active) {
         Measure measure = new Measure();
         measure.setCourseIndicatorId(courseIndicatorId);
+        measure.setSemesterId(semesterId);
         measure.setDescription(description);
         measure.setRecommendedAction(recAction);
-        measure.setFcar(fcar);
-        measure.setStatus(status);
         measure.setActive(active);
         return measure;
     }
 
     //Create Custom Measure with ID
-    public static Measure createMeasureWithId(Long id, Long courseIndicatorId, String description, String observation, String recAction, String fcar, 
-    Integer met, Integer exceeded, Integer below, String status, Boolean active) {
-        Measure measure = createMeasure(courseIndicatorId, description, recAction, fcar, status, active);
+    public static Measure createMeasureWithId(Long id, Long courseIndicatorId, Long semesterId, String description, String recAction,
+    Boolean active) {
+        Measure measure = createMeasure(courseIndicatorId, semesterId, description, recAction, active);
         measure.setId(id);
         return measure;
     }
 
     //Create MeasureDTO
     public static MeasureDTO creaMeasureDTO(){
-        return createMeasureDTO(1l, 1l, "New Description", "New Observation", 
-        "New Recommended Action", "New Fcar", 1, 2, 3, "InReview", true);
+        return createMeasureDTO(1l, 1l, "New Description",
+        "New Recommended Action", true);
     }
 
     //Create Custom MeasureDTO
-    public static MeasureDTO createMeasureDTO(Long id, Long courseIndicatorId, String description, String observation, String recAction, String fcar,
-    Integer met, Integer exceeded, Integer below, String status, Boolean active){
-        MeasureDTO measureDTO = new MeasureDTO(courseIndicatorId, description, recAction, status, active);
+    public static MeasureDTO createMeasureDTO(Long courseIndicatorId, Long semesterId, String description, String recAction,
+    Boolean active){
+        MeasureDTO measureDTO = new MeasureDTO(courseIndicatorId, semesterId, description, recAction, active);
 
         return measureDTO;
     }
@@ -446,12 +445,9 @@ public class TestDataBuilder {
             measures.add(createMeasureWithId(
                     (long) i,
                     (long) i,
+                    (long) i,
                     "Description" + i,
-                    "Observation" + i,
                     "Action" + i,
-                    "Fcar" + i,
-                    i, i, i,
-                    "InProgress",
                     i % 2 == 0));
         }
         return measures;
