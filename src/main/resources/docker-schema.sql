@@ -205,7 +205,6 @@ CREATE TABLE measure (
     course_indicator_id BIGINT NOT NULL,
     measure_description TEXT NOT NULL,
     recommended_action TEXT NULL,
-    fcar TEXT NULL,
     -- From BaseEntity
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,

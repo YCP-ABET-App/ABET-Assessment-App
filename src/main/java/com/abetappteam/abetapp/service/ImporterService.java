@@ -65,7 +65,6 @@ public class ImporterService {
                         measure.setCourseIndicatorId(ci.getId());
 
                         measure.setActive(true);
-                        measure.setStatus(convertStatus(m.getStatus()));
 
                         measure.setDescription(m.getDescription());
 
@@ -74,8 +73,6 @@ public class ImporterService {
                                 m.getRecommendedActions() != null && !m.getRecommendedActions().isEmpty()
                                         ? String.join("\n", m.getRecommendedActions())
                                         : null);
-
-                        measure.setFcar(null);
 
                         // Calculate student counts from percentage
                         // Assume 30 students as default

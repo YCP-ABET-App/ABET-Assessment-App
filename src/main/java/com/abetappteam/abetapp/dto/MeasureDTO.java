@@ -13,10 +13,6 @@ public class MeasureDTO {
 
     private String recAction;
 
-    private String fcar;
-
-    private String status;
-
     private Boolean active;
 
     //Constructors
@@ -29,8 +25,6 @@ public class MeasureDTO {
         this.courseIndicatorId = courseIndicatorId;
         this.description = description;
         this.recAction = recAction;
-        this.fcar = fcar;
-        this.status = status;
         this.active = active;
     }
 
@@ -65,22 +59,6 @@ public class MeasureDTO {
 
     public void setRecommendedAction(String recAction){
         this.recAction = recAction;
-    }
-
-    public String getFCar(){
-        return fcar;
-    }
-
-    public void setFCar(String fcar){
-        this.fcar = fcar;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
     }
  
     public Boolean getActive(){

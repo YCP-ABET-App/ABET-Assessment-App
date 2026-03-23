@@ -4,7 +4,6 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 
 @Entity
 @Table(name = "measure")
@@ -22,18 +21,6 @@ public class Measure extends BaseEntity {
     @Column(name = "recommended_action", length = 3000)
     private String recommendedAction;
 
-    @Column(name = "fcar", length = 3000)
-    private String fcar;
-
-
-    /*
-     * Each measure has a status:
-     * "InProgress", "Submitted", "InReview", "Complete"
-     */
-    @NotBlank(message = "Measure Status is required")
-    @Size(min = 8, max = 10, message = "Measure must have a status of length 8, 9, or 10")
-    @Column(name = "m_status", nullable = false, length = 10)
-    private String status;
 
     @Column(name = "is_active", nullable = false)
     private Boolean active;
@@ -49,20 +36,12 @@ public class Measure extends BaseEntity {
     public Measure(
             Long courseIndicatorId,
             String description,
-            String observation,
             String recommendedAction,
-            String fcar,
-            Integer studentsMet,
-            Integer studentsExceeded,
-            Integer studentsBelow,
-            String status,
             Boolean active
     ) {
         this.courseIndicatorId = courseIndicatorId;
         this.description = description;
         this.recommendedAction = recommendedAction;
-        this.fcar = fcar;
-        this.status = status;
         this.active = active;
     }
 
@@ -94,22 +73,6 @@ public class Measure extends BaseEntity {
         this.recommendedAction = recommendedAction;
     }
 
-    public String getFcar() {
-        return fcar;
-    }
-
-    public void setFcar(String fcar) {
-        this.fcar = fcar;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
     public Boolean getActive() {
         return active;
     }
@@ -129,8 +92,6 @@ public class Measure extends BaseEntity {
                 ", courseIndicatorId=" + courseIndicatorId +
                 ", description='" + description + '\'' +
                 ", recommendedAction='" + recommendedAction + '\'' +
-                ", fcar='" + fcar + '\'' +
-                ", status='" + status + '\'' +
                 ", active=" + active +
                 ", createdAt=" + getCreatedAt() +
                 ", updatedAt=" + getUpdatedAt() +
