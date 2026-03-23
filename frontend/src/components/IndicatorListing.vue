@@ -16,7 +16,7 @@ const { isAdmin } = storeToRefs(userStore);
 // Toast notifications
 const toast = useToast();
 
-const props = defineProps({piid: Number, section_id: Number, instructor_id:Number, course_indicator_id:Number})
+const props = defineProps({piid: Number, section_id: Number, instructor_id:Number, course_indicator_id:Number, semester_id:Number})
 
 interface Measure {
   id: number
@@ -108,7 +108,11 @@ async function fetch_measures(){
       for (const mr_entry of mr_data.data){
         measures.value.push({
           id: mr_entry.id,
+          measure_id: m_entry.id,
+          section_id: mr_entry.sectionId,
+          program_id: mr_entry.programId,
           course_indicator_id: m_entry.courseIndicatorId,
+          semester_id: m_entry.semesterId,
           measure_description: m_entry.description,
           observation: mr_entry.observation,
           recommended_action: m_entry.recommendedAction,
@@ -145,6 +149,7 @@ async function add_measure_submit(){
   const new_measure = ref({
     id: null,
     courseIndicatorId: props.course_indicator_id,
+    semesterId: props.semester_id,
     description: new_measure_form_data.value.description,
     recommendedAction: null,
     active: true
