@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.ArrayList;
 
 import com.abetappteam.abetapp.entity.Requests.Measure.MeasureSearchRequest;
+import com.abetappteam.abetapp.entity.Requests.MeasureResults.MeasureResultsSearchRequest;
 import com.abetappteam.abetapp.entity.Requests.Section.SectionSearchRequest;
 import com.abetappteam.abetapp.entity.Requests.SectionProgram.SectionProgramSearchRequest;
 
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.abetappteam.abetapp.entity.Measure;
+import com.abetappteam.abetapp.entity.MeasureResult;
 import com.abetappteam.abetapp.entity.Section;
 import com.abetappteam.abetapp.entity.SectionProgram;
 import com.abetappteam.abetapp.entity.Course;
@@ -59,29 +61,27 @@ public class MeasureService extends BaseService<Measure, Long, MeasureRepository
     //Create new Measure
     @Transactional
     public Measure create(MeasureDTO dto) {
-        // 1. Create and Save the Measure first
+        // Create and store measure
         Measure measure = new Measure();
         measure.setCourseIndicatorId(dto.getCourseIndicatorId());
         measure.setSemesterId(dto.getSemesterId());
         measure.setDescription(dto.getDescription());
         measure.setRecommendedAction(dto.getRecommendedAction());
         measure.setActive(dto.getActive());
-
-        // saveAndFlush pushes the insert to the DB immediately so we get the ID back
         measure = repository.saveAndFlush(measure);
         Long measureId = measure.getId();
         logger.info("Created Measure with ID: {}", measureId);
 
-        // 2. Retrieve the Course ID from the CourseIndicator
+        // Retrieve the Course ID from the CourseIndicator
         CourseIndicator ci = courseIndicatorService.findById(measure.getCourseIndicatorId());
 
-        // 3. Find relevant Sections
+        // Find relevant Sections
         SectionSearchRequest sectionSearchRequest = new SectionSearchRequest(
             null, null, null, ci.getCourseId().intValue(), null
         );
         List<Section> sections = sectionService.searchSections(sectionSearchRequest);
 
-        // 4. Loop through Sections and Programs to create Results
+        // Loop through Sections and Programs to create Results
         for (Section section : sections) {
             SectionProgramSearchRequest spSearchRequest = new SectionProgramSearchRequest(
                 null, section.getId().intValue(), null
@@ -136,6 +136,31 @@ public class MeasureService extends BaseService<Measure, Long, MeasureRepository
     public Measure deactivate(Long id){
         Measure measure = findById(id);
         measure.setActive(false);
+
+        // Retrieve the Course ID from the CourseIndicator
+        CourseIndicator ci = courseIndicatorService.findById(measure.getCourseIndicatorId());
+
+        // Find relevant Sections
+        SectionSearchRequest sectionSearchRequest = new SectionSearchRequest(
+            null, null, null, ci.getCourseId().intValue(), null
+        );
+        List<Section> sections = sectionService.searchSections(sectionSearchRequest);
+
+        // Loop through Sections and deactivate measure results
+        for (Section section : sections) {
+            MeasureResultsSearchRequest measureResultsRequest = new MeasureResultsSearchRequest(
+                null,
+                measure.getId().intValue(),
+                section.getId().intValue(),
+                null
+            );
+            List<MeasureResult> measureResults = measureResultService.searchMeasureResults(measureResultsRequest);
+            for (MeasureResult measureResult: measureResults){
+                // TODO: measure results should have active field
+                //measureResult.setActive(false);
+            }
+        }
+
         logger.info("Deactivaitng Measure: {}", id);
         return repository.save(measure);
     }
