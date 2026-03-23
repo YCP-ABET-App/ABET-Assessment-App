@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 public class MeasureDTO {
 
     private final Long courseIndicatorId;
+    private final Long semesterId;
 
     @NotBlank(message = "Description of Measure is required")
     private String description;
@@ -12,10 +13,11 @@ public class MeasureDTO {
     private Boolean active;
 
     //Constructor
-    public MeasureDTO(Long courseIndicatorId, String description, String recAction,
+    public MeasureDTO(Long courseIndicatorId, Long semesterId, String description, String recAction,
     Boolean active){
 
         this.courseIndicatorId = courseIndicatorId;
+        this.semesterId = semesterId;
         this.description = description;
         this.recAction = recAction;
         this.active = active;
@@ -23,9 +25,8 @@ public class MeasureDTO {
 
     //Getters/setters
 
-    public Long getCourseIndicatorId() {
-        return courseIndicatorId;
-    }
+    public Long getCourseIndicatorId() { return courseIndicatorId; }
+    public Long getSemesterId() { return semesterId; }
  
     public void setDescription(String description){
         this.description = description;

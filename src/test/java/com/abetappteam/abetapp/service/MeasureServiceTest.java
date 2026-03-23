@@ -15,8 +15,10 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -29,9 +31,14 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-public class MeasureServiceTest extends BaseServiceTest{
+@ExtendWith(MockitoExtension.class)
+public class MeasureServiceTest {
     @Mock 
     private MeasureRepository measureRepository;
+    @Mock private CourseIndicatorService courseIndicatorService;
+    @Mock private SectionService sectionService;
+    @Mock private SectionProgramService sectionProgramService;
+    @Mock private MeasureResultService measureResultService;
 
     @Mock
     private CourseIndicatorRepository courseIndicatorRepository;
@@ -47,7 +54,9 @@ public class MeasureServiceTest extends BaseServiceTest{
     @BeforeEach
     void setUp(){
         testMeasure = TestDataBuilder.createMeasure();
-        testDTO = TestDataBuilder.createMeasureDTO(1l, "New Measure",
+        testMeasure.setId(1L);
+
+        testDTO = TestDataBuilder.createMeasureDTO(1l, 1l,"New Measure",
         "New Action", true);
     }
 
@@ -108,17 +117,44 @@ public class MeasureServiceTest extends BaseServiceTest{
         verify(measureRepository).findAll(pageable);
     }
 
+//    @Test
+//    void shouldCreateMeasure() {
+//        // Given
+//        //when(measureRepository.save(any(Measure.class))).thenReturn(testMeasure);
+//        when(measureRepository.saveAndFlush(any(Measure.class)))
+//                .thenReturn(testMeasure);
+//
+//        // When
+//        Measure created = measureService.create(testDTO);
+//
+//        // Then
+//        assertThat(created).isNotNull();
+//        verify(measureRepository).save(any(Measure.class));
+//    }
     @Test
     void shouldCreateMeasure() {
         // Given
-        when(measureRepository.save(any(Measure.class))).thenReturn(testMeasure);
+        when(measureRepository.saveAndFlush(any()))
+                .thenReturn(testMeasure);
+
+        CourseIndicator ci = new CourseIndicator();
+        ci.setId(1L);
+        ci.setCourseId(1L);
+
+        when(courseIndicatorService.findById(any()))
+                .thenReturn(ci);
+
+        when(sectionService.searchSections(any()))
+                .thenReturn(List.of()); // no sections → skips loops
 
         // When
         Measure created = measureService.create(testDTO);
 
         // Then
         assertThat(created).isNotNull();
-        verify(measureRepository).save(any(Measure.class));
+        assertThat(created.getId()).isEqualTo(1L);
+
+        verify(measureRepository).saveAndFlush(any());
     }
 
     @Test

@@ -36,9 +36,10 @@ public class MeasureController extends BaseController{
     public ResponseEntity<ApiResponse<List<Measure>>> searchMeasures(
         @RequestParam(required = false) Integer id,
         @RequestParam(required = false) Integer courseIndicatorId,
+        @RequestParam(required = false) Integer semesterId,
         @RequestParam(required = false) Boolean active
     ) {
-        MeasureSearchRequest request = new MeasureSearchRequest(id, courseIndicatorId, active);
+        MeasureSearchRequest request = new MeasureSearchRequest(id, courseIndicatorId, semesterId, active);
         logger.info("Fetching measures for request: {}", request);
         List<Measure> measures = service.searchMeasures(request);
         return success(measures, "Measures retrieved successfully");

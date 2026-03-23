@@ -24,24 +24,31 @@ import com.abetappteam.abetapp.repository.MeasureRepository;
 
 @Service
 public class MeasureService extends BaseService<Measure, Long, MeasureRepository>{
-    
+
     private final CourseIndicatorRepository courseIndicatorRepository;
     private final CourseRepository courseRepository;
+    private final SectionService sectionService;
+    private final CourseIndicatorService courseIndicatorService;
+    private final SectionProgramService sectionProgramService;
+    private final MeasureResultService measureResultService;
 
     @Autowired
-    private SectionService sectionService;
-    @Autowired
-    private CourseIndicatorService courseIndicatorService;
-    @Autowired
-    private SectionProgramService sectionProgramService;
-    @Autowired
-    private MeasureResultService measureResultService;
-    
-    @Autowired
-    public MeasureService(MeasureRepository repository, CourseIndicatorRepository courseIndicatorRepository, CourseRepository courseRepository){
+    public MeasureService(
+            MeasureRepository repository,
+            CourseIndicatorRepository courseIndicatorRepository,
+            CourseRepository courseRepository,
+            SectionService sectionService,
+            CourseIndicatorService courseIndicatorService,
+            SectionProgramService sectionProgramService,
+            MeasureResultService measureResultService
+    ) {
         super(repository);
         this.courseIndicatorRepository = courseIndicatorRepository;
         this.courseRepository = courseRepository;
+        this.sectionService = sectionService;
+        this.courseIndicatorService = courseIndicatorService;
+        this.sectionProgramService = sectionProgramService;
+        this.measureResultService = measureResultService;
     }
 
     @Override
@@ -55,6 +62,7 @@ public class MeasureService extends BaseService<Measure, Long, MeasureRepository
         // 1. Create and Save the Measure first
         Measure measure = new Measure();
         measure.setCourseIndicatorId(dto.getCourseIndicatorId());
+        measure.setSemesterId(dto.getSemesterId());
         measure.setDescription(dto.getDescription());
         measure.setRecommendedAction(dto.getRecommendedAction());
         measure.setActive(dto.getActive());
@@ -82,13 +90,12 @@ public class MeasureService extends BaseService<Measure, Long, MeasureRepository
 
             for (SectionProgram sp : sectionPrograms) {
                 MeasureResultDTO resultDto = new MeasureResultDTO(
-                    null, 
                     measureId,          
                     section.getId(), 
                     sp.getProgramId().longValue(), 
                     null, null, null, null, 
                     "InProgress",        
-                    null, true
+                    null
                 );
                 measureResultService.create(resultDto);
             }
@@ -103,8 +110,10 @@ public class MeasureService extends BaseService<Measure, Long, MeasureRepository
         Measure measure = findById(id);
 
         measure.setCourseIndicatorId(dto.getCourseIndicatorId());
+        measure.setSemesterId(dto.getSemesterId());
         measure.setDescription(dto.getDescription());
         measure.setRecommendedAction(dto.getRecommendedAction());
+
         if(dto.getActive() != null){
             measure.setActive(dto.getActive());
         }
@@ -134,7 +143,7 @@ public class MeasureService extends BaseService<Measure, Long, MeasureRepository
     @Transactional
     public List<Measure> searchMeasures(MeasureSearchRequest request) {
         logger.info("Fetching all measures");
-        return repository.searchMeasures(request.id(), request.courseIndicatorId(), request.active());
+        return repository.searchMeasures(request.id(), request.courseIndicatorId(), request.semesterId(), request.active());
     }
 
     @Transactional
