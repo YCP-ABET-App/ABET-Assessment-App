@@ -136,7 +136,7 @@ public class MeasureService extends BaseService<Measure, Long, MeasureRepository
     public Measure deactivate(Long id){
         Measure measure = findById(id);
         measure.setActive(false);
-
+        /* 
         // Retrieve the Course ID from the CourseIndicator
         CourseIndicator ci = courseIndicatorService.findById(measure.getCourseIndicatorId());
 
@@ -160,7 +160,7 @@ public class MeasureService extends BaseService<Measure, Long, MeasureRepository
                 //measureResult.setActive(false);
             }
         }
-
+        */
         logger.info("Deactivaitng Measure: {}", id);
         return repository.save(measure);
     }
