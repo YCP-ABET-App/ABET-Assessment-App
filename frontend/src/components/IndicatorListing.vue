@@ -100,6 +100,7 @@ async function edit_form_submit() {
 
 async function fetch_measures(){
   try {
+    measures.value = [];
     const { data: m_data } = await api.get(`/measure`, {params:{"courseIndicatorId": props.course_indicator_id}});
     for (const m_entry of m_data.data){
       const measure_id = m_entry.id;

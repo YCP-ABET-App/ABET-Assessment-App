@@ -182,6 +182,23 @@ CREATE TABLE section_user (
     FOREIGN KEY (section_id) REFERENCES section(id)
 );
 
+-- SectionProgram table
+CREATE TABLE section_program (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    section_id BIGINT NOT NULL,
+    program_id BIGINT NOT NULL,
+    -- From BaseEntity
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    version BIGINT DEFAULT 0,
+    deleted BOOLEAN DEFAULT FALSE NOT NULL,
+    deleted_at TIMESTAMP NULL,
+    -- CourseInstructor-specific
+    is_active BOOLEAN DEFAULT TRUE NOT NULL,
+    FOREIGN KEY (section_id) REFERENCES section(id),
+    FOREIGN KEY (program_id) REFERENCES program(id)
+);
+
 -- CourseIndicator table
 CREATE TABLE course_indicator (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -391,6 +408,21 @@ VALUES
     (7, 1, 7, TRUE),  -- Babcock teaches CS 360
     (8, 3, 8, TRUE),  -- Zeller teaches CS 400
     (9, 2, 9, TRUE);  -- Moscola teaches CS 420
+
+------------------------------------------------------------
+-- SECTION_PROGRAM (Assign programs to sections)
+------------------------------------------------------------
+INSERT INTO section_program (id, section_id, program_id, is_active)
+VALUES
+    (1, 1, 1, TRUE),
+    (2, 2, 1, TRUE),
+    (3, 3, 1, TRUE),
+    (4, 4, 1, TRUE),
+    (5, 5, 1, TRUE),
+    (6, 6, 1, TRUE),
+    (7, 7, 1, TRUE),
+    (8, 8, 1, TRUE),
+    (9, 9, 1, TRUE);
 
 ------------------------------------------------------------
 -- COURSE_INDICATOR (Map courses to performance indicators)
