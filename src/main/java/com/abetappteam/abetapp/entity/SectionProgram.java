@@ -7,32 +7,43 @@ import jakarta.validation.constraints.NotBlank;
 @Table(name = "section_program")
 public class SectionProgram extends BaseEntity {
 
-    @NotBlank(message = "Section is required")
+    // @NotBlank(message = "Section is required")
     @Column(name = "section_id", nullable = false)
     private int sectionId;
 
-    @NotBlank(message = "Program is required")
+    // @NotBlank(message = "Program is required")
     @Column(name = "program_id", nullable = false)
     private int programId;
 
-    public SectionProgram(){super();}
+    public SectionProgram() {
+        super();
+    }
 
     public SectionProgram(
-        int sectionId,
-        int programId
-    ) {
+            int sectionId,
+            int programId) {
         this.sectionId = sectionId;
         this.programId = programId;
     }
 
-    public void setSectionId(int sectionId){this.sectionId = sectionId;}
-    public int getSectionId(){return this.sectionId;}
-    public void setProgramId(int programId){this.programId = programId;}
-    public int getProgramId(){return this.programId;}
+    public void setSectionId(int sectionId) {
+        this.sectionId = sectionId;
+    }
+
+    public int getSectionId() {
+        return this.sectionId;
+    }
+
+    public void setProgramId(int programId) {
+        this.programId = programId;
+    }
+
+    public int getProgramId() {
+        return this.programId;
+    }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return "SectionProgram{" +
                 "id=" + getId() +
                 ", sectionId=" + sectionId +

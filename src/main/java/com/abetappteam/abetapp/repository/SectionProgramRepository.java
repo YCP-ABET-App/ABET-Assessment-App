@@ -13,10 +13,9 @@ import java.util.List;
 
 /**
  * Repository for Section Program entity
-* */
+ */
 @Repository
-public interface SectionProgramRepository  extends JpaRepository<SectionProgram, Long>
-{
+public interface SectionProgramRepository extends JpaRepository<SectionProgram, Long> {
     // ========== Section ID queries ==========
     Page<SectionProgram> findBySectionId(int sectionId, Pageable pageable);
 
@@ -31,7 +30,6 @@ public interface SectionProgramRepository  extends JpaRepository<SectionProgram,
 
     long countByProgramId(int programId);
 
-
     @Query("SELECT sp FROM SectionProgram sp " +
             "WHERE (:#{#request.id()} IS NULL OR sp.id = :#{#request.id()}) " +
             "AND (:#{#request.sectionId()} IS NULL OR sp.sectionId = :#{#request.sectionId()}) " +
@@ -44,7 +42,7 @@ public interface SectionProgramRepository  extends JpaRepository<SectionProgram,
     @Query("SELECT sp FROM SectionProgram sp WHERE sp.programId = :programId")
     List<SectionProgram> findByProgramId(@Param("programId") Long programId);
 
-    @Query("SELECT sp FROM SectionProgram sp WHERE sp.sectionId = :sectionId AND sp.programId = :programId")
-    boolean existsBySectionIdAndProgramId(@Param("sectionId") int sectionId, @Param("programId") int programId);
+    @Query("SELECT COUNT(sp) > 0 FROM SectionProgram sp WHERE sp.sectionId = :sectionId AND sp.programId = :programId")
+    Boolean existsBySectionIdAndProgramId(@Param("sectionId") int sectionId, @Param("programId") int programId);
 
 }
