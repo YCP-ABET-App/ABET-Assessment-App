@@ -32,26 +32,6 @@ function open_complete_form(){
   viewing.value = false
 }
 
-interface Measure {
-  id: number
-  courseIndicatorId: number
-  description: string
-  observation: string | null
-  recommendedAction: string | null
-  fcar: string | null
-  studentsMet: number | null
-  studentsExceeded: number | null
-  studentsBelow: number | null
-  createdAt: string
-  active: boolean
-  deleted: boolean | null
-  deletedAt: string | null
-  new: boolean | null
-  status: "InProgress" | "Complete" | null
-  updatedAt: string | null
-  version: number | null
-}
-
 const complete_form_data = ref({
   met: 0,
   exceeded: 0,
@@ -280,27 +260,20 @@ function open_view(){
 }
 
 async function mark_complete(){
-  const new_measure = {
+  const new_measure_result = {
     id: measure_obj.value.id,
-    courseIndicatorId: measure_obj.value.course_indicator_id,
-    description: measure_obj.value.measure_description,
+    measureId: measure_obj.value.measure_id,
+    sectionId: measure_obj.value.section_id,
+    programId: measure_obj.value.program_id,
     observation: measure_obj.value.observation,
-    recommendedAction: measure_obj.value.recommended_action,
     studentsMet: measure_obj.value.met,
     studentsExceeded: measure_obj.value.exceeded,
     studentsBelow: measure_obj.value.below,
-    createdAt: measure_obj.value.created_at,
-    active: measure_obj.value.is_active,
-    deleted: measure_obj.value.deleted,
-    deletedAt: measure_obj.value.deleted_at,
-    new: measure_obj.value.new,
-    status: "Complete",
-    updatedAt: measure_obj.value.updated_at,
-    version: measure_obj.value.version
+    status: "Complete"
   }
 
   try {
-    const { data } = await api.put(`/measure/${measure_obj.value.id}`, new_measure);
+    const { data } = await api.put(`/measure-result/${measure_obj.value.id}`, new_measure_result);
     measure_obj.value.status = "Complete"
     set_status()
     calculate_chart_data()
@@ -324,6 +297,9 @@ function set_status(){
 
 const measure_obj = ref<{
   id: number
+  measure_id: number
+  section_id: number
+  program_id: number
   course_indicator_id: number
   measure_description: string
   observation: string | null
@@ -342,6 +318,9 @@ const measure_obj = ref<{
   rejection_note: string | null
 }>({
   id: NaN,
+  measure_id: NaN,
+  section_id: NaN,
+  program_id: NaN,
   course_indicator_id: NaN,
   measure_description: '',
   observation: null,
@@ -374,27 +353,12 @@ function calculate_chart_data(){
   }
 }
 
-//-----TEST DATA-----
-/*
-const measure_obj = ref({
-    id: 1,
-    course_indicator_id: 1,
-    measure_description: 'Students will be given an exam question to find the error in a section of code',
-    observation: null,
-    recommended_action: null,
-    fcar: null,
-    met: null,
-    exceeded: null,
-    below: null,
-    created_at: '2025-11-06 12:06:00.880463',
-    is_active: true
-})
-*/
-//-------------------
-
 async function initialize(){
   measure_obj.value = {
     id: props.measure_prop.id,
+    measure_id: props.measure_prop.measure_id,
+    section_id: props.measure_prop.section_id,
+    program_id: props.measure_prop.program_id,
     course_indicator_id: props.measure_prop.course_indicator_id,
     measure_description: props.measure_prop.measure_description,
     observation: props.measure_prop.observation,

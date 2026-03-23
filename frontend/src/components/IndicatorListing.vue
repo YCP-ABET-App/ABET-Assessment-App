@@ -108,6 +108,9 @@ async function fetch_measures(){
       for (const mr_entry of mr_data.data){
         measures.value.push({
           id: mr_entry.id,
+          measure_id: m_entry.id,
+          section_id: mr_entry.sectionId,
+          program_id: mr_entry.programId,
           course_indicator_id: m_entry.courseIndicatorId,
           measure_description: m_entry.description,
           observation: mr_entry.observation,
