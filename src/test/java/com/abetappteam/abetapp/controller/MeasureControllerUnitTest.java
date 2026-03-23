@@ -210,7 +210,7 @@ public class MeasureControllerUnitTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Measure deleted successfully"));
 
-        verify(service, times(1)).delete(1L);
+        verify(service, times(1)).deactivate(1L);
     }
 
     // TODO: Come through and refactor these tests with updated search code
