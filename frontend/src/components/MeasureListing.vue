@@ -4,6 +4,7 @@ import { useUserStore } from '@/stores/user-store.ts'
 import { BaseButton } from '@/components/ui'
 import { BaseInput } from '@/components/ui'
 import { BaseModal } from '@/components/ui'
+import CounterComponent from '@/components/CounterComponent.vue'
 import api from '@/api';
 
 const userStore = useUserStore()
@@ -54,27 +55,20 @@ async function complete_form_submit() {
     return;
   }
 
-  const new_measure_payload = {
+  const new_measure_results_payload = {
     id: measure_obj.value.id,
-    courseIndicatorId: measure_obj.value.course_indicator_id,
-    description: measure_obj.value.measure_description,
+    measureId: measure_obj.value.measure_id,
+    sectionId: measure_obj.value.section_id,
+    programId: measure_obj.value.program_id,
     observation: complete_form_data.value.observation,
-    recommendedAction: measure_obj.value.recommended_action,
     studentsMet: met,
     studentsExceeded: exceeded,
     studentsBelow: below,
-    createdAt: measure_obj.value.created_at,
-    active: measure_obj.value.is_active,
-    deleted: measure_obj.value.deleted,
-    deletedAt: measure_obj.value.deleted_at,
-    new: measure_obj.value.new,
-    status: "Complete",
-    updatedAt: measure_obj.value.updated_at,
-    version: measure_obj.value.version
+    status: "Complete"
   }
 
   try {
-    await api.put(`/measure/${measure_obj.value.id}`, new_measure_payload);
+    await api.put(`/measure-result/${measure_obj.value.id}`, new_measure_results_payload);
 
     measure_obj.value.observation = complete_form_data.value.observation
     measure_obj.value.met = met
@@ -118,27 +112,16 @@ async function edit_form_submit(){
 
   //Define new measure object
   const new_measure = ref({
-    id: measure_obj.value.id,
+    id: measure_obj.value.measure_id,
     courseIndicatorId: measure_obj.value.course_indicator_id,
     description: newDescVal,
-    observation: measure_obj.value.observation,
     recommendedAction: measure_obj.value.recommended_action,
-    studentsMet: measure_obj.value.met,
-    studentsExceeded: measure_obj.value.exceeded,
-    studentsBelow: measure_obj.value.below,
-    createdAt: measure_obj.value.created_at,
-    active: measure_obj.value.is_active,
-    deleted: measure_obj.value.deleted,
-    deletedAt: measure_obj.value.deleted_at,
-    new: measure_obj.value.new,
-    status: measure_obj.value.status,
-    updatedAt: measure_obj.value.updated_at,
-    version: measure_obj.value.version
+    active: measure_obj.value.is_active
   })
 
   //PUT request to server
   try {
-    const { data } = await api.put(`/measure/${measure_obj.value.id}`, new_measure.value);
+    const { data } = await api.put(`/measure/${measure_obj.value.measure_id}`, new_measure.value);
 
     //Update measure object
     measure_obj.value.measure_description = edit_form_data.value.description
