@@ -82,10 +82,9 @@ public class MeasureController extends BaseController{
             );
             List<SectionProgram> section_programs = sectionProgramService.searchSectionProgram(sp_search_request);
 
-            //Create a measure results object for each
-            for(SectionProgram section_program: section_programs){
+            // Create a measure results object for each
+            for(SectionProgram section_program: section_programs) {
                 MeasureResult measure_result = measureResultService.create(new MeasureResultDTO(
-                    null,
                     (Long) measure_id.longValue(),
                     section_id,
                     (Long) section_program.getProgramId().longValue(),
@@ -94,8 +93,8 @@ public class MeasureController extends BaseController{
                     null,
                     null,
                     "InProgress",
-                    null,
-                    true
+                    null
+
                 ));
                 logger.info("Creating new Measure Result: ", measure_result.getId());
             }

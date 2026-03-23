@@ -9,17 +9,15 @@ public class MeasureDTO {
     @NotBlank(message = "Description of Measure is required")
     private String description;
     private String recAction;
-    private String status;
     private Boolean active;
 
     //Constructor
     public MeasureDTO(Long courseIndicatorId, String description, String recAction,
-    String status, Boolean active){
+    Boolean active){
 
         this.courseIndicatorId = courseIndicatorId;
         this.description = description;
         this.recAction = recAction;
-        this.status = status;
         this.active = active;
     }
 
@@ -41,13 +39,6 @@ public class MeasureDTO {
     }
     public void setRecommendedAction(String recAction){
         this.recAction = recAction;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-    public void setStatus(String status) {
-        this.status = status;
     }
  
     public Boolean getActive(){

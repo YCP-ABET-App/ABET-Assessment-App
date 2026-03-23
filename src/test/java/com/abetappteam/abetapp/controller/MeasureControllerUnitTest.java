@@ -58,12 +58,12 @@ public class MeasureControllerUnitTest {
         testMeasure.setId(1l);
         testMeasure.setDescription("Test Description");
         testMeasure.setRecommendedAction("Test Action");
-        testMeasure.setFcar("Test Fcar");
+        //testMeasure.setFcar("Test Fcar");
         testMeasure.setCourseIndicatorId(1l);
-        testMeasure.setStatus("InProgress");
+        //testMeasure.setStatus("InProgress");
         testMeasure.setActive(true);
 
-        testDTO = new MeasureDTO(1L, "New Description", null, "InReview", true);
+        testDTO = new MeasureDTO(1L, "New Description", null, true);
 
         testIndicator = new CourseIndicator();
         testIndicator.setId(1l);

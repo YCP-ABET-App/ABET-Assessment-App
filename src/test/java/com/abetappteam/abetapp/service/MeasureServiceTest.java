@@ -47,8 +47,8 @@ public class MeasureServiceTest extends BaseServiceTest{
     @BeforeEach
     void setUp(){
         testMeasure = TestDataBuilder.createMeasure();
-        testDTO = TestDataBuilder.createMeasureDTO(1l, 1l, "New Measure", "New Observation", 
-        "New Action", "New Fcar", 10, 4, 11, "InProgress", true);
+        testDTO = TestDataBuilder.createMeasureDTO(1l, "New Measure",
+        "New Action", true);
     }
 
     @Test
