@@ -145,20 +145,8 @@ async function add_measure_submit(){
     id: null,
     courseIndicatorId: props.course_indicator_id,
     description: new_measure_form_data.value.description,
-    observation: null,
     recommendedAction: null,
-    fcar: null,
-    studentsMet: null,
-    studentsExceeded: null,
-    studentsBelow: null,
-    createdAt: null,
-    active: true,
-    deleted: null,
-    deletedAt: null,
-    new: null,
-    status: "InProgress",
-    updatedAt: null,
-    version: null
+    active: true
   }) 
 
   //POST request to server

@@ -9,11 +9,11 @@ public class SectionProgram extends BaseEntity {
 
     @NotBlank(message = "Section is required")
     @Column(name = "section_id", nullable = false)
-    private int sectionId;
+    private Integer sectionId;
 
     @NotBlank(message = "Program is required")
     @Column(name = "program_id", nullable = false)
-    private int programId;
+    private Integer programId;
 
     public SectionProgram(){super();}
 
@@ -25,10 +25,10 @@ public class SectionProgram extends BaseEntity {
         this.programId = programId;
     }
 
-    public void setSectionId(int sectionId){this.sectionId = sectionId;}
-    public int getSectionId(){return this.sectionId;}
-    public void setProgramId(int programId){this.programId = programId;}
-    public int getProgramId(){return this.programId;}
+    public void setSectionId(Integer sectionId){this.sectionId = sectionId;}
+    public Integer getSectionId(){return this.sectionId;}
+    public void setProgramId(Integer programId){this.programId = programId;}
+    public Integer getProgramId(){return this.programId;}
 
     @Override
     public String toString()

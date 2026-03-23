@@ -41,7 +41,6 @@ public class MeasureService extends BaseService<Measure, Long, MeasureRepository
         measure.setCourseIndicatorId(dto.getCourseIndicatorId());
         measure.setDescription(dto.getDescription());
         measure.setRecommendedAction(dto.getRecommendedAction());
-        measure.setStatus(dto.getStatus());
         measure.setActive(dto.getActive());
 
         logger.info("Creating new measure: {}");
@@ -56,7 +55,6 @@ public class MeasureService extends BaseService<Measure, Long, MeasureRepository
         measure.setCourseIndicatorId(dto.getCourseIndicatorId());
         measure.setDescription(dto.getDescription());
         measure.setRecommendedAction(dto.getRecommendedAction());
-        measure.setStatus(dto.getStatus());
         if(dto.getActive() != null){
             measure.setActive(dto.getActive());
         }
