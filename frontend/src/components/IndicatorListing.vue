@@ -16,7 +16,27 @@ const { isAdmin } = storeToRefs(userStore);
 // Toast notifications
 const toast = useToast();
 
-const props = defineProps({piid: Number, course_id: Number, instructor_id:Number})
+const props = defineProps({piid: Number, section_id: Number, instructor_id:Number, course_indicator_id:Number, semester_id:Number})
+
+interface Measure {
+  id: number
+  courseIndicatorId: number
+  description: string
+  observation: string | null
+  recommendedAction: string | null
+  rejectionNote: string | null
+  studentsMet: number | null
+  studentsExceeded: number | null
+  studentsBelow: number | null
+  createdAt: string
+  active: boolean
+  deleted: boolean | null
+  deletedAt: string | null
+  new: boolean | null
+  status: "InProgress" | "Complete" | null
+  updatedAt: string | null
+  version: number | null
+}
 
 const indicator_obj = ref({
   id: NaN,
@@ -80,8 +100,35 @@ async function edit_form_submit() {
 
 async function fetch_measures(){
   try {
-    const { data } = await api.get(`/measure/byIndicator/${props.piid}`);
-    measures.value = data.data;
+    measures.value = [];
+    const { data: m_data } = await api.get(`/measure`, {params:{"courseIndicatorId": props.course_indicator_id, "active": true}});
+    for (const m_entry of m_data.data){
+      const measure_id = m_entry.id;
+      const {data: mr_data} = await api.get(`measure-result`, {params: {"measureId": measure_id, "sectionId": props.section_id}})
+      for (const mr_entry of mr_data.data){
+        measures.value.push({
+          id: mr_entry.id,
+          measure_id: m_entry.id,
+          section_id: mr_entry.sectionId,
+          program_id: mr_entry.programId,
+          course_indicator_id: m_entry.courseIndicatorId,
+          semester_id: m_entry.semesterId,
+          measure_description: m_entry.description,
+          observation: mr_entry.observation,
+          recommended_action: m_entry.recommendedAction,
+          met: mr_entry.studentsMet,
+          exceeded: mr_entry.studentsExceeded,
+          below: mr_entry.studentsBelow,
+          created_at: m_entry.createdAt,
+          active: mr_entry.active,
+          deleted: mr_entry.deleted,
+          deleted_at: mr_entry.deleted_at,
+          new: mr_entry.new,
+          status: mr_entry.status,
+          rejection_note: mr_entry.rejectionNote
+        })
+      }
+    }
   } catch (error) {
     console.error('Error fetching or parsing indicator data:', error);
   }
@@ -98,38 +145,15 @@ async function add_measure_submit(){
     return;
   }
 
-  let ciid
-
-  //Get course indicator id
-  try {
-    const { data } = await api.get(`courses/courseIndicator/${props.course_id}/${props.piid}`)
-    ciid = data.data.id
-  } catch(error) {
-    console.error('Error fetching course/indicator joint ID: ', error)
-    toast.error('Failed to create measure');
-    return
-  }
-
   //Define new measure object with description from form
   const new_measure = ref({
     id: null,
-    courseIndicatorId: ciid,
+    courseIndicatorId: props.course_indicator_id,
+    semesterId: props.semester_id,
     description: new_measure_form_data.value.description,
-    observation: null,
     recommendedAction: null,
-    fcar: null,
-    studentsMet: null,
-    studentsExceeded: null,
-    studentsBelow: null,
-    createdAt: null,
-    active: true,
-    deleted: null,
-    deletedAt: null,
-    new: null,
-    status: "InProgress",
-    updatedAt: null,
-    version: null
-  })
+    active: true
+  }) 
 
   //POST request to server
   try {

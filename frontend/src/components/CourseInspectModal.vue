@@ -12,6 +12,7 @@ interface Course {
   courseName: string;
   courseDescription?: string;
   studentCount?: number;
+  threshold?: number;
 }
 
 interface PerformanceIndicator {
@@ -59,30 +60,38 @@ async function loadCourseData() {
   indicatorsWithMeasures.value = [];
 
   try {
-    // Get indicator IDs for this course
-    const indicatorIdsRes = await api.get(`/courses/${props.course.id}/indicators`);
-    const indicatorIds = indicatorIdsRes.data as number[];
+    const indicatorIdsRes = await api.get(`/courses/searchCourse`, {
+      params: {
+        courseId: props.course.id
+      }
+    });
+
+    const res = await api.get(`/courses/searchCourse`, { // Added "const res ="
+      params: { courseId: props.course.id }
+    });
+    const rawData = res.data?.data ?? res.data ?? [];
+
+    // 3. Ensure we are working with an array of numbers
+    // This helps TypeScript understand exactly what 'indicatorId' is
+    const indicatorIds: number[] = Array.isArray(rawData)
+      ? rawData.map((item: any) => typeof item === 'object' ? item.id : item)
+      : [];
 
     if (indicatorIds.length === 0) {
       loading.value = false;
       return;
     }
 
-    // Fetch each indicator's details and measures
+    // Now indicatorId won't be red because TypeScript knows indicatorIds is number[]
     const indicatorPromises = indicatorIds.map(async (indicatorId) => {
       try {
-        // Get indicator details
         const indicatorRes = await api.get(`/performance-indicators/${indicatorId}`);
         const indicator = indicatorRes.data.data as PerformanceIndicator;
 
-        // Get measures for this indicator
         const measuresRes = await api.get(`/measure/byIndicator/${indicatorId}`);
         const measures = measuresRes.data.data as Measure[];
 
-        return {
-          indicator,
-          measures
-        };
+        return { indicator, measures };
       } catch (err) {
         console.error(`Error loading indicator ${indicatorId}:`, err);
         return null;
@@ -117,6 +126,35 @@ watch(
   },
   { immediate: true }
 );
+
+/* -----------------------------------------------
+ * Delete Logic
+ * ----------------------------------------------- */
+const deleting = ref(false);
+
+async function deleteCourse() {
+  if (!props.course) return;
+
+  const confirmed = window.confirm(
+    `Are you sure you want to delete ${props.course.courseCode}? This action cannot be undone.`
+  );
+  if (!confirmed) return;
+
+  deleting.value = true;
+  error.value = null;
+
+  try {
+    await api.delete(`/courses/${props.course.id}`);
+
+    emit("close");
+    window.location.reload();
+  } catch (err: any) {
+    console.error("Failed to delete course:", err);
+    error.value = err?.response?.data?.message || "Failed to delete course. Please try again.";
+  } finally {
+    deleting.value = false;
+  }
+}
 
 /* -----------------------------------------------
  * Helper functions
@@ -165,18 +203,22 @@ function calculatePercentage(met: number, exceeded: number, total: number): numb
   >
 
     <!-- HEADER CONTENT (inline, not a slot) -->
-    <div class="modal-header-content">
+<!--    <div class="modal-header-content">-->
+<!--      <h2>{{ course?.courseName }}</h2>-->
+<!--      <BaseButton-->
+<!--        variant="primary"-->
+<!--        size="sm"-->
+<!--        @click="$router.push(`/course/${course?.id}`)"-->
+<!--      >-->
+<!--        {{ course?.courseCode }}-->
+<!--      </BaseButton>-->
+<!--    </div>-->
+
+    <div class="course-code-badge">
       <h2>{{ course?.courseName }}</h2>
-      <BaseButton
-        variant="primary"
-        size="sm"
-        @click="$router.push(`/course/${course?.id}`)"
-      >
-        {{ course?.courseCode }}
-      </BaseButton>
+      {{ course?.courseCode }}
     </div>
 
-    <!-- BODY CONTENT (default slot instead of #body) -->
 
     <!-- Loading State -->
     <div v-if="loading" class="loading-container">
@@ -197,6 +239,9 @@ function calculatePercentage(met: number, exceeded: number, total: number): numb
         </p>
         <p v-if="course?.studentCount" class="student-count">
           <strong>Student Count:</strong> {{ course.studentCount }}
+        </p>
+        <p v-if="course?.threshold !== undefined && course?.threshold !== null" class="threshold">
+          <strong>Threshold:</strong> {{ course.threshold }}
         </p>
       </section>
 
@@ -242,7 +287,6 @@ function calculatePercentage(met: number, exceeded: number, total: number): numb
                 </span>
               </div>
 
-              <!-- Measure Data -->
               <div
                 v-if="measure.studentsMet !== null || measure.studentsExceeded !== null"
                 class="measure-data"
@@ -273,13 +317,11 @@ function calculatePercentage(met: number, exceeded: number, total: number): numb
                 </div>
               </div>
 
-              <!-- Observation -->
               <div v-if="measure.observation" class="measure-observation">
                 <strong>Observation:</strong>
                 <p>{{ measure.observation }}</p>
               </div>
 
-              <!-- Recommended Action -->
               <div v-if="measure.recommendedAction" class="measure-action">
                 <strong>Recommended Action:</strong>
                 <p>{{ measure.recommendedAction }}</p>
@@ -287,7 +329,6 @@ function calculatePercentage(met: number, exceeded: number, total: number): numb
             </div>
           </div>
 
-          <!-- No Measures -->
           <div v-else class="no-measures">
             <p>No measures defined for this indicator.</p>
           </div>
@@ -295,9 +336,26 @@ function calculatePercentage(met: number, exceeded: number, total: number): numb
       </div>
     </div>
 
-    <!-- FOOTER SLOT -->
     <template #footer>
-      <button class="btn-close" @click="emit('close')">Close</button>
+      <div class="footer-container">
+        <BaseButton
+          variant="danger"
+          @click="deleteCourse"
+          :disabled="loading || deleting"
+          class="btn-action btn-delete"
+        >
+          <span v-if="deleting">Deleting...</span>
+          <span v-else>Delete Course</span>
+        </BaseButton>
+
+        <button
+          class="btn-action btn-close"
+          @click="emit('close')"
+          :disabled="deleting"
+        >
+          Close
+        </button>
+      </div>
     </template>
 
   </BaseModal>
@@ -562,22 +620,58 @@ function calculatePercentage(met: number, exceeded: number, total: number): numb
   font-style: italic;
 }
 
-/* Footer Button */
-.btn-close {
-  background: var(--color-primary);
-  color: white;
-  border: none;
-  padding: 0.625rem 1.5rem;
+/* Container to push buttons to opposite sides */
+.footer-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  gap: 1rem; /* Adds a safety gap */
+}
+
+/* Shared sizing for both buttons */
+.btn-action {
+  padding: 0.625rem 1.5rem; /* Matches your existing .btn-close padding */
   border-radius: 0.375rem;
   font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
+  height: 40px; /* Forces identical height */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 140px; /* Ensures buttons look balanced */
 }
 
-.btn-close:hover {
+/* Specific Delete styles */
+.btn-delete {
+  background-color: transparent;
+  color: #dc3545; /* Standard red */
+  border: 1px solid #dc3545;
+}
+
+.btn-delete:hover:not(:disabled) {
+  background-color: #dc3545;
+  color: white;
+}
+
+.btn-close {
+  background: var(--color-primary);
+  color: white;
+  border: none;
+}
+
+.btn-close:hover:not(:disabled) {
   background: var(--color-primary-dark);
 }
+
+.btn-action:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+
 
 /* Responsive */
 @media (max-width: 768px) {

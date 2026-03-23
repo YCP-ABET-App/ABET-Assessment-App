@@ -4,8 +4,7 @@ import com.abetappteam.abetapp.BaseControllerTest;
 import com.abetappteam.abetapp.config.TestSecurityConfig;
 import com.abetappteam.abetapp.dto.CourseDTO;
 import com.abetappteam.abetapp.entity.Course;
-import com.abetappteam.abetapp.entity.CourseIndicator;
-import com.abetappteam.abetapp.entity.Semester;
+import com.abetappteam.abetapp.entity.Requests.Course.CourseSearchRequest;
 import com.abetappteam.abetapp.service.CourseService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,16 +12,13 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 
+import java.util.HashMap;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -48,7 +44,6 @@ class CourseControllerUnitTest extends BaseControllerTest {
 
     private Course testCourse;
     private CourseDTO testCourseDTO;
-    private CourseIndicator testCI;
 
     @BeforeEach
     void setUp() {
@@ -57,60 +52,39 @@ class CourseControllerUnitTest extends BaseControllerTest {
         testCourse.setCourseCode("CS401");
         testCourse.setCourseName("Software Engineering");
         testCourse.setCourseDescription("An introduction to software engineering principles");
-        testCourse.setSemesterId(1L);
         testCourse.setStudentCount(28);
         testCourse.setIsActive(true);
 
-        testCourseDTO = new CourseDTO();
-        testCourseDTO.setCourseCode("CS401");
-        testCourseDTO.setCourseName("Software Engineering");
-        testCourseDTO.setCourseDescription("An introduction to software engineering principles");
-        testCourseDTO.setSemesterId(1L);
-        testCourseDTO.setStudentCount(28);
+        testCourseDTO = new CourseDTO("CS401", "Software Engineering", "An introduction to software engineering principles", 28, .5);
 
-        testCI = new CourseIndicator();
-        testCI.setId(1l);
-        testCI.setIndicatorId(1l);
-        testCI.setCourseId(1l);
-        testCI.setIsActive(true);
     }
 
-    @Test
-    void shouldGetAllCoursesBySemester() throws Exception {
-        // Given
-        List<Course> courses = List.of(testCourse);
-        Page<Course> page = new PageImpl<>(courses, PageRequest.of(0, 20), 1);
-
-        when(courseService.getCoursesBySemester(eq(1L), any(PageRequest.class))).thenReturn(page);
-
-        // When/Then
-        mockMvc.perform(get("/api/courses")
-                        .param("semesterId", "1")
-                        .param("page", "0")
-                        .param("size", "20"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content").isArray())
-                .andExpect(jsonPath("$.content.length()").value(1))
-                .andExpect(jsonPath("$.totalElements").value(1));
-
-        verify(courseService, times(1)).getCoursesBySemester(eq(1L), any(PageRequest.class));
-    }
-
-    @Test
-    void shouldGetCourseById() throws Exception {
-        // Given
-        when(courseService.findById(1L)).thenReturn(testCourse);
-
-        // When/Then
-        mockMvc.perform(get("/api/courses/1"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.id").value(1))
-                .andExpect(jsonPath("$.data.courseName").value("Software Engineering"))
-                .andExpect(jsonPath("$.data.courseCode").value("CS401"));
-
-        verify(courseService, times(1)).findById(1L);
-    }
+//    @Test
+//    void shouldGetCourseById() throws Exception {
+//        // Use the search endpoint (CourseSearchRequest) to retrieve the course by id
+//        List<Course> list = List.of(testCourse);
+//        when(courseService.searchCourse(any())).thenReturn(list);
+//
+//        Map<String, Object> body = new HashMap<>();
+//        body.put("id", 1);
+//        body.put("courseCode", null);
+//        body.put("courseName", null);
+//        body.put("courseDescription", null);
+//        body.put("student_count", null);
+//        body.put("mirrorId", null);
+//        body.put("isActive", null);
+//
+//        mockMvc.perform(get("/api/courses/searchCourse")
+//                .contentType(MediaType.APPLICATION_JSON)
+//                .content(objectMapper.writeValueAsString(body)))
+//                .andExpect(status().isOk())
+//                .andExpect(jsonPath("$.success").value(true))
+//                .andExpect(jsonPath("$.data[0].id").value(1))
+//                .andExpect(jsonPath("$.data[0].courseName").value("Software Engineering"))
+//                .andExpect(jsonPath("$.data[0].courseCode").value("CS401"));
+//
+//        verify(courseService, times(1)).searchCourse(any());
+//    }
 
     @Test
     void shouldCreateCourse() throws Exception {
@@ -119,8 +93,8 @@ class CourseControllerUnitTest extends BaseControllerTest {
 
         // When/Then
         mockMvc.perform(post("/api/courses")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(testCourseDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(testCourseDTO)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Resource created successfully"))
@@ -134,14 +108,14 @@ class CourseControllerUnitTest extends BaseControllerTest {
     @Test
     void shouldReturnBadRequestForInvalidCourse() throws Exception {
         // Given - DTO with missing required fields
-        CourseDTO invalidDTO = new CourseDTO();
-        invalidDTO.setCourseName(null); // Invalid - courseName is required
-        invalidDTO.setCourseCode(null); // Invalid - courseCode is required
+        CourseDTO invalidDTO = new CourseDTO(null, null , null , null , null);
+//        invalidDTO.setCourseName(null); // Invalid - courseName is required
+//        invalidDTO.setCourseCode(null); // Invalid - courseCode is required
 
         // When/Then
         mockMvc.perform(post("/api/courses")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(invalidDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(invalidDTO)))
                 .andExpect(status().isBadRequest());
 
         verify(courseService, never()).createCourse(any(CourseDTO.class));
@@ -154,8 +128,8 @@ class CourseControllerUnitTest extends BaseControllerTest {
 
         // When/Then
         mockMvc.perform(put("/api/courses/1")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(testCourseDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(testCourseDTO)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Course updated successfully"))
@@ -172,8 +146,8 @@ class CourseControllerUnitTest extends BaseControllerTest {
 
         // When/Then
         mockMvc.perform(put("/api/courses/1/student-count")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"studentCount\": 32}"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"studentCount\": 32}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.studentCount").value(32));
@@ -223,159 +197,6 @@ class CourseControllerUnitTest extends BaseControllerTest {
     }
 
     @Test
-    void shouldGetMeasureCompleteness() throws Exception {
-        // Given
-        CourseService.MeasureCompletenessResponse completeness = new CourseService.MeasureCompletenessResponse();
-        completeness.setCourseId(1L);
-        completeness.setTotalMeasures(10);
-        completeness.setCompletedMeasures(7);
-        completeness.setCompletionPercentage(70.0);
-
-        when(courseService.calculateMeasureCompleteness(1L)).thenReturn(completeness);
-
-        // When/Then
-        mockMvc.perform(get("/api/courses/1/completeness"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.courseId").value(1))
-                .andExpect(jsonPath("$.data.totalMeasures").value(10))
-                .andExpect(jsonPath("$.data.completedMeasures").value(7))
-                .andExpect(jsonPath("$.data.completionPercentage").value(70.0));
-
-        verify(courseService, times(1)).calculateMeasureCompleteness(1L);
-    }
-
-    @Test
-    void shouldGetActiveCourses() throws Exception {
-        // Given
-        List<Course> courses = List.of(testCourse);
-        Page<Course> page = new PageImpl<>(courses, PageRequest.of(0, 20), 1);
-
-        when(courseService.getActiveCoursesBySemester(eq(1L), any(PageRequest.class))).thenReturn(page);
-
-        // When/Then
-        mockMvc.perform(get("/api/courses/active")
-                        .param("semesterId", "1")
-                        .param("page", "0")
-                        .param("size", "20"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content").isArray())
-                .andExpect(jsonPath("$.content.length()").value(1));
-
-        verify(courseService, times(1)).getActiveCoursesBySemester(eq(1L), any(PageRequest.class));
-    }
-
-    @Test
-    void shouldSearchCourses() throws Exception {
-        // Given
-        List<Course> courses = List.of(testCourse);
-        Page<Course> page = new PageImpl<>(courses, PageRequest.of(0, 20), 1);
-
-        when(courseService.searchByNameOrCourseCode(eq("Software"), any(PageRequest.class))).thenReturn(page);
-
-        // When/Then
-        mockMvc.perform(get("/api/courses/search")
-                        .param("searchTerm", "Software")
-                        .param("page", "0")
-                        .param("size", "20"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content").isArray())
-                .andExpect(jsonPath("$.content.length()").value(1));
-
-        verify(courseService, times(1)).searchByNameOrCourseCode(eq("Software"), any(PageRequest.class));
-    }
-
-    @Test
-    void shouldGetCourseByCourseCode() throws Exception {
-        // Arrange
-        String courseCode = "CS401";
-        Long semesterId = 1L;
-
-        // Create properly populated mock course
-        Course mockCourse = new Course();
-        mockCourse.setId(1L);
-        mockCourse.setCourseCode(courseCode);
-        mockCourse.setCourseName("Advanced Computer Science");
-        mockCourse.setCourseDescription("Advanced topics in CS");
-        mockCourse.setSemesterId(semesterId);  // Use setSemesterId, not setSemester
-        mockCourse.setIsActive(true);
-
-        // Mock the service method with BOTH parameters
-        when(courseService.findByCourseCodeAndSemesterId(eq(courseCode), eq(semesterId)))
-                .thenReturn(mockCourse);
-
-        // Act & Assert - Add semesterId parameter
-        mockMvc.perform(get("/api/courses/code/{courseCode}", courseCode)
-                        .param("semesterId", semesterId.toString()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data").exists())
-                .andExpect(jsonPath("$.data.courseCode").value(courseCode))
-                .andExpect(jsonPath("$.data.courseName").value("Advanced Computer Science"));
-
-        // Verify the service was called with correct parameters
-        verify(courseService, times(1)).findByCourseCodeAndSemesterId(courseCode, semesterId);
-    }
-
-    @Test
-    void shouldCheckCourseCodeExists() throws Exception {
-        // Given
-        when(courseService.existsByCourseCode("CS401")).thenReturn(true);
-
-        // When/Then
-        mockMvc.perform(get("/api/courses/code/CS401/exists"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data").value(true));
-
-        verify(courseService, times(1)).existsByCourseCode("CS401");
-    }
-
-    @Test
-    void shouldCountCoursesBySemester() throws Exception {
-        // Given
-        when(courseService.countBySemester(1L)).thenReturn(5L);
-
-        // When/Then
-        mockMvc.perform(get("/api/courses/count")
-                        .param("semesterId", "1"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data").value(5));
-
-        verify(courseService, times(1)).countBySemester(1L);
-    }
-
-    @Test
-    void shouldCountActiveCoursesBySemester() throws Exception {
-        // Given
-        when(courseService.countActiveBySemester(1L)).thenReturn(3L);
-
-        // When/Then
-        mockMvc.perform(get("/api/courses/count/active")
-                        .param("semesterId", "1"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data").value(3));
-
-        verify(courseService, times(1)).countActiveBySemester(1L);
-    }
-
-    @Test
-    void shouldReturnBadRequestForInvalidId() throws Exception {
-        // Test invalid ID in path
-        mockMvc.perform(get("/api/courses/0"))
-                .andExpect(status().isBadRequest());
-
-        mockMvc.perform(get("/api/courses/-1"))
-                .andExpect(status().isBadRequest());
-
-        // Verify service was never called for invalid IDs
-        verify(courseService, never()).findById(0L);
-        verify(courseService, never()).findById(-1L);
-    }
-
-    @Test
     void shouldAssignInstructor() throws Exception {
         mockMvc.perform(post("/api/courses/1/instructors/2"))
                 .andExpect(status().isOk());
@@ -392,79 +213,85 @@ class CourseControllerUnitTest extends BaseControllerTest {
     }
 
     @Test
-    void shouldGetInstructors() throws Exception {
-        when(courseService.getInstructorIds(1L)).thenReturn(List.of(5L, 6L));
-
-        mockMvc.perform(get("/api/courses/1/instructors"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0]").value(5))
-                .andExpect(jsonPath("$[1]").value(6));
-
-        verify(courseService).getInstructorIds(1L);
-    }
-
-    @Test
     void shouldAssignIndicator() throws Exception {
-        mockMvc.perform(post("/api/courses/1/indicators/3"))
+        mockMvc.perform(post("/api/courses/1/indicators/10"))
                 .andExpect(status().isOk());
 
-        verify(courseService).assignIndicator(1L, 3L);
+        verify(courseService, times(1)).assignIndicator(1L, 10L);
     }
 
     @Test
     void shouldRemoveIndicator() throws Exception {
-        mockMvc.perform(delete("/api/courses/1/indicators/3"))
+        mockMvc.perform(delete("/api/courses/1/indicators/10"))
                 .andExpect(status().isOk());
 
-        verify(courseService).removeIndicator(1L, 3L);
+        verify(courseService, times(1)).removeIndicator(1L, 10L);
     }
 
     @Test
-    void shouldGetIndicators() throws Exception {
-        when(courseService.getIndicatorIds(1L)).thenReturn(List.of(7L, 8L));
+    void shouldSearchCourseWithFilters() throws Exception {
+        // Given
+        List<Course> list = List.of(testCourse);
+        when(courseService.searchCourse(any(CourseSearchRequest.class))).thenReturn(list);
 
-        mockMvc.perform(get("/api/courses/1/indicators"))
+
+        mockMvc.perform(get("/api/courses/searchCourse")
+                        .param("courseCode", "CS401")
+                        .param("isActive", "true"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0]").value(7))
-                .andExpect(jsonPath("$[1]").value(8));
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data[0].courseCode").value("CS401"));
 
-        verify(courseService).getIndicatorIds(1L);
+        verify(courseService).searchCourse(any(CourseSearchRequest.class));
     }
 
     @Test
-    void shouldGetCourseIndicatorByCourseAndIndicator() throws Exception {
-        when(courseService.getCourseIndicatorByCourseIdAndIndicatorId(1l, 1l)).thenReturn(Optional.of(testCI));
+    void shouldReturnErrorForInvalidIdFormat() throws Exception {
 
-        mockMvc.perform(get("/api/courses/courseIndicator/1/1"))
-            .andExpect(status().isOk())
-            .andDo(MockMvcResultHandlers.print())
-            .andExpect(jsonPath("$.data.id").value(1));
-
-        verify(courseService).getCourseIndicatorByCourseIdAndIndicatorId(1l, 1l);
+        mockMvc.perform(put("/api/courses/-1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(testCourseDTO)))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
-    void shouldGetCourseIndicatorById() throws Exception {
-        when(courseService.getCourseIndicatorById(1l)).thenReturn(Optional.of(testCI));
+    void shouldSearchCoursesWithFilters() throws Exception {
+        List<Course> list = List.of(testCourse);
+        when(courseService.searchCourse(any(CourseSearchRequest.class))).thenReturn(list);
 
-        mockMvc.perform(get("/api/courses/courseIndicator/1"))
-            .andExpect(status().isOk())
-            .andDo(MockMvcResultHandlers.print())
-            .andExpect(jsonPath("$.data.id").value(1));
+        mockMvc.perform(get("/api/courses/searchCourse")
+                        .param("courseCode", "CS401")
+                        .param("isActive", "true"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data[0].courseCode").value("CS401"));
 
-        verify(courseService).getCourseIndicatorById(1l);
+        verify(courseService).searchCourse(any(CourseSearchRequest.class));
     }
 
     @Test
-    void shouldGetCourseIdAndIndicatorId() throws Exception {
-        when(courseService.getCourseIndicatorById(1l)).thenReturn(Optional.of(testCI));
+    void shouldAssignIndicatorToCourse() throws Exception {
+        mockMvc.perform(post("/api/courses/1/indicators/10"))
+                .andExpect(status().isOk());
 
-        mockMvc.perform(get("/api/courses/courseIndicator/getIds/1"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.[0]").value(1))
-            .andExpect(jsonPath("$.data.[1]").value(1));
-        
-        verify(courseService).getCourseIndicatorById(1l);
+        verify(courseService).assignIndicator(1L, 10L);
     }
+
+    @Test
+    void shouldRemoveIndicatorFromCourse() throws Exception {
+        mockMvc.perform(delete("/api/courses/1/indicators/10"))
+                .andExpect(status().isOk());
+
+        verify(courseService).removeIndicator(1L, 10L);
+    }
+
+    @Test
+    void shouldAssignInstructorToCourse() throws Exception {
+        mockMvc.perform(post("/api/courses/1/instructors/5"))
+                .andExpect(status().isOk());
+
+        verify(courseService).assignInstructor(1L, 5L);
+    }
+
 
 }

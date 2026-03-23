@@ -56,9 +56,9 @@ public class OutcomeControllerUnitTest {
         testOutcome.setEvaluation("Test Evaluation");
         testOutcome.setActive(true);
 
-        testDTO = new OutcomeDTO();
+        testDTO = new OutcomeDTO(1, "New description", "New Evaluation", 1L, true);
         testDTO.setNumber(1);
-        testDTO.setSemesterId(1l);
+        //testDTO.setSemesterId(1l);
         testDTO.setDescription("New Description");
         testDTO.setEvaluation("New Evaluation");
         testOutcome.setActive(true);
@@ -187,5 +187,16 @@ public class OutcomeControllerUnitTest {
             .andExpect(jsonPath("$.message").value("Outcomes found"))
             .andExpect(jsonPath("$.data.[0].number").value(1))
             .andExpect(jsonPath("$.data.[0].semesterId").value(1l));
-    } 
+    }
+
+    @Test
+    void shouldReturnEmptyPageWhenNoOutcomesExist() throws Exception {
+        Page<Outcome> emptyPage = new PageImpl<>(List.of(), PageRequest.of(0, 20), 0);
+        when(service.findAll(any(PageRequest.class))).thenReturn(emptyPage);
+
+        mockMvc.perform(get("/api/outcome")
+                        .param("page", "99"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isEmpty());
+    }
 }

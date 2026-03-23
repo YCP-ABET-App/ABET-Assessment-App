@@ -4,6 +4,7 @@ import { useUserStore } from '@/stores/user-store.ts'
 import { BaseButton } from '@/components/ui'
 import { BaseInput } from '@/components/ui'
 import { BaseModal } from '@/components/ui'
+import CounterComponent from '@/components/CounterComponent.vue'
 import api from '@/api';
 
 const userStore = useUserStore()
@@ -32,97 +33,66 @@ function open_complete_form(){
   viewing.value = false
 }
 
-interface Measure {
-  id: number
-  courseIndicatorId: number
-  description: string
-  observation: string | null
-  recommendedAction: string | null
-  fcar: string | null
-  studentsMet: number | null
-  studentsExceeded: number | null
-  studentsBelow: number | null
-  createdAt: string
-  active: boolean
-  deleted: boolean | null
-  deletedAt: string | null
-  new: boolean | null
-  status: "InProgress" | "Complete" | null
-  updatedAt: string | null
-  version: number | null
-}
-
 const complete_form_data = ref({
-  met: '',
-  exceeded: '',
-  below: '',
+  met: 0,
+  exceeded: 0,
+  below: 0,
   observation: ''
-})
+});
 
-async function complete_form_submit(){
-  //Check that met, exceeded, below are all ints
-  let newMetVal, newExceededVal, newBelowVal
-  try{
-    newMetVal = parseInt(complete_form_data.value.met)
-    newExceededVal = parseInt(complete_form_data.value.exceeded)
-    newBelowVal = parseInt(complete_form_data.value.below)
-  }
-  catch{
-    console.error("Met, Exceeded, and Below values must all be valid integers")
-    return
+async function complete_form_submit() {
+  const met = Number(complete_form_data.value.met);
+  const exceeded = Number(complete_form_data.value.exceeded);
+  const below = Number(complete_form_data.value.below);
+
+  if (Number.isNaN(met) || Number.isNaN(exceeded) || Number.isNaN(below)) {
+    console.error("Met, Exceeded, and Below values must all be valid numbers");
+    return;
   }
 
-  //Define new measure object
-  const new_measure = ref({
+  if (met < 0 || exceeded < 0 || below < 0) {
+    console.error("Values cannot be negative");
+    return;
+  }
+
+  const new_measure_results_payload = {
     id: measure_obj.value.id,
-    courseIndicatorId: measure_obj.value.course_indicator_id,
-    description: measure_obj.value.measure_description,
+    measureId: measure_obj.value.measure_id,
+    sectionId: measure_obj.value.section_id,
+    programId: measure_obj.value.program_id,
     observation: complete_form_data.value.observation,
-    recommendedAction: measure_obj.value.recommended_action,
-    fcar: measure_obj.value.fcar,
-    studentsMet: newMetVal as number,
-    studentsExceeded: newExceededVal as number,
-    studentsBelow: newBelowVal as number,
-    createdAt: measure_obj.value.created_at,
-    active: measure_obj.value.is_active,
-    deleted: measure_obj.value.deleted,
-    deletedAt: measure_obj.value.deleted_at,
-    new: measure_obj.value.new,
-    status: "Complete",
-    updatedAt: measure_obj.value.updated_at,
-    version: measure_obj.value.version
-  })
+    studentsMet: met,
+    studentsExceeded: exceeded,
+    studentsBelow: below,
+    status: "Complete"
+  }
 
-  //PUT request to server
   try {
-    const { data } = await api.put(`/measure/${measure_obj.value.id}`, new_measure.value);
+    await api.put(`/measure-result/${measure_obj.value.id}`, new_measure_results_payload);
 
-    //Update measure object
     measure_obj.value.observation = complete_form_data.value.observation
-    measure_obj.value.met = newMetVal as number
-    measure_obj.value.exceeded = newExceededVal as number
-    measure_obj.value.below = newBelowVal as number
+    measure_obj.value.met = met
+    measure_obj.value.exceeded = exceeded
+    measure_obj.value.below = below
     measure_obj.value.status = "Complete"
+
+    complete_form_data.value = {
+      met: 0,
+      exceeded: 0,
+      below: 0,
+      observation: ''
+    }
+
+    close_forms()
+    set_status()
+    calculate_chart_data()
+    emits('refresh')
+
   } catch (error) {
     console.error('Error editing measure:', error);
   }
-
-  //Reset form data
-  complete_form_data.value = {
-    met: '',
-    exceeded: '',
-    below: '',
-    observation: ''
-  }
-
-  //Close forms
-  close_forms()
-
-  //Refresh measures
-  set_status()
-  calculate_chart_data()
-  emits('refresh')
 }
+
 
 function open_edit_form(){
   completing.value = false
@@ -142,28 +112,17 @@ async function edit_form_submit(){
 
   //Define new measure object
   const new_measure = ref({
-    id: measure_obj.value.id,
+    id: measure_obj.value.measure_id,
     courseIndicatorId: measure_obj.value.course_indicator_id,
+    semesterId: measure_obj.value.semester_id,
     description: newDescVal,
-    observation: measure_obj.value.observation,
     recommendedAction: measure_obj.value.recommended_action,
-    fcar: measure_obj.value.fcar,
-    studentsMet: measure_obj.value.met,
-    studentsExceeded: measure_obj.value.exceeded,
-    studentsBelow: measure_obj.value.below,
-    createdAt: measure_obj.value.created_at,
-    active: measure_obj.value.is_active,
-    deleted: measure_obj.value.deleted,
-    deletedAt: measure_obj.value.deleted_at,
-    new: measure_obj.value.new,
-    status: measure_obj.value.status,
-    updatedAt: measure_obj.value.updated_at,
-    version: measure_obj.value.version
+    active: measure_obj.value.is_active
   })
 
   //PUT request to server
   try {
-    const { data } = await api.put(`/measure/${measure_obj.value.id}`, new_measure.value);
+    const { data } = await api.put(`/measure/${measure_obj.value.measure_id}`, new_measure.value);
 
     //Update measure object
     measure_obj.value.measure_description = edit_form_data.value.description
@@ -195,7 +154,7 @@ function open_delete_form(){
 async function delete_measure(){
   //DELETE request to server
   try {
-    const { data } = await api.delete(`/measure/${measure_obj.value.id}`);
+    const { data } = await api.delete(`/measure/${measure_obj.value.measure_id}`);
 
     //Update measure object
     measure_obj.value.recommended_action = ra_form_data.value.recommended_action
@@ -232,7 +191,6 @@ async function ra_form_submit(){
     description: measure_obj.value.measure_description,
     observation: measure_obj.value.observation,
     recommendedAction: newRAVal,
-    fcar: measure_obj.value.fcar,
     studentsMet: measure_obj.value.met,
     studentsExceeded: measure_obj.value.exceeded,
     studentsBelow: measure_obj.value.below,
@@ -286,28 +244,20 @@ function open_view(){
 }
 
 async function mark_complete(){
-  const new_measure = {
+  const new_measure_result = {
     id: measure_obj.value.id,
-    courseIndicatorId: measure_obj.value.course_indicator_id,
-    description: measure_obj.value.measure_description,
+    measureId: measure_obj.value.measure_id,
+    sectionId: measure_obj.value.section_id,
+    programId: measure_obj.value.program_id,
     observation: measure_obj.value.observation,
-    recommendedAction: measure_obj.value.recommended_action,
-    fcar: measure_obj.value.fcar,
     studentsMet: measure_obj.value.met,
     studentsExceeded: measure_obj.value.exceeded,
     studentsBelow: measure_obj.value.below,
-    createdAt: measure_obj.value.created_at,
-    active: measure_obj.value.is_active,
-    deleted: measure_obj.value.deleted,
-    deletedAt: measure_obj.value.deleted_at,
-    new: measure_obj.value.new,
-    status: "Complete",
-    updatedAt: measure_obj.value.updated_at,
-    version: measure_obj.value.version
+    status: "Complete"
   }
 
   try {
-    const { data } = await api.put(`/measure/${measure_obj.value.id}`, new_measure);
+    const { data } = await api.put(`/measure-result/${measure_obj.value.id}`, new_measure_result);
     measure_obj.value.status = "Complete"
     set_status()
     calculate_chart_data()
@@ -331,11 +281,14 @@ function set_status(){
 
 const measure_obj = ref<{
   id: number
+  measure_id: number
+  section_id: number
+  program_id: number
   course_indicator_id: number
+  semester_id: number
   measure_description: string
   observation: string | null
   recommended_action: string | null
-  fcar: string | null
   met: number | null
   exceeded: number | null
   below: number | null
@@ -347,13 +300,17 @@ const measure_obj = ref<{
   status: "InProgress" | "Complete" | null
   updated_at: string | null
   version: number | null
+  rejection_note: string | null
 }>({
   id: NaN,
+  measure_id: NaN,
+  section_id: NaN,
+  program_id: NaN,
   course_indicator_id: NaN,
+  semester_id: NaN,
   measure_description: '',
   observation: null,
   recommended_action: null,
-  fcar: null,
   met: null,
   exceeded: null,
   below: null,
@@ -364,7 +321,8 @@ const measure_obj = ref<{
   new: null,
   status: null,
   updated_at: null,
-  version: null
+  version: null,
+  rejection_note: ''
 })
 
 const status = ref(NaN)
@@ -381,47 +339,33 @@ function calculate_chart_data(){
   }
 }
 
-//-----TEST DATA-----
-/*
-const measure_obj = ref({
-    id: 1,
-    course_indicator_id: 1,
-    measure_description: 'Students will be given an exam question to find the error in a section of code',
-    observation: null,
-    recommended_action: null,
-    fcar: null,
-    met: null,
-    exceeded: null,
-    below: null,
-    created_at: '2025-11-06 12:06:00.880463',
-    is_active: true
-})
-*/
-//-------------------
-
 async function initialize(){
   measure_obj.value = {
     id: props.measure_prop.id,
-    course_indicator_id: props.measure_prop.courseIndicatorId,
-    measure_description: props.measure_prop.description,
+    measure_id: props.measure_prop.measure_id,
+    section_id: props.measure_prop.section_id,
+    program_id: props.measure_prop.program_id,
+    course_indicator_id: props.measure_prop.course_indicator_id,
+    semester_id: props.measure_prop.semester_id,
+    measure_description: props.measure_prop.measure_description,
     observation: props.measure_prop.observation,
-    recommended_action: props.measure_prop.recommendedAction,
-    fcar: props.measure_prop.fcar,
-    met: props.measure_prop.studentsMet,
-    exceeded: props.measure_prop.studentsExceeded,
-    below: props.measure_prop.studentsBelow,
-    created_at: props.measure_prop.createdAt,
-    is_active: props.measure_prop.active,
+    recommended_action: props.measure_prop.recommended_ction,
+    met: props.measure_prop.met,
+    exceeded: props.measure_prop.exceeded,
+    below: props.measure_prop.below,
+    created_at: props.measure_prop.created_at,
+    is_active: props.measure_prop.is_active,
     deleted: props.measure_prop.deleted,
     deleted_at: props.measure_prop.deleted_at,
     new: props.measure_prop.new,
     status: props.measure_prop.status,
-    updated_at: props.measure_prop.updatedAt,
-    version: props.measure_prop.version
+    updated_at: props.measure_prop.updated_at,
+    version: props.measure_prop.version,
+    rejection_note: props.measure_prop.rejection_note
   }
 
   set_status()
-  
+
   //Check if the logged in user is the instructor for the section
   if (userId == props.instructor_id){
     isInstructor.value = true
@@ -486,33 +430,19 @@ calculate_chart_data()
       </div>
     </div>
 
-    <BaseModal v-model:isOpen="completing" title="Complete Measure" size="md" class="form" id="complete-form">
+    <BaseModal v-model:isOpen="completing" title="Complete Measure" size="md">
       <div class="input-grid">
-        <BaseInput
-          v-model="complete_form_data.met"
-          label="Met: "
-          placeholder="Number of students who met measure"
-          required
-        />
-        <BaseInput
-          v-model="complete_form_data.exceeded"
-          label="Exceeded: "
-          placeholder="Number of students who exceeded measure"
-          required
-        />
-        <BaseInput
-          v-model="complete_form_data.below"
-          label="Below: "
-          placeholder="Number of students who failed measure"
-          required
-        />
+        <CounterComponent v-model="complete_form_data.met" label="Met" />
+        <CounterComponent v-model="complete_form_data.exceeded" label="Exceeded" />
+        <CounterComponent v-model="complete_form_data.below" label="Below" />
+
         <BaseInput
           v-model="complete_form_data.observation"
-          label="Observation: "
-          placeholder=""
+          label="Observation"
+          placeholder="Optional notes"
         />
       </div>
-      <BaseButton variant="primary" class="submit-button" @click="complete_form_submit">Submit</BaseButton>
+      <BaseButton variant="primary" @click="complete_form_submit">Submit</BaseButton>
     </BaseModal>
 
     <BaseModal v-model:isOpen="editing" title="Edit Measure" size="md" class="form" id="complete-form">
@@ -559,8 +489,8 @@ calculate_chart_data()
           <div class="view-field">
             <span class="field-label">Status:</span>
             <span v-if="status==0" class="field-value status-badge status-in-progress">In Progress</span>
-            <span v-else-if="status==1" class="field-value status-badge status-in-review">In Review</span>
-            <span v-else class="field-value status-badge status-completed">Complete</span>
+            <span v-else-if="status==1" class="field-value status-badge status-completed">Complete</span>
+            <span v-else class="field-value status-badge status-error">Error</span>
           </div>
         </div>
 

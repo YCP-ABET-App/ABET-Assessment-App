@@ -14,12 +14,20 @@ import java.util.List;
 @Service
 public class ImporterService {
 
-    @Autowired private SemesterService semesterService;
-    @Autowired private OutcomeService outcomeService;
-    @Autowired private PerformanceIndicatorService indicatorService;
-    @Autowired private CourseService courseService;
-    @Autowired private CourseIndicatorService courseIndicatorService;
-    @Autowired private MeasureService measureService;
+    @Autowired
+    private SemesterService semesterService;
+    @Autowired
+    private OutcomeService outcomeService;
+    @Autowired
+    private PerformanceIndicatorService indicatorService;
+    @Autowired
+    private CourseService courseService;
+    @Autowired
+    private CourseIndicatorService courseIndicatorService;
+    @Autowired
+    private MeasureService measureService;
+    @Autowired
+    private MeasureResultService measureResultService;
 
     @Transactional
     public void importSummary(SummaryImportDTO dto) {
@@ -37,20 +45,16 @@ public class ImporterService {
                 // Extract the indicator number (the part after the decimal)
                 int indicatorNumber = extractIndicatorNumber(ind.getNumber());
 
-                PerformanceIndicator pi =
-                        getOrCreateIndicator(outcome.getId(), indicatorNumber);
+                PerformanceIndicator pi = getOrCreateIndicator(outcome.getId(), indicatorNumber);
 
                 for (CourseImportDTO c : ind.getCourses()) {
 
                     // ========== COURSE ==========
                     Course course = getOrCreateCourse(
-                            c.getCourseCode().trim().toUpperCase(),
-                            semester.getId()
-                    );
+                            c.getCourseCode().trim().toUpperCase());
 
                     // ========== COURSE INDICATOR ==========
-                    CourseIndicator ci =
-                            courseIndicatorService.getOrCreate(course.getId(), pi.getId());
+                    CourseIndicator ci = courseIndicatorService.getOrCreate(course.getId(), pi.getId());
 
                     // ========== MEASURES ==========
                     for (MeasureImportDTO m : c.getMeasures()) {
@@ -60,20 +64,14 @@ public class ImporterService {
                         measure.setCourseIndicatorId(ci.getId());
 
                         measure.setActive(true);
-                        measure.setStatus(convertStatus(m.getStatus()));
 
                         measure.setDescription(m.getDescription());
-
-                        measure.setObservation(null);
 
                         // Join recommended actions array into single string
                         measure.setRecommendedAction(
                                 m.getRecommendedActions() != null && !m.getRecommendedActions().isEmpty()
                                         ? String.join("\n", m.getRecommendedActions())
-                                        : null
-                        );
-
-                        measure.setFcar(null);
+                                        : null);
 
                         // Calculate student counts from percentage
                         // Assume 30 students as default
@@ -103,12 +101,18 @@ public class ImporterService {
                             exceeded = 0;
                         }
 
-                        measure.setStudentsMet(met);
-                        measure.setStudentsExceeded(exceeded);
-                        measure.setStudentsBelow(below);
+                        // measureService.createFromImport(measure);
 
-                        measureService.createFromImport(measure);
+                        Measure savedMeasure = measureService.createFromImport(measure);
 
+                        MeasureResult measureResult = new MeasureResult();
+                        measureResult.setMeasureId(savedMeasure.getId());
+                        measureResult.setStudentsMet(met);
+                        measureResult.setStudentsExceeded(exceeded);
+                        measureResult.setStudentsBelow(below);
+                        measureResult.setStatus(convertStatus(m.getStatus()));
+
+                        measureResultService.createFromImport(measureResult);
                     }
                 }
             }
@@ -143,12 +147,12 @@ public class ImporterService {
         }
 
         // If not found, create new outcome
-        OutcomeDTO dto = new OutcomeDTO();
-        dto.setNumber(o.getNumber());
-        dto.setDescription("Imported outcome " + o.getNumber());
-        dto.setEvaluation(o.getStatus() != null ? o.getStatus() : "Pending");
-        dto.setSemesterId(semesterId);
-        dto.setActive(true);
+        OutcomeDTO dto = new OutcomeDTO(
+                o.getNumber(),
+                ("Imported outcome " + o.getNumber()),
+                (o.getStatus() != null ? o.getStatus() : "Pending"),
+                semesterId,
+                true);
 
         return outcomeService.create(dto);
     }
@@ -169,10 +173,11 @@ public class ImporterService {
         }
 
         // If not found, create new indicator
-        PerformanceIndicatorDTO dto = new PerformanceIndicatorDTO();
-        dto.setIndicatorNumber(indicatorNumber);
-        dto.setDescription("Imported indicator " + indicatorNumber);
-        dto.setStudentOutcomeId(outcomeId);
+        PerformanceIndicatorDTO dto = new PerformanceIndicatorDTO(
+                ("Imported indicator " + indicatorNumber),
+                indicatorNumber,
+                outcomeId
+        );
         dto.setIsActive(true);
 
         return indicatorService.createPerformanceIndicator(dto);
@@ -182,24 +187,22 @@ public class ImporterService {
      * Find or create a course for the given semester.
      * Matches by course code (case-insensitive).
      */
-    private Course getOrCreateCourse(String code, Long semesterId) {
+    private Course getOrCreateCourse(String code) {
         // Try to find an existing course in this semester
-        List<Course> semesterCourses = courseService.getCoursesBySemester(semesterId);
+        Course course = courseService.findByCourseCode(code);
 
-        for (Course course : semesterCourses) {
-            if (course.getCourseCode() != null &&
-                    course.getCourseCode().equalsIgnoreCase(code)) {
-                return course;
-            }
+        if (course != null) {
+            return course;
         }
 
         // Create new course
-        CourseDTO dto = new CourseDTO();
-        dto.setCourseCode(code);
-        dto.setCourseName(code);
-        dto.setCourseDescription("Imported course " + code);
-        dto.setSemesterId(semesterId);
-        dto.setStudentCount(0);
+        CourseDTO dto = new CourseDTO(
+                code,
+                code,
+                ("Imported course " + code),
+                0,
+                0.0
+        );
         dto.setIsActive(true);
 
         return courseService.createCourse(dto);

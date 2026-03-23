@@ -2,6 +2,7 @@
 const props = defineProps({
   loggedIn: Boolean,
   username: String,
+  isInstructor: Boolean,
   isAdmin: Boolean,
 })
 
@@ -15,16 +16,16 @@ const emit = defineEmits(["logout"])
 
 <div class="navbar-links">
         <router-link to="/" class="nav_button">Home</router-link>
-        
-        <div class="nav-divider"></div>
-        <router-link to="/about" class="nav_button">About</router-link>
 
         <template v-if="loggedIn">
 
-        <template v-if="isAdmin">
+        <template v-if="isAdmin && isInstructor">
           <div class="nav-divider"></div>
           <router-link to="/admin-dashboard" class="nav_button">Admin</router-link>
-          </template>
+        </template>
+
+          <div class="nav-divider"/>
+          <router-link to="/import-tool" class="nav_button">Importer</router-link>
 
           <div class="nav-divider"></div>
           <router-link to="/settings" class="nav_button">Settings</router-link>
@@ -193,7 +194,7 @@ const emit = defineEmits(["logout"])
 }
 
 .user-avatar {
-  width: 28px;          
+  width: 28px;
   height: 28px;
   background-color: var(--color-primary-dark, #3498db);
   border-radius: 50%;
@@ -214,7 +215,7 @@ const emit = defineEmits(["logout"])
 }
 
 .user-name {
-  font-size: 10px;       
+  font-size: 10px;
   font-weight: 500;
   color: var(--navbar-text, white);
   white-space: nowrap;

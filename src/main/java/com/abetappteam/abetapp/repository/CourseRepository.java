@@ -1,8 +1,6 @@
 package com.abetappteam.abetapp.repository;
 
 import com.abetappteam.abetapp.entity.Course;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -13,53 +11,22 @@ import java.util.Optional;
 
 /**
  * Repository for Course entity
- * Based on schema: course table with fields (id, course_code, course_name, course_description, semester_id, student_count, created_at, is_active)
+ * Based on schema: course table with fields (id, course_code, course_name, course_description, student_count, created_at, is_active)
  */
 @Repository
 public interface CourseRepository extends JpaRepository<Course, Long> {
 
-    // ========== Semester queries ==========
-    Page<Course> findBySemesterId(Long semesterId, Pageable pageable);
-
-    List<Course> findBySemesterId(Long semesterId);
-
-    long countBySemesterId(Long semesterId);
-
-    // ========== Active status queries ==========
-    Page<Course> findBySemesterIdAndIsActive(Long semesterId, Boolean isActive, Pageable pageable);
-
-    List<Course> findBySemesterIdAndIsActive(Long semesterId, Boolean isActive);
-
     List<Course> findByIsActive(Boolean isActive);
-
-    long countBySemesterIdAndIsActive(Long semesterId, Boolean isActive);
 
     // ========== Course code queries ==========
     Optional<Course> findByCourseCodeIgnoreCase(String courseCode);
 
     boolean existsByCourseCodeIgnoreCase(String courseCode);
 
-    Optional<Course> findByCourseCodeIgnoreCaseAndSemesterId(String courseCode, Long semesterId);
-
-    boolean existsByCourseCodeAndSemesterId(String courseCode, Long semesterId);
-
     List<Course> findByCourseCode(String courseCode);
 
     // ========== Course name queries ==========
     List<Course> findByCourseNameContainingIgnoreCase(String nameFragment);
-
-    // ========== Search queries ==========
-    @Query("SELECT c FROM Course c WHERE LOWER(c.courseName) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR LOWER(c.courseCode) LIKE LOWER(CONCAT('%', :searchTerm, '%'))")
-    List<Course> searchByNameOrCourseCode(@Param("searchTerm") String searchTerm);
-
-    @Query("SELECT c FROM Course c WHERE LOWER(c.courseName) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR LOWER(c.courseCode) LIKE LOWER(CONCAT('%', :searchTerm, '%'))")
-    Page<Course> searchByNameOrCourseCode(@Param("searchTerm") String searchTerm, Pageable pageable);
-
-    @Query("SELECT c FROM Course c WHERE c.semesterId = :semesterId AND (LOWER(c.courseName) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR LOWER(c.courseCode) LIKE LOWER(CONCAT('%', :searchTerm, '%')))")
-    List<Course> searchByNameOrCourseCodeAndSemester(@Param("searchTerm") String searchTerm, @Param("semesterId") Long semesterId);
-
-    @Query("SELECT c FROM Course c WHERE c.semesterId = :semesterId AND c.isActive = :isActive AND (LOWER(c.courseName) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR LOWER(c.courseCode) LIKE LOWER(CONCAT('%', :searchTerm, '%')))")
-    Page<Course> searchByNameOrCourseCodeAndSemesterAndIsActive(@Param("searchTerm") String searchTerm, @Param("semesterId") Long semesterId, @Param("isActive") Boolean isActive, Pageable pageable);
 
     // ========== Instructor relationship queries (via course_instructor table) ==========
     // Note: These queries use the course_instructor junction table
@@ -69,12 +36,26 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @Query("SELECT DISTINCT c FROM Course c JOIN CourseInstructor ci ON c.id = ci.courseId JOIN ProgramUser pu ON pu.id = ci.programUserId WHERE pu.programId = :programId AND pu.isActive = true AND c.isActive = true")
     List<Course> findActiveCoursesByProgramId(@Param("programId") Long programId);
 
-
+    @Query("SELECT DISTINCT c FROM Course c WHERE " +
+           "(:id IS NULL OR c.id = :id) AND " +
+           "(:courseCode IS NULL OR c.courseCode = :courseCode) AND " +
+           "(:courseName IS NULL OR LOWER(c.courseName) LIKE LOWER(CONCAT('%', :courseName, '%'))) AND " +
+           "(:courseDescription IS NULL OR LOWER(c.courseDescription) LIKE LOWER(CONCAT('%', :courseDescription, '%'))) AND " +
+           "(:studentCount IS NULL OR c.studentCount = :studentCount) AND " +
+           "(:mirrorId IS NULL OR c.mirrorId = :mirrorId) AND " +
+           "(:isActive IS NULL OR c.isActive = :isActive)")
+        List<Course> searchCourse(
+            @Param("id") Integer id,
+            @Param("courseCode") String courseCode,
+            @Param("courseName") String courseName,
+            @Param("courseDescription") String courseDescription,
+            @Param("studentCount") Integer studentCount,
+            @Param("mirrorId") Integer mirrorId,
+            @Param("isActive") boolean isActive
+        );
+    
     @Query("SELECT c FROM Course c JOIN CourseInstructor ci ON c.id = ci.courseId WHERE ci.programUserId = :programUserId")
     List<Course> findCoursesByProgramUserId(@Param("programUserId") Long programUserId);
-
-    @Query("SELECT c FROM Course c JOIN CourseInstructor ci ON c.id = ci.courseId WHERE ci.programUserId = :programUserId AND c.semesterId = :semesterId")
-    List<Course> findCoursesByProgramUserIdAndSemesterId(@Param("programUserId") Long programUserId, @Param("semesterId") Long semesterId);
 
     // ========== Methods for measure completeness calculations ==========
     // Based on schema: course -> course_indicator -> measure

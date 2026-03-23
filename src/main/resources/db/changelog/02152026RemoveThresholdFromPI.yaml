@@ -1,0 +1,13 @@
+databaseChangeLog:
+  - changeSet:
+      id: drop-threshold-column-from-performance-indicator
+      author: ohornbeck
+      preConditions:
+        - onFail: MARK_RAN
+          columnExists:
+              columnName: threshold_percentage
+              tableName: performance_indicator
+      changes:
+        - dropColumn:
+            columnName: threshold_percentage
+            tableName: performance_indicator

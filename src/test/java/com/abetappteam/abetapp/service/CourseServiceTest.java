@@ -3,19 +3,21 @@ package com.abetappteam.abetapp.service;
 import com.abetappteam.abetapp.BaseServiceTest;
 import com.abetappteam.abetapp.dto.CourseDTO;
 import com.abetappteam.abetapp.entity.Course;
+import com.abetappteam.abetapp.entity.CourseIndicator;
+import com.abetappteam.abetapp.entity.CourseInstructor;
+import com.abetappteam.abetapp.entity.Requests.Course.CourseSearchRequest;
 import com.abetappteam.abetapp.exception.BusinessException;
 import com.abetappteam.abetapp.exception.ConflictException;
 import com.abetappteam.abetapp.exception.ResourceNotFoundException;
 import com.abetappteam.abetapp.repository.CourseRepository;
+import com.abetappteam.abetapp.repository.CourseIndicatorRepository;
+import com.abetappteam.abetapp.repository.CourseInstructorRepository;
 import com.abetappteam.abetapp.util.TestDataBuilder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
 import java.util.Optional;
@@ -33,6 +35,12 @@ class CourseServiceTest extends BaseServiceTest {
     @Mock
     private CourseRepository courseRepository;
 
+    @Mock
+    private CourseIndicatorRepository courseIndicatorRepository;
+
+    @Mock
+    private CourseInstructorRepository courseInstructorRepository;
+
     @InjectMocks
     private CourseService courseService;
 
@@ -41,12 +49,18 @@ class CourseServiceTest extends BaseServiceTest {
 
     @BeforeEach
     void setUp() {
+        courseService = new CourseService(courseRepository);
+
+        ReflectionTestUtils.setField(courseService, "courseInstructorRepository", courseInstructorRepository);
+
+        ReflectionTestUtils.setField(courseService, "courseIndicatorRepository", courseIndicatorRepository);
+
         testCourse = TestDataBuilder.createCourseWithId(1L, "CS101", "Introduction to Computer Science",
                 "Basic computer science principles", 1L);
         testCourse.setStudentCount(30);
 
         testCourseDTO = TestDataBuilder.createCourseDTO("CS102", "Database Systems",
-                "Database management systems", 1L);
+                "Database management systems", 1, 1.0);
         testCourseDTO.setStudentCount(25);
     }
 
@@ -67,6 +81,26 @@ class CourseServiceTest extends BaseServiceTest {
     }
 
     @Test
+    void shouldGetAllActiveCourses() {
+        when(courseRepository.findByIsActive(true)).thenReturn(List.of(testCourse));
+
+        List<Course> results = courseService.getAllActiveCourses();
+
+        assertThat(results).hasSize(1);
+        verify(courseRepository).findByIsActive(true);
+    }
+
+    @Test
+    void shouldGetActiveCoursesByProgramUserId() {
+        when(courseRepository.findActiveCoursesByProgramUserId(5L)).thenReturn(List.of(testCourse));
+
+        List<Course> results = courseService.getActiveCoursesByProgramUserId(5L);
+
+        assertThat(results).hasSize(1);
+        verify(courseRepository).findActiveCoursesByProgramUserId(5L);
+    }
+
+    @Test
     void shouldThrowExceptionWhenNotFound() {
         // Given
         when(courseRepository.findById(999L)).thenReturn(Optional.empty());
@@ -80,7 +114,7 @@ class CourseServiceTest extends BaseServiceTest {
     @Test
     void shouldCreateCourse() {
         // Given
-        when(courseRepository.existsByCourseCodeAndSemesterId("CS102", 1L)).thenReturn(false);
+        when(courseRepository.existsByCourseCodeIgnoreCase("CS102")).thenReturn(false);
         when(courseRepository.save(any(Course.class))).thenReturn(testCourse);
 
         // When
@@ -88,14 +122,14 @@ class CourseServiceTest extends BaseServiceTest {
 
         // Then
         assertThat(created).isNotNull();
-        verify(courseRepository).existsByCourseCodeAndSemesterId("CS102", 1L);
+        verify(courseRepository).existsByCourseCodeIgnoreCase("CS102");
         verify(courseRepository).save(any(Course.class));
     }
 
     @Test
     void shouldThrowConflictWhenCreatingDuplicate() {
         // Given
-        when(courseRepository.existsByCourseCodeAndSemesterId("CS102", 1L)).thenReturn(true);
+        when(courseRepository.existsByCourseCodeIgnoreCase("CS102")).thenReturn(true);
 
         // When/Then
         assertThatThrownBy(() -> courseService.createCourse(testCourseDTO))
@@ -105,10 +139,25 @@ class CourseServiceTest extends BaseServiceTest {
     }
 
     @Test
+    void shouldSearchCourses() {
+        // Given
+        CourseSearchRequest request = new CourseSearchRequest(null, null, null, null, null, null, true);
+        when(courseRepository.searchCourse(any(), any(), any(), any(), any(), any(), any(Boolean.class)))
+                .thenReturn(List.of(testCourse));
+
+        // When
+        List<Course> results = courseService.searchCourse(request);
+
+        // Then
+        assertThat(results).hasSize(1);
+        verify(courseRepository).searchCourse(any(), any(), any(), any(), any(), any(), any(Boolean.class));
+    }
+
+    @Test
     void shouldUpdateCourse() {
         // Given
         when(courseRepository.findById(1L)).thenReturn(Optional.of(testCourse));
-        when(courseRepository.existsByCourseCodeAndSemesterId("CS102", 1L)).thenReturn(false);
+        when(courseRepository.existsByCourseCodeIgnoreCase("CS102")).thenReturn(false);
         when(courseRepository.save(any(Course.class))).thenReturn(testCourse);
 
         // When
@@ -142,7 +191,7 @@ class CourseServiceTest extends BaseServiceTest {
         Course existingCourse = TestDataBuilder.createCourseWithId(1L, "CS102", "Some Course",
                 "Description", 1L);
         CourseDTO updateDTO = TestDataBuilder.createCourseDTO("CS102", "Updated Name",
-                "Updated Description", 1L);
+                "Updated Description", 1, 1.0);
         when(courseRepository.findById(1L)).thenReturn(Optional.of(existingCourse));
         when(courseRepository.save(any(Course.class))).thenReturn(existingCourse);
 
@@ -152,7 +201,7 @@ class CourseServiceTest extends BaseServiceTest {
         // Then
         assertThat(updated).isNotNull();
         verify(courseRepository).findById(1L);
-        verify(courseRepository, never()).existsByCourseCodeAndSemesterId(anyString(), anyLong());
+        verify(courseRepository, never()).existsByCourseCodeIgnoreCase(anyString());
         verify(courseRepository).save(any(Course.class));
     }
 
@@ -160,7 +209,7 @@ class CourseServiceTest extends BaseServiceTest {
     void shouldThrowConflictWhenUpdatingWithDuplicateCourseCode() {
         // Given
         when(courseRepository.findById(1L)).thenReturn(Optional.of(testCourse));
-        when(courseRepository.existsByCourseCodeAndSemesterId("CS102", 1L)).thenReturn(true);
+        when(courseRepository.existsByCourseCodeIgnoreCase("CS102")).thenReturn(true);
 
         // When/Then
         assertThatThrownBy(() -> courseService.updateCourse(1L, testCourseDTO))
@@ -195,6 +244,21 @@ class CourseServiceTest extends BaseServiceTest {
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining("Cannot delete course with measures submitted for review");
         verify(courseRepository, never()).delete(any());
+    }
+
+    @Test
+    void shoudDeleteCourse() {
+        // Given
+        when(courseRepository.findById(1L)).thenReturn(Optional.of(testCourse));
+        when(courseRepository.countMeasuresInReviewByCourseId(1L)).thenReturn(0);
+        doNothing().when(courseRepository).delete(testCourse);
+
+        // When
+        courseService.removeCourse(1L);
+
+        // Then
+        verify(courseRepository).findById(1L);
+        verify(courseRepository).delete(testCourse);
     }
 
     @Test
@@ -254,120 +318,132 @@ class CourseServiceTest extends BaseServiceTest {
     }
 
     @Test
-    void shouldGetCoursesBySemester() {
-        // Given
-        Pageable pageable = PageRequest.of(0, 10);
-        List<Course> courses = TestDataBuilder.createCourseList(3, 1L);
-        Page<Course> page = new PageImpl<>(courses, pageable, 3);
-        when(courseRepository.findBySemesterId(1L, pageable)).thenReturn(page);
+    void shouldAssignInstructor() {
+        when(courseRepository.findById(1L)).thenReturn(Optional.of(testCourse));
+        when(courseInstructorRepository.existsByCourseIdAndProgramUserId(1L, 2L)).thenReturn(false);
 
-        // When
-        Page<Course> found = courseService.getCoursesBySemester(1L, pageable);
+        courseService.assignInstructor(1L, 2L);
 
-        // Then
-        assertThat(found.getContent()).hasSize(3);
-        assertThat(found.getTotalElements()).isEqualTo(3);
-        verify(courseRepository).findBySemesterId(1L, pageable);
+        verify(courseInstructorRepository).save(any(CourseInstructor.class));
     }
 
     @Test
-    void shouldGetCoursesBySemesterList() {
-        // Given
-        List<Course> courses = TestDataBuilder.createCourseList(3, 1L);
-        when(courseRepository.findBySemesterId(1L)).thenReturn(courses);
+    void shouldThrowWhenAssigningDuplicateInstructor() {
+        when(courseRepository.findById(1L)).thenReturn(Optional.of(testCourse));
+        when(courseInstructorRepository.existsByCourseIdAndProgramUserId(1L, 2L)).thenReturn(true);
 
-        // When
-        List<Course> found = courseService.getCoursesBySemester(1L);
+        assertThatThrownBy(() -> courseService.assignInstructor(1L, 2L))
+                .isInstanceOf(ConflictException.class)
+                .hasMessageContaining("Instructor already assigned");
 
-        // Then
-        assertThat(found).hasSize(3);
-        verify(courseRepository).findBySemesterId(1L);
+        verify(courseInstructorRepository, never()).save(any());
     }
 
     @Test
-    void shouldGetActiveCoursesBySemester() {
-        // Given
-        Pageable pageable = PageRequest.of(0, 10);
-        List<Course> courses = TestDataBuilder.createCourseListWithStatus(4);
-        Page<Course> page = new PageImpl<>(courses, pageable, 4);
-        when(courseRepository.findBySemesterIdAndIsActive(1L, true, pageable)).thenReturn(page);
+    void shouldRemoveInstructor() {
+        CourseInstructor ci = new CourseInstructor(2L, 1L);
+        when(courseInstructorRepository.findByCourseIdAndProgramUserId(1L, 2L)).thenReturn(Optional.of(ci));
 
-        // When
-        Page<Course> found = courseService.getActiveCoursesBySemester(1L, pageable);
+        courseService.removeInstructor(1L, 2L);
 
-        // Then
-        assertThat(found.getContent()).hasSize(4);
-        verify(courseRepository).findBySemesterIdAndIsActive(1L, true, pageable);
+        assertThat(ci.getIsActive()).isFalse();
+        verify(courseInstructorRepository).save(ci);
     }
 
     @Test
-    void shouldGetActiveCoursesBySemesterList() {
-        // Given
-        List<Course> courses = TestDataBuilder.createCourseListWithStatus(4);
-        when(courseRepository.findBySemesterIdAndIsActive(1L, true)).thenReturn(courses);
+    void shouldThrowWhenRemovingNonExistentInstructor() {
+        when(courseInstructorRepository.findByCourseIdAndProgramUserId(1L, 99L)).thenReturn(Optional.empty());
 
-        // When
-        List<Course> found = courseService.getActiveCoursesBySemester(1L);
-
-        // Then
-        assertThat(found).hasSize(4);
-        verify(courseRepository).findBySemesterIdAndIsActive(1L, true);
+        assertThatThrownBy(() -> courseService.removeInstructor(1L, 99L))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("Instructor assignment not found");
     }
 
     @Test
-    void shouldSearchByNameOrCourseCode() {
-        // Given
-        List<Course> courses = TestDataBuilder.createCourseList(2);
-        when(courseRepository.searchByNameOrCourseCode("CS101")).thenReturn(courses);
+    void shouldGetInstructorIds() {
+        CourseInstructor ci = new CourseInstructor(2L, 1L);
+        when(courseInstructorRepository.findByCourseIdAndIsActive(1L, true)).thenReturn(List.of(ci));
 
-        // When
-        List<Course> found = courseService.searchByNameOrCourseCode("CS101");
+        List<Long> ids = courseService.getInstructorIds(1L);
 
-        // Then
-        assertThat(found).hasSize(2);
-        verify(courseRepository).searchByNameOrCourseCode("CS101");
+        assertThat(ids).containsExactly(2L);
+        verify(courseInstructorRepository).findByCourseIdAndIsActive(1L, true);
     }
 
     @Test
-    void shouldSearchByNameOrCourseCodeWithPaging() {
-        // Given
-        Pageable pageable = PageRequest.of(0, 10);
-        List<Course> courses = TestDataBuilder.createCourseList(2);
-        Page<Course> page = new PageImpl<>(courses, pageable, 2);
-        when(courseRepository.searchByNameOrCourseCode("software", pageable)).thenReturn(page);
+    void shouldAssignIndicator() {
+        when(courseRepository.findById(1L)).thenReturn(Optional.of(testCourse));
+        when(courseIndicatorRepository.existsByCourseIdAndIndicatorId(1L, 3L)).thenReturn(false);
 
-        // When
-        Page<Course> found = courseService.searchByNameOrCourseCode("software", pageable);
+        courseService.assignIndicator(1L, 3L);
 
-        // Then
-        assertThat(found.getContent()).hasSize(2);
-        verify(courseRepository).searchByNameOrCourseCode("software", pageable);
+        verify(courseIndicatorRepository).save(any(CourseIndicator.class));
     }
 
     @Test
-    void shouldCountBySemester() {
-        // Given
-        when(courseRepository.countBySemesterId(1L)).thenReturn(5L);
+    void shouldThrowWhenAssigningDuplicateIndicator() {
+        when(courseRepository.findById(1L)).thenReturn(Optional.of(testCourse));
+        when(courseIndicatorRepository.existsByCourseIdAndIndicatorId(1L, 3L)).thenReturn(true);
 
-        // When
-        long count = courseService.countBySemester(1L);
+        assertThatThrownBy(() -> courseService.assignIndicator(1L, 3L))
+                .isInstanceOf(ConflictException.class)
+                .hasMessageContaining("Indicator already assigned");
 
-        // Then
-        assertThat(count).isEqualTo(5L);
-        verify(courseRepository).countBySemesterId(1L);
+        verify(courseIndicatorRepository, never()).save(any());
     }
 
     @Test
-    void shouldCountActiveBySemester() {
-        // Given
-        when(courseRepository.countBySemesterIdAndIsActive(1L, true)).thenReturn(3L);
+    void shouldRemoveIndicator() {
+        CourseIndicator ci = new CourseIndicator(1L, 3L);
+        when(courseIndicatorRepository.findByCourseIdAndIndicatorId(1L, 3L)).thenReturn(Optional.of(ci));
 
-        // When
-        long count = courseService.countActiveBySemester(1L);
+        courseService.removeIndicator(1L, 3L);
 
-        // Then
-        assertThat(count).isEqualTo(3L);
-        verify(courseRepository).countBySemesterIdAndIsActive(1L, true);
+        assertThat(ci.getIsActive()).isFalse();
+        verify(courseIndicatorRepository).save(ci);
+    }
+
+    @Test
+    void shouldThrowWhenRemovingNonExistentIndicator() {
+        when(courseIndicatorRepository.findByCourseIdAndIndicatorId(1L, 99L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> courseService.removeIndicator(1L, 99L))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("Indicator assignment not found");
+    }
+
+    @Test
+    void shouldGetIndicatorIds() {
+        CourseIndicator ci = new CourseIndicator(1L, 3L);
+        when(courseIndicatorRepository.findByCourseIdAndIsActive(1L, true)).thenReturn(List.of(ci));
+
+        List<Long> ids = courseService.getIndicatorIds(1L);
+
+        assertThat(ids).containsExactly(3L);
+        verify(courseIndicatorRepository).findByCourseIdAndIsActive(1L, true);
+    }
+
+    @Test
+    void shouldGetCourseIndicatorByCourseIdAndIndicatorId() {
+        CourseIndicator ci = new CourseIndicator(1L, 3L);
+        when(courseIndicatorRepository.findByCourseIdAndIndicatorId(1L, 3L)).thenReturn(Optional.of(ci));
+
+        Optional<CourseIndicator> result = courseService.getCourseIndicatorByCourseIdAndIndicatorId(1L, 3L);
+
+        assertThat(result).isPresent();
+        verify(courseIndicatorRepository).findByCourseIdAndIndicatorId(1L, 3L);
+    }
+
+    @Test
+    void shouldGetCourseIndicatorById() {
+        CourseIndicator ci = new CourseIndicator(1L, 3L);
+        ci.setId(10L);
+        when(courseIndicatorRepository.findById(10L)).thenReturn(Optional.of(ci));
+
+        Optional<CourseIndicator> result = courseService.getCourseIndicatorById(10L);
+
+        assertThat(result).isPresent();
+        verify(courseIndicatorRepository).findById(10L);
     }
 
     @Test

@@ -55,8 +55,11 @@ export const useUserStore = defineStore('user', () => {
   // GETTERS
   // -------------------------
   const isLoggedIn = computed(() => !!authToken.value && !!user.value);
-  const isAdmin = computed(() => user.value?.role === "ADMIN");
-  const isInstructor = computed(() => { return user.value?.hasCourses === true || user.value?.role === "INSTRUCTOR"; });
+  const isAdmin = computed(() => user.value?.role?.toUpperCase() === "ADMIN");
+const isInstructor = computed(() => {
+    const role = user.value?.role?.toUpperCase();
+    return user.value?.hasCourses === true || role === "INSTRUCTOR" || role === "ADMIN";
+  });
 
   const userId = computed(() => user.value?.id ?? 0);
 
@@ -204,6 +207,7 @@ export const useUserStore = defineStore('user', () => {
     if (currentSemesterId.value !== null) {
       localStorage.setItem("currentSemesterId", String(currentSemesterId.value));
     }
+
 
     if (theme.value) {
       localStorage.setItem('theme', theme.value)

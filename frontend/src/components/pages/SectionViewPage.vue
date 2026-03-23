@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import type { Ref } from 'vue';
 import { ref } from 'vue';
 import { useRoute } from 'vue-router';
 import api from '@/api';
@@ -14,52 +15,39 @@ interface Instructor {
   email: string;
 }
 
-const course_id = ref(NaN);
-const course_obj = ref({
-  id: NaN,
+const section_id = ref(NaN);
+//Contains data from both the backend section and course objects
+const section_obj = ref({
+  course_id: NaN,
+  semester_id: NaN,
   course_code: '',
   course_name: '',
   course_description: '',
-  semester_id: '',
-  created_at: '',
-  is_active: false
-});
+  section_number: ''
+})
 const semester_name = ref('');
 const instructors = ref<Instructor[]>([]);
-const indicator_ids = ref([]);
+const indicator_ids: Ref<number[]> = ref([]);
+const course_indicator_ids: Ref<number[]> = ref([]); //These IDs are 
 
 // Modal state
 const selectedInstructor = ref<Instructor | null>(null);
 
-//--------TEST DATA--------
-/*
-const course_id = ref(1);
-const course_obj = ref({
-    id: 1,
-    course_code: 'CS101',
-    course_name: 'Fundamentals of Computer Science I',
-    course_description: 'Basic programming concepts and problem solving',
-    semester_id: '1',
-    created_at: '2025-11-10T10:16:56.456221',
-    is_active: true
-});
-const semester_name = ref('Fall 2025');
-const instructor_ids = ref([1, 2]);
-const indicator_ids = ref([1,2])
-*/
-//--------------------------
-
-async function fetch_course_data() {
+async function fetch_course_section_data() {
   try {
-    const { data } = await api.get(`/courses/${course_id.value}`);
-    course_obj.value = {
-      id: data.data.id,
-      course_code: data.data.courseCode,
-      course_name: data.data.courseName,
-      course_description: data.data.courseDescription,
-      semester_id: data.data.semesterId,
-      created_at: data.data.createdAt,
-      is_active: data.data.isActive
+    const { data } = await api.get(`/section`, {
+      params: {
+        "id": section_id.value
+      }
+    });
+
+    section_obj.value = {
+      course_code: data.data.courses[0].courseCode,
+      course_name: data.data.courses[0].courseName,
+      course_description: data.data.courses[0].courseDescription,
+      semester_id: data.data.sections[0].semesterId,
+      course_id: data.data.sections[0].courseId,
+      section_number: "Section " + data.data.sections[0].sectionNumber
     }
   } catch (error) {
     console.error('Error fetching or parsing course data:', error);
@@ -69,8 +57,8 @@ async function fetch_course_data() {
 
 async function fetch_semester_data() {
   try {
-    const { data } = await api.get(`/semesters/${course_obj.value.semester_id}`);
-    semester_name.value = `${data.data.name}`
+    const { data } = await api.get(`/semesters`, {params:{"id": section_obj.value.semester_id}});
+    semester_name.value = `${data.data[0].name}`
   } catch (error) {
     console.error('Error fetching or parsing course data:', error);
   }
@@ -78,8 +66,11 @@ async function fetch_semester_data() {
 
 async function fetch_instructor_ids() {
   try {
-    const { data } = await api.get(`/courses/${course_id.value}/instructors`);
-    const instructorIds = data;
+    const { data } = await api.get(`/section-user`, {params:{"sectionId": section_id.value}});
+    let instructorIds: number[] = [];
+    for(const entry of data.data){
+      instructorIds.push(entry.userId)
+    }
 
     // Fetch full instructor details for each ID
     const instructorPromises = instructorIds.map(async (id: number) => {
@@ -106,8 +97,11 @@ async function fetch_instructor_ids() {
 
 async function fetch_indicator_ids() {
   try {
-    const { data } = await api.get(`/courses/${course_id.value}/indicators`);
-    indicator_ids.value = data
+    const { data } = await api.get(`/course-indicators/by-course/${section_obj.value.course_id}`);
+    for (const entry of data.data){
+      indicator_ids.value.push(entry.indicatorId);
+      course_indicator_ids.value.push(entry.id);
+    }
   } catch (error) {
     console.error('Error fetching or parsing course data:', error);
   }
@@ -134,19 +128,19 @@ function closeInspectModal() {
 }
 
 async function initialize() {
-  course_id.value = parseInt(route.params.course_id as string, 10)
+  section_id.value = parseInt(route.params.section_id as string, 10)
 
-  //Fetch Course data
-  await fetch_course_data();
+  //Fetch Section data
+  await fetch_course_section_data();
 
   //Fetch Semester data
   await fetch_semester_data();
 
   //Fetch Instructor IDs
-  fetch_instructor_ids();
+  await fetch_instructor_ids();
 
   //Fetch Indicator IDs
-  fetch_indicator_ids();
+  await fetch_indicator_ids();
 }
 
 initialize();
@@ -159,9 +153,13 @@ initialize();
     <!-- Header -->
     <div class="page-header">
       <div class="header-content">
-        <h2 class="course-title">
-          {{ course_obj.course_code }} — {{ course_obj.course_name }}
-        </h2>
+        <div class="course-title">
+          <div id="codes">
+            <span id="course-code">{{ section_obj.course_code }}</span>
+            <span id="section-code">{{ section_obj.section_number }}</span>
+          </div>
+          <div id="course-name">{{ section_obj.course_name }}</div>
+        </div>
 
         <p class="subtitle">
           {{ semester_name }}
@@ -171,7 +169,7 @@ initialize();
 
     <!-- Description -->
     <p class="course-description">
-      {{ course_obj.course_description }}
+      {{ section_obj.course_description }}
     </p>
 
     <!-- Instructors -->
@@ -208,9 +206,9 @@ initialize();
     <section class="detail-section">
       <h3>Performance Indicators</h3>
 
-      <div class="indicator-list">
-        <BaseCard v-for="piid in indicator_ids" :key="piid" variant="default" class="indicator-card">
-          <IndicatorListing :piid="piid" :course_id="course_id" :instructor_id="instructors[0].id"/>
+      <div class="indicator-list" v-if="indicator_ids.length > 0">
+        <BaseCard v-for="i in indicator_ids.length" :key="i" variant="default" class="indicator-card">
+          <IndicatorListing :piid="indicator_ids[i - 1]" :section_id="section_id" :instructor_id="instructors[0].id" :course_indicator_id="course_indicator_ids[i - 1]" :semester_id="section_obj.semester_id"/>
         </BaseCard>
       </div>
     </section>
@@ -288,10 +286,31 @@ initialize();
 }
 
 .course-title {
-  margin: 0;
   color: var(--color-text-primary);
   font-size: 2rem;
   font-weight: 700;
+}
+
+#course-name {
+  margin-bottom: 1rem;
+  color: var(--color-text-primary);
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+#course-code {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+#section-code {
+  color: var(--color-text-secondary);
+  font-size: 1rem;
+  font-weight: 700;
+  margin-left: 1rem;
+  margin-bottom: 0rem;
 }
 
 .subtitle {
