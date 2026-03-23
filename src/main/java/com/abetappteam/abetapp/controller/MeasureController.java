@@ -1,21 +1,10 @@
 package com.abetappteam.abetapp.controller;
 
 import com.abetappteam.abetapp.entity.Requests.Measure.MeasureSearchRequest;
-import com.abetappteam.abetapp.entity.Requests.Section.SectionSearchRequest;
-import com.abetappteam.abetapp.entity.Requests.SectionProgram.SectionProgramSearchRequest;
-import com.abetappteam.abetapp.service.CourseIndicatorService;
-import com.abetappteam.abetapp.service.MeasureResultService;
 import com.abetappteam.abetapp.service.MeasureService;
-import com.abetappteam.abetapp.service.SectionProgramService;
-import com.abetappteam.abetapp.service.SectionService;
 import com.abetappteam.abetapp.dto.ApiResponse;
 import com.abetappteam.abetapp.dto.MeasureDTO;
-import com.abetappteam.abetapp.dto.MeasureResultDTO;
 import com.abetappteam.abetapp.entity.Measure;
-import com.abetappteam.abetapp.entity.MeasureResult;
-import com.abetappteam.abetapp.entity.Section;
-import com.abetappteam.abetapp.entity.SectionProgram;
-import com.abetappteam.abetapp.entity.CourseIndicator;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -66,8 +55,8 @@ public class MeasureController extends BaseController{
     //Delete/remove a Measure
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteMeasure(@PathVariable Long id){
-        logger.info("Deleting measure with id: {}", id);
-        service.delete(id);
+        logger.info("Deactivating measure with id: {}", id);
+        service.deactivate(id);
         return success(null, "Measure deleted successfully");
     }
 }

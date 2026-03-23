@@ -154,7 +154,7 @@ function open_delete_form(){
 async function delete_measure(){
   //DELETE request to server
   try {
-    const { data } = await api.delete(`/measure/${measure_obj.value.id}`);
+    const { data } = await api.delete(`/measure/${measure_obj.value.measure_id}`);
 
     //Update measure object
     measure_obj.value.recommended_action = ra_form_data.value.recommended_action
