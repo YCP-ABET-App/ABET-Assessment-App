@@ -16,27 +16,24 @@ public class ProgramDTO {
     private Boolean active = true;
 
     //Constructors
-    public ProgramDTO() {}
-
     public ProgramDTO(String name, String institution, Boolean active) {
         this.name = name;
         this.institution = institution;
         this.active = active;
     }
 
-    //Getters and Setters 
+    //Getters and Setters
+
     public String getName() {
         return name;
+    }
+    public void setName(String name) {
+        this.name = name;
     }
 
     public String getInstitution() {
         return institution;
     }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
     public void setInstitution(String institution) {
         this.institution = institution;
     }
@@ -44,7 +41,6 @@ public class ProgramDTO {
     public Boolean getActive(){
         return active;
     }
-
     public void setActive(Boolean active){
         this.active = active;
     }

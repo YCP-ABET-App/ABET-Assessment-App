@@ -182,6 +182,23 @@ CREATE TABLE section_user (
     FOREIGN KEY (section_id) REFERENCES section(id)
 );
 
+-- SectionProgram table
+CREATE TABLE section_program (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    section_id BIGINT NOT NULL,
+    program_id BIGINT NOT NULL,
+    -- From BaseEntity
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    version BIGINT DEFAULT 0,
+    deleted BOOLEAN DEFAULT FALSE NOT NULL,
+    deleted_at TIMESTAMP NULL,
+    -- CourseInstructor-specific
+    is_active BOOLEAN DEFAULT TRUE NOT NULL,
+    FOREIGN KEY (section_id) REFERENCES section(id),
+    FOREIGN KEY (program_id) REFERENCES program(id)
+);
+
 -- CourseIndicator table
 CREATE TABLE course_indicator (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -203,9 +220,9 @@ CREATE TABLE course_indicator (
 CREATE TABLE measure (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     course_indicator_id BIGINT NOT NULL,
+    semester_id BIGINT NOT NULL,
     measure_description TEXT NOT NULL,
     recommended_action TEXT NULL,
-    fcar TEXT NULL,
     -- From BaseEntity
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
@@ -214,7 +231,8 @@ CREATE TABLE measure (
     deleted_at TIMESTAMP NULL,
     -- Measure-specific
     is_active BOOLEAN DEFAULT TRUE NOT NULL,
-    FOREIGN KEY (course_indicator_id) REFERENCES course_indicator(id)
+    FOREIGN KEY (course_indicator_id) REFERENCES course_indicator(id),
+    FOREIGN KEY (semester_id) REFERENCES semester(id)
 );
 
 -- Measure Results Table
@@ -394,6 +412,21 @@ VALUES
     (9, 2, 9, TRUE);  -- Moscola teaches CS 420
 
 ------------------------------------------------------------
+-- SECTION_PROGRAM (Assign programs to sections)
+------------------------------------------------------------
+INSERT INTO section_program (id, section_id, program_id, is_active)
+VALUES
+    (1, 1, 1, TRUE),
+    (2, 2, 1, TRUE),
+    (3, 3, 1, TRUE),
+    (4, 4, 1, TRUE),
+    (5, 5, 1, TRUE),
+    (6, 6, 1, TRUE),
+    (7, 7, 1, TRUE),
+    (8, 8, 1, TRUE),
+    (9, 9, 1, TRUE);
+
+------------------------------------------------------------
 -- COURSE_INDICATOR (Map courses to performance indicators)
 ------------------------------------------------------------
 -- CS 101 indicators
@@ -470,14 +503,14 @@ VALUES
 ------------------------------------------------------------
 
 -- CS 101 Measures
-INSERT INTO measure (id, course_indicator_id, measure_description, recommended_action, is_active)
+INSERT INTO measure (id, course_indicator_id, semester_id, measure_description, recommended_action, is_active)
 VALUES
     -- 1.1-cs101: Assignment 3 MS1
-    (1, 1, 'Assignment 3 MS1, Dominoes Initialization', NULL, TRUE),
+    (1, 1, 2, 'Assignment 3 MS1, Dominoes Initialization', NULL, TRUE),
     -- 1.3-cs101: Assignment 3 MS2
-    (2, 2, 'Assignment 3 MS2, Dominoes Simulation', NULL, TRUE),
+    (2, 2, 2, 'Assignment 3 MS2, Dominoes Simulation', NULL, TRUE),
     -- 6.1-cs101: Assignment 4
-    (3, 3, 'Assignment 4, Roulette (functions)', NULL, TRUE);
+    (3, 3, 2, 'Assignment 4, Roulette (functions)', NULL, TRUE);
 
 -- Section 1 Measure Results
 INSERT INTO measure_result (id, measure_id, section_id, program_id, met, exceeded, below, observation, rejection_note, m_status, is_active)
@@ -500,22 +533,22 @@ VALUES
     (6, 3, 2, 1, 31, 2, 11, NULL, NULL, 'Complete', TRUE);
 
 -- CS 201 Measures
-INSERT INTO measure (id, course_indicator_id, measure_description, recommended_action, is_active)
+INSERT INTO measure (id, course_indicator_id, semester_id, measure_description, recommended_action, is_active)
 VALUES
     -- 1.1-cs201: Assignment 6
-    (4, 4, 'Assignment 6, Final project', NULL, TRUE),
+    (4, 4, 2, 'Assignment 6, Final project', NULL, TRUE),
     -- 1.2-cs201: Exam 2
-    (5, 5, 'Exam 2, Question 2, Fibonacci', NULL, TRUE),
+    (5, 5, 2, 'Exam 2, Question 2, Fibonacci', NULL, TRUE),
     -- 1.6-cs201: Exam 3
-    (6, 6, 'Exam 3, Question 7, Asymptotic Behavior', NULL, TRUE),
+    (6, 6, 2, 'Exam 3, Question 7, Asymptotic Behavior', NULL, TRUE),
     -- 2.5-cs201: NOT ASSESSED
     -- 6.1-cs201: Final Project
-    (7, 8, 'Final Project', NULL, TRUE),
+    (7, 8, 2, 'Final Project', NULL, TRUE),
     -- 6.2-cs201: Final Project UI
-    (8, 9, 'Final Project, UI', NULL, TRUE),
+    (8, 9, 2, 'Final Project, UI', NULL, TRUE),
     -- 6.3-cs201: NOT ASSESSED
     -- 6.4-cs201: Lab 6 and Assignment 6
-    (9, 10, 'Lab 6 and Assignment 6, Unit tests', NULL, TRUE);
+    (9, 10, 2, 'Lab 6 and Assignment 6, Unit tests', NULL, TRUE);
 
 INSERT INTO measure_result (id, measure_id, section_id, program_id, met, exceeded, below, observation, rejection_note, m_status, is_active)
 VALUES
@@ -527,14 +560,14 @@ VALUES
     (12, 9, 3, 1, 17, 3, 8, 'This indicator was used rather than 6.3 as the course material covered unit testing instead of concurrency.', NULL, 'Complete', TRUE);
 
 -- CS 330 Measures
-INSERT INTO measure (id, course_indicator_id, measure_description, recommended_action, is_active)
+INSERT INTO measure (id, course_indicator_id, semester_id, measure_description, recommended_action, is_active)
 VALUES
     -- 2.6-cs330: Lab 2
-    (10, 11, 'Lab 2, HTTP', NULL, TRUE),
+    (10, 11, 2, 'Lab 2, HTTP', NULL, TRUE),
     -- 2.6-cs330: Quiz 3
-    (11, 11, 'Quiz 3, Question 10, Host authentication', NULL, TRUE),
+    (11, 11, 2, 'Quiz 3, Question 10, Host authentication', NULL, TRUE),
     -- 2.7-cs330: Quiz 3
-    (12, 12, 'Quiz 3, Question 11, Symmetric Key Cryptography', NULL, TRUE);
+    (12, 12, 2, 'Quiz 3, Question 11, Symmetric Key Cryptography', NULL, TRUE);
 
 INSERT INTO measure_result (id, measure_id, section_id, program_id, met, exceeded, below, observation, rejection_note, m_status, is_active)
 VALUES
@@ -543,26 +576,26 @@ VALUES
     (15, 12, 4, 1, 16, 0, 0, NULL, NULL, 'Complete', TRUE);
 
 -- CS 335 Measures
-INSERT INTO measure (id, course_indicator_id, measure_description, recommended_action, is_active)
+INSERT INTO measure (id, course_indicator_id, semester_id, measure_description, recommended_action, is_active)
 VALUES
     -- 2.6-cs335: Lab 1
-    (13, 13, 'Lab 1, Shellshock attack', NULL, TRUE),
+    (13, 13, 2, 'Lab 1, Shellshock attack', NULL, TRUE),
     -- 2.6-cs335: Exam 1
-    (14, 13, 'Exam 1, Question 6, Authorization vs. Authentication', NULL, TRUE),
+    (14, 13, 2, 'Exam 1, Question 6, Authorization vs. Authentication', NULL, TRUE),
     -- 2.6-cs335: Quiz 2
-    (15, 13, 'Quiz 2, Question 4, XSS identification', NULL, TRUE),
+    (15, 13, 2, 'Quiz 2, Question 4, XSS identification', NULL, TRUE),
     -- 2.7-cs335: Quiz 2
-    (16, 14, 'Quiz 2, Question 5, XSS mitigation', NULL, TRUE),
+    (16, 14, 2, 'Quiz 2, Question 5, XSS mitigation', NULL, TRUE),
     -- 2.7-cs335: Quiz 2
-    (17, 14, 'Quiz 2, Question 8, SQL injection', NULL, TRUE),
+    (17, 14, 2, 'Quiz 2, Question 8, SQL injection', NULL, TRUE),
     -- 4.1-cs335: Ethical Hacking Acknowledgement
-    (18, 15, 'Ethical Hacking Acknowledgement', NULL, TRUE),
+    (18, 15, 2, 'Ethical Hacking Acknowledgement', NULL, TRUE),
     -- 4.1-cs335: Exam 1
-    (19, 15, 'Exam 1, Question 15, MAC tracking', NULL, TRUE),
+    (19, 15, 2, 'Exam 1, Question 15, MAC tracking', NULL, TRUE),
     -- 6.5-cs335: Lab 6
-    (20, 16, 'Lab 6, XSS vulnerabilities', 'Consider timing to avoid major capstone milestones for seniors', TRUE),
+    (20, 16, 2, 'Lab 6, XSS vulnerabilities', 'Consider timing to avoid major capstone milestones for seniors', TRUE),
     -- 6.5-cs335: Quiz 2
-    (21, 16, 'Quiz 2, Question 14, "Man-in-the-Middle" attacks', NULL, TRUE);
+    (21, 16, 2, 'Quiz 2, Question 14, "Man-in-the-Middle" attacks', NULL, TRUE);
 
 INSERT INTO measure_result (id, measure_id, section_id, program_id, met, exceeded, below, observation, rejection_note, m_status, is_active)
 VALUES
@@ -577,36 +610,36 @@ VALUES
     (24, 21, 5, 1, 13, 0, 0, NULL, NULL, 'Complete', TRUE);
 
 -- CS 340 Measures
-INSERT INTO measure (id, course_indicator_id, measure_description, recommended_action, is_active)
+INSERT INTO measure (id, course_indicator_id, semester_id, measure_description, recommended_action, is_active)
 VALUES
     -- 6.1-cs340: Final Project
-    (22, 17, 'Final Project, Compiler Design', NULL, TRUE);
+    (22, 17, 2, 'Final Project, Compiler Design', NULL, TRUE);
 
 INSERT INTO measure_result (id, measure_id, section_id, program_id, met, exceeded, below, observation, rejection_note, m_status, is_active)
 VALUES
     (25, 22, 6, 1, 10, 2, 3, NULL, NULL, 'Complete', TRUE);
 
 -- CS 360 Measures
-INSERT INTO measure (id, course_indicator_id, measure_description, recommended_action, is_active)
+INSERT INTO measure (id, course_indicator_id, semester_id, measure_description, recommended_action, is_active)
 VALUES
     -- 1.1-cs360: Exam 1 Takehome
-    (23, 18, 'Exam 1 Takehome, Question 3a, Derive recursive equation', NULL, TRUE),
+    (23, 18, 2, 'Exam 1 Takehome, Question 3a, Derive recursive equation', NULL, TRUE),
     -- 1.1-cs360: Exam 2 Inclass
-    (24, 18, 'Exam 2 Inclass, Question 1, Derive recursive equation', 'Since students were solid on the concept for simpler problems (exam 1), provide some additional practice and slightly reduce the difficulty for the inclass exam problem', TRUE),
+    (24, 18, 2, 'Exam 2 Inclass, Question 1, Derive recursive equation', 'Since students were solid on the concept for simpler problems (exam 1), provide some additional practice and slightly reduce the difficulty for the inclass exam problem', TRUE),
     -- 1.2-cs360: Exam 2 Inclass
-    (25, 19, 'Exam 2 Inclass, Question 3, Master Theorem', 'Ensure better consistency of coverage of the material across sections and reassess', TRUE),
+    (25, 19, 2, 'Exam 2 Inclass, Question 3, Master Theorem', 'Ensure better consistency of coverage of the material across sections and reassess', TRUE),
     -- 1.2-cs360: Exam 4 Inclass
-    (26, 19, 'Exam 4 Inclass, Question 1, Dijkstra''s Algorithm', NULL, TRUE),
+    (26, 19, 2, 'Exam 4 Inclass, Question 1, Dijkstra''s Algorithm', NULL, TRUE),
     -- 1.3-cs360: Exam 1 Takehome
-    (27, 20, 'Exam 1 Takehome, Question 1b, More efficient algorithm', NULL, TRUE),
+    (27, 20, 2, 'Exam 1 Takehome, Question 1b, More efficient algorithm', NULL, TRUE),
     -- 1.3-cs360: Exam 4 Takehome
-    (28, 20, 'Exam 4 Takehome, Question 3, Maximum matching', 'Provide additional hints as problem was quite difficult', TRUE),
+    (28, 20, 2, 'Exam 4 Takehome, Question 3, Maximum matching', 'Provide additional hints as problem was quite difficult', TRUE),
     -- 1.6-cs360: Empirical Comparison Report
-    (29, 21, 'Empirical Comparison Report', 'Provide additional material on plotting multiple data sets on a single graph to compare results visually', TRUE),
+    (29, 21, 2, 'Empirical Comparison Report', 'Provide additional material on plotting multiple data sets on a single graph to compare results visually', TRUE),
     -- 2.5-cs360: Exam 1
-    (30, 22, 'Exam 1, Question 3d, Empirical benchmark subarray sum', NULL, TRUE),
+    (30, 22, 2, 'Exam 1, Question 3d, Empirical benchmark subarray sum', NULL, TRUE),
     -- 2.5-cs360: Exam 2
-    (31, 22, 'Exam 2, Question 3d, Empirical benchmark median', 'A bit more instruction on constructing multiple curve graphs. Students also struggled with this on the subsequent empirical comparison report', TRUE);
+    (31, 22, 2, 'Exam 2, Question 3d, Empirical benchmark median', 'A bit more instruction on constructing multiple curve graphs. Students also struggled with this on the subsequent empirical comparison report', TRUE);
 
 INSERT INTO measure_result (id, measure_id, section_id, program_id, met, exceeded, below, observation, rejection_note, m_status, is_active)
 VALUES
@@ -621,32 +654,32 @@ VALUES
     (34, 31, 7, 1, 8, 2, 5, NULL, NULL, 'Complete', TRUE);
 
 -- CS 400 Measures
-INSERT INTO measure (id, course_indicator_id, measure_description, recommended_action, is_active)
+INSERT INTO measure (id, course_indicator_id, semester_id, measure_description, recommended_action, is_active)
 VALUES
     -- 1.4-cs400: Assignment 3 Requirements
-    (32, 23, 'Assignment 3, Requirements', NULL, TRUE),
+    (32, 23, 2, 'Assignment 3, Requirements', NULL, TRUE),
     -- 1.5-cs400: Assignment 3 Use Cases
-    (33, 24, 'Assignment 3, Use Cases', 'More weight and emphasis on creation of use cases as part of requirements document', TRUE),
+    (33, 24, 2, 'Assignment 3, Use Cases', 'More weight and emphasis on creation of use cases as part of requirements document', TRUE),
     -- 2.1-cs400: Assignment 1
-    (34, 25, 'Assignment 1, Project Proposal', NULL, TRUE),
+    (34, 25, 2, 'Assignment 1, Project Proposal', NULL, TRUE),
     -- 2.2-cs400: Assignment 4 UML
-    (35, 26, 'Assignment 4, Analysis and Design - UML', 'None, as students were able to demonstrate proficiency upon resubmission', TRUE),
+    (35, 26, 2, 'Assignment 4, Analysis and Design - UML', 'None, as students were able to demonstrate proficiency upon resubmission', TRUE),
     -- 2.3-cs400: Assignment 4 UI
-    (36, 27, 'Assignment 4, Analysis and Design - UI', NULL, TRUE),
+    (36, 27, 2, 'Assignment 4, Analysis and Design - UI', NULL, TRUE),
     -- 2.4-cs400: Assignment 5
-    (37, 28, 'Assignment 5, Minimal Working System - Unit Tests', 'None, one group started a project from scratch and thus did not have a testing framework at this stage. By the end of the project they had a well developed testing architecture including CI/CD server deployment.', TRUE),
+    (37, 28, 2, 'Assignment 5, Minimal Working System - Unit Tests', 'None, one group started a project from scratch and thus did not have a testing framework at this stage. By the end of the project they had a well developed testing architecture including CI/CD server deployment.', TRUE),
     -- 3.1-cs400: Final Presentation Quality
-    (38, 29, 'Final Presentation, Quality', NULL, TRUE),
+    (38, 29, 2, 'Final Presentation, Quality', NULL, TRUE),
     -- 3.2-cs400: Final Presentation Technical
-    (39, 30, 'Final Presentation, Technical', NULL, TRUE),
+    (39, 30, 2, 'Final Presentation, Technical', NULL, TRUE),
     -- 3.3-cs400: Final Report Draft
-    (40, 31, 'Final Report, Draft', NULL, TRUE),
+    (40, 31, 2, 'Final Report, Draft', NULL, TRUE),
     -- 5.1-cs400: Issue Tracker and Peer Evaluations
-    (41, 32, 'Issue Tracker, Instructor Observations, Peer Evaluations', NULL, TRUE),
+    (41, 32, 2, 'Issue Tracker, Instructor Observations, Peer Evaluations', NULL, TRUE),
     -- 5.2-cs400: Peer Evaluations
-    (42, 33, 'Peer Evaluations, Instructor Observations', NULL, TRUE),
+    (42, 33, 2, 'Peer Evaluations, Instructor Observations', NULL, TRUE),
     -- 6.4-cs400: Assignment 6
-    (43, 34, 'Assignment 6, 50% Working System - Testing Framework', NULL, TRUE);
+    (43, 34, 2, 'Assignment 6, 50% Working System - Testing Framework', NULL, TRUE);
 
 INSERT INTO measure_result (id, measure_id, section_id, program_id, met, exceeded, below, observation, rejection_note, m_status, is_active)
 VALUES
@@ -664,14 +697,14 @@ VALUES
     (46, 43, 8, 1, 20, 4, 3, NULL, NULL, 'Completed', TRUE);
 
 -- CS 420 Measures
-INSERT INTO measure (id, course_indicator_id, measure_description, recommended_action, is_active)
+INSERT INTO measure (id, course_indicator_id, semester_id, measure_description, recommended_action, is_active)
 VALUES
     -- 6.1-cs420: Programming Assignment #2
-    (44, 35, 'Programming Assignment #2, Shared Memory', NULL, TRUE),
+    (44, 35, 2, 'Programming Assignment #2, Shared Memory', NULL, TRUE),
     -- 6.3-cs420: Programming Assignment #3
-    (45, 36, 'Programming Assignment #3, Multithreaded Application', NULL, TRUE),
+    (45, 36, 2, 'Programming Assignment #3, Multithreaded Application', NULL, TRUE),
     -- 6.5-cs420: Programming Assignment #1
-    (46, 37, 'Programming Assignment #1, Error Checking', NULL, TRUE);
+    (46, 37, 2, 'Programming Assignment #1, Error Checking', NULL, TRUE);
 
 INSERT INTO measure_result (id, measure_id, section_id, program_id, met, exceeded, below, observation, rejection_note, m_status, is_active)
 VALUES

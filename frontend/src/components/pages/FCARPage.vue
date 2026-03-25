@@ -62,13 +62,19 @@
     <textarea v-model="form.summary" placeholder="Summarize findings, trends, and recommendations..."></textarea>
 
     <button class="generate-btn" @click="generateReport">Generate Report</button>
+    <button class="generate-btn" @click="exportReport" :disabled="exportingDrive">
+      {{ exportingDrive ? 'Exporting...' : 'Export Report To Drive' }}
+    </button>
+
   </section>
 </template>
 
 <script setup lang="ts">
+
 import { ref, computed } from "vue";
 import { useRoute } from "vue-router";
 import api from "@/api";
+import { useGoogleDrive } from '@/composables/use-google-drive';
 
 const route = useRoute();
 const measureId = ref(NaN);
@@ -88,6 +94,9 @@ const form = ref({
   outcomeEvaluation: "", // Manual choice
 });
 
+const exportingDrive = ref(false);
+const { openDriveFolderPickerAndUpload } = useGoogleDrive();
+
 // Logic to suggest an evaluation based on the Target Goal vs Actual Data
 const suggestedEvaluation = computed(() => {
   const ni = parseInt(form.value.needsImprovement || "0");
@@ -106,47 +115,66 @@ const suggestedEvaluation = computed(() => {
   return "Not Met";
 });
 
+
 function generateReport() {
   if (!form.value.outcomeEvaluation) {
     alert("Please select an Outcome Evaluation from the dropdown before generating the report.");
     return;
   }
+  const { reportText, filename } = generateFCARTextAndFilename();
+  const blob = new Blob([reportText], { type: "text/plain" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+}
 
+function generateFCARTextAndFilename() {
   const f = form.value;
   const lines = [];
-
   lines.push(`FCAR REPORT - ${f.course}`);
   lines.push(`Outcome: (${f.outcome}) ${f.outcomeDescription}`);
   lines.push(`Work Used: ${f.work}`);
   lines.push(`Description: ${f.description}`);
   lines.push("");
-
   const ni = parseInt(f.needsImprovement || "0");
   const me = parseInt(f.meetsExpectations || "0");
   const ee = parseInt(f.exceedsExpectations || "0");
   const total = ni + me + ee;
-
   const pctNI = total ? ((ni / total) * 100).toFixed(1) : "0.0";
   const pctME = total ? ((me / total) * 100).toFixed(1) : "0.0";
   const pctEE = total ? ((ee / total) * 100).toFixed(1) : "0.0";
-
   lines.push(`Target Goal: ${f.targetGoal}%`);
   lines.push(`Actual Performance:`);
   lines.push(`- Needs Improvement: ${ni}/${total} (${pctNI}%)`);
   lines.push(`- Meets Expectations: ${me}/${total} (${pctME}%)`);
   lines.push(`- Exceeds Expectations: ${ee}/${total} (${pctEE}%)`);
   lines.push("");
-
   lines.push(`FINAL EVALUATION: ${f.outcomeEvaluation}`);
   lines.push(`OBSERVATIONS: ${f.summary || "None"}`);
-
   const reportText = lines.join("\n");
-  const blob = new Blob([reportText], { type: "text/plain" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `FCAR_${f.outcome.replace(/\./g, '_')}.txt`;
-  a.click();
+  const filename = `FCAR_${f.outcome.replace(/\./g, '_')}.txt`;
+  return { reportText, filename };
+}
+
+async function exportReport() {
+  if (!form.value.outcomeEvaluation) {
+    alert("Please select an Outcome Evaluation from the dropdown before exporting the report.");
+    return;
+  }
+  exportingDrive.value = true;
+  try {
+    const { reportText, filename } = generateFCARTextAndFilename();
+    const blob = new Blob([reportText], { type: "text/plain" });
+    await openDriveFolderPickerAndUpload(blob, filename);
+    alert('Exported to Google Drive successfully!');
+  } catch (error) {
+    console.error('Export to Drive failed:', error);
+    alert('Failed to export to Google Drive. Please try again.');
+  } finally {
+    exportingDrive.value = false;
+  }
 }
 
 async function initialize() {
