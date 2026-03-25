@@ -86,7 +86,7 @@ const props = defineProps<{
 
 const emit = defineEmits(["close", "submitted"]);
 
-const prefixes = ["ECE", "ME", "CS", "CVE"];
+const prefixes = ["ECE", "ME", "CS", "CVE", "EGR"];
 const codePrefix = ref("ECE");
 const codeSuffix = ref("");
 
