@@ -158,7 +158,11 @@ async function executeSave(isNew: boolean) {
         </div>
 
         <label class="checkbox-container">
-          <input type="checkbox" v-model="isActive" />
+          <input
+            type="checkbox"
+            :checked="isActive"
+            @click="isActive = !isActive"
+          />
           <span class="checkbox-label">Active Course</span>
         </label>
       </form>
