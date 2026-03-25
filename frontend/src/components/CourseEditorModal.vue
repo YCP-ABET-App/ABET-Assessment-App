@@ -168,7 +168,6 @@ async function executeSave(isNew: boolean) {
 
         <div class="choice-grid">
           <button class="choice-card" @click="executeSave(false)" :disabled="saving">
-            <div class="card-icon">🔄</div>
             <div class="card-info">
               <h4>Update Existing</h4>
               <p>Overwrite <strong>{{ props.course?.courseCode }}</strong> with new details.</p>
@@ -176,7 +175,6 @@ async function executeSave(isNew: boolean) {
           </button>
 
           <button class="choice-card highlight" @click="executeSave(true)" :disabled="saving">
-            <div class="card-icon">✨</div>
             <div class="card-info">
               <h4>Create as New</h4>
               <p>Keep old course and create <strong>{{ selectedPrefix }}{{ courseNumber }}</strong>.</p>
