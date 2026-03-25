@@ -42,6 +42,6 @@ public interface SectionRepository  extends JpaRepository<Section, Long>
        "AND (:#{#request.userId()} IS NULL OR su.userId = :#{#request.userId()})")
     List<Section> searchSections(@Param("request") SectionSearchRequest request);
 
-    @Query("SELECT s FROM Section s WHERE s.sectionNumber = :sectionNumber AND s.semesterId = :semesterId AND s.courseId = :courseId")
+    @Query("SELECT CASE WHEN COUNT(s) > 0 THEN true ELSE false END FROM Section s WHERE s.sectionNumber = :sectionNumber AND s.semesterId = :semesterId AND s.courseId = :courseId")
     boolean existsByCourseNumberAndSemesterIdAndCourseId(@Param("sectionNumber") String sectionNumber, @Param("semesterId") int semesterId, @Param("courseId") int courseId);
 }
