@@ -56,12 +56,14 @@ const userStore = useUserStore();
 
 const showNewSectionForm = ref(false);
 const newSectionNumber = ref("");
+const newInstructorId = ref<number | null>(null);
 const submittingSection = ref(false);
 const loading = ref(false);
 const error = ref<string | null>(null);
 const indicatorsWithMeasures = ref<IndicatorWithMeasures[]>([]);
 const { currentProgramId, currentSemesterId } = storeToRefs(userStore);
 const currentCourseSemesterSections = ref<Section[]>([]);
+const availableInstructors = ref<Array<{id: number; fullName: string}>>([]);
 
 /* -----------------------------------------------
  * Load course indicators and measures
@@ -94,8 +96,12 @@ async function loadCourseData() {
 
       const userId = sectionUserRes.data?.data?.[0]?.userId;
 
-      const userRes = await api.get(`/users/${userId}`);
-      const userName = userRes.data?.data?.fullName;
+      var userName = "Unassigned";
+
+      if(userId > 0) {
+        const userRes = await api.get(`/users/${userId}`);
+        userName = userRes.data?.data?.fullName;
+      }
 
       currentCourseSemesterSections.value.push({
         id: section.id,
@@ -244,11 +250,30 @@ function calculatePercentage(met: number, exceeded: number, total: number): numb
 function openNewSectionForm() {
   showNewSectionForm.value = true;
   newSectionNumber.value = "";
+  newInstructorId.value = null;
+  loadInstructors();
+}
+
+async function loadInstructors() {
+  try {
+    const res = await api.get(`/users`, {
+      params: {
+        role: "INSTRUCTOR",
+        semesterId: currentSemesterId.value
+      }
+    });
+    console.log(res)
+    availableInstructors.value = res.data?.content ?? [];
+  } catch (err: any) {
+    console.error("Failed to load instructors:", err);
+    availableInstructors.value = [];
+  }
 }
 
 function cancelNewSection() {
   showNewSectionForm.value = false;
   newSectionNumber.value = "";
+  newInstructorId.value = null;
 }
 
 async function submitNewSection() {
@@ -269,21 +294,47 @@ async function submitNewSection() {
 
     const newSection = sectionRes.data?.data;
     if (newSection) {
+      // Assign instructor if one was selected
+      let instructorName = "Unassigned";
+
+      if (newInstructorId.value) {
+        try {
+          await api.post(`/section-user`, {
+            sectionId: newSection.id,
+            userId: newInstructorId.value
+          });
+
+          // Get instructor name
+          const selectedInstructor = availableInstructors.value.find(
+            i => i.id === newInstructorId.value
+          );
+          instructorName = selectedInstructor?.fullName || "Assigned";
+        } catch (err: any) {
+          console.error("Failed to assign instructor:", err);
+          // Continue even if instructor assignment fails
+        }
+      }
+
       currentCourseSemesterSections.value.push({
         id: newSection.id,
         formattedName: `${props.course.courseCode} ${props.course.courseName} ${newSection.sectionNumber}`,
-        instructor: "Unassigned" // or fetch the instructor if needed
+        instructor: instructorName
       });
     }
 
     showNewSectionForm.value = false;
     newSectionNumber.value = "";
+    newInstructorId.value = null;
   } catch (err: any) {
     console.error("Failed to create section:", err);
     error.value = err?.response?.data?.message || "Failed to create section. Please try again.";
   } finally {
     submittingSection.value = false;
   }
+}
+
+function openSectionDetails(sectionId: number) {
+  window.open(`/section/${sectionId}`, "_blank");
 }
 </script>
 
@@ -293,18 +344,6 @@ async function submitNewSection() {
     @close="emit('close')"
     size="xl"
   >
-
-    <!-- HEADER CONTENT (inline, not a slot) -->
-<!--    <div class="modal-header-content">-->
-<!--      <h2>{{ course?.courseName }}</h2>-->
-<!--      <BaseButton-->
-<!--        variant="primary"-->
-<!--        size="sm"-->
-<!--        @click="$router.push(`/course/${course?.id}`)"-->
-<!--      >-->
-<!--        {{ course?.courseCode }}-->
-<!--      </BaseButton>-->
-<!--    </div>-->
 
     <div class="course-code-badge">
       <h2>{{ course?.courseName }}</h2>
@@ -352,8 +391,9 @@ async function submitNewSection() {
             <tr
               v-for="section in currentCourseSemesterSections"
               :key="section.id"
-              class="course-row clickable">
-              <!-- @click="openSectionDetails(section.id)"-->
+              class="course-row clickable"
+              @click="openSectionDetails(section.id)"
+            >
               <td>{{ section.formattedName }}</td>
               <td>{{ section.instructor }}</td>
             </tr>
@@ -367,6 +407,19 @@ async function submitNewSection() {
                     class="section-input"
                     @keyup.enter="submitNewSection"
                   />
+                  <select
+                    v-model.number="newInstructorId"
+                    class="instructor-select"
+                  >
+                    <option :value="null">Select Instructor (Optional)</option>
+                    <option
+                      v-for="instructor in availableInstructors"
+                      :key="instructor.id"
+                      :value="instructor.id"
+                    >
+                      {{ instructor.fullName }}
+                    </option>
+                  </select>
                   <button
                     @click="submitNewSection"
                     :disabled="submittingSection"
@@ -896,6 +949,30 @@ async function submitNewSection() {
   outline: none;
   border-color: var(--color-primary);
   box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.1);
+}
+
+.instructor-select {
+  flex: 0 1 auto;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--color-border-light);
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  transition: all 0.2s;
+  cursor: pointer;
+  min-width: 180px;
+}
+
+.instructor-select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.1);
+}
+
+.instructor-select option {
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
 }
 
 .btn-submit,

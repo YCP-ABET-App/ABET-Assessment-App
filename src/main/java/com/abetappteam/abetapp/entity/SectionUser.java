@@ -2,16 +2,17 @@ package com.abetappteam.abetapp.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 @Entity
 @Table(name = "section_user")
 public class SectionUser extends BaseEntity {
 
-    @NotBlank(message = "Section is required")
+    @NotNull(message = "Section is required")
     @Column(name = "section_id", nullable = false)
     private int sectionId;
 
-    @NotBlank(message = "User is required")
+    @NotNull(message = "User is required")
     @Column(name = "user_id", nullable = false)
     private int userId;
 
