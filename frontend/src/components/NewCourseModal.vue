@@ -42,26 +42,7 @@
         ></textarea>
       </div>
 
-      <div class="form-row-double">
-        <div class="form-group">
-          <label class="label">Student Count</label>
-          <input
-            v-model.number="formData.studentCount"
-            type="number"
-            class="input"
-          />
-        </div>
-
-        <div class="form-group">
-          <label class="label">Threshold (%)</label>
-          <input
-            v-model.number="formData.threshold"
-            type="number"
-            class="input"
-          />
-        </div>
       </div>
-    </div>
 
     <template #footer>
       <div class="form-actions-footer">
@@ -86,19 +67,17 @@ const props = defineProps<{
 
 const emit = defineEmits(["close", "submitted"]);
 
-const prefixes = ["ECE", "ME", "CS", "CVE"];
+const prefixes = ["ECE", "ME", "CS", "CVE", "EGR"];
 const codePrefix = ref("ECE");
 const codeSuffix = ref("");
 
 const formData = ref({
   courseName: "",
-  courseDescription: "",
-  studentCount: 0,
-  threshold: 0
+  courseDescription: ""
 });
 
 function handleClose() {
-  formData.value = { courseName: "", courseDescription: "", studentCount: 0, threshold: 0 };
+  formData.value = { courseName: "", courseDescription: "" };
   codePrefix.value = "ECE";
   codeSuffix.value = "";
   emit("close");
