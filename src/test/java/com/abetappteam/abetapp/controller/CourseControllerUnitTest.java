@@ -6,6 +6,7 @@ import com.abetappteam.abetapp.dto.CourseDTO;
 import com.abetappteam.abetapp.entity.Course;
 import com.abetappteam.abetapp.entity.Requests.Course.CourseSearchRequest;
 import com.abetappteam.abetapp.service.CourseService;
+import com.abetappteam.abetapp.util.TestDataBuilder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -62,32 +63,32 @@ class CourseControllerUnitTest extends BaseControllerTest {
         testCourseDTO.setStudentCount(28);
     }
 
-//    @Test
-//    void shouldGetCourseById() throws Exception {
-//        // Use the search endpoint (CourseSearchRequest) to retrieve the course by id
-//        List<Course> list = List.of(testCourse);
-//        when(courseService.searchCourse(any())).thenReturn(list);
-//
-//        Map<String, Object> body = new HashMap<>();
-//        body.put("id", 1);
-//        body.put("courseCode", null);
-//        body.put("courseName", null);
-//        body.put("courseDescription", null);
-//        body.put("student_count", null);
-//        body.put("mirrorId", null);
-//        body.put("isActive", null);
-//
-//        mockMvc.perform(get("/api/courses/searchCourse")
-//                .contentType(MediaType.APPLICATION_JSON)
-//                .content(objectMapper.writeValueAsString(body)))
-//                .andExpect(status().isOk())
-//                .andExpect(jsonPath("$.success").value(true))
-//                .andExpect(jsonPath("$.data[0].id").value(1))
-//                .andExpect(jsonPath("$.data[0].courseName").value("Software Engineering"))
-//                .andExpect(jsonPath("$.data[0].courseCode").value("CS401"));
-//
-//        verify(courseService, times(1)).searchCourse(any());
-//    }
+    // @Test
+    // void shouldGetCourseById() throws Exception {
+    // // Use the search endpoint (CourseSearchRequest) to retrieve the course by id
+    // List<Course> list = List.of(testCourse);
+    // when(courseService.searchCourse(any())).thenReturn(list);
+    //
+    // Map<String, Object> body = new HashMap<>();
+    // body.put("id", 1);
+    // body.put("courseCode", null);
+    // body.put("courseName", null);
+    // body.put("courseDescription", null);
+    // body.put("student_count", null);
+    // body.put("mirrorId", null);
+    // body.put("isActive", null);
+    //
+    // mockMvc.perform(get("/api/courses/searchCourse")
+    // .contentType(MediaType.APPLICATION_JSON)
+    // .content(objectMapper.writeValueAsString(body)))
+    // .andExpect(status().isOk())
+    // .andExpect(jsonPath("$.success").value(true))
+    // .andExpect(jsonPath("$.data[0].id").value(1))
+    // .andExpect(jsonPath("$.data[0].courseName").value("Software Engineering"))
+    // .andExpect(jsonPath("$.data[0].courseCode").value("CS401"));
+    //
+    // verify(courseService, times(1)).searchCourse(any());
+    // }
 
     @Test
     void shouldCreateCourse() throws Exception {
@@ -237,10 +238,9 @@ class CourseControllerUnitTest extends BaseControllerTest {
         List<Course> list = List.of(testCourse);
         when(courseService.searchCourse(any(CourseSearchRequest.class))).thenReturn(list);
 
-
         mockMvc.perform(get("/api/courses/searchCourse")
-                        .param("courseCode", "CS401")
-                        .param("isActive", "true"))
+                .param("courseCode", "CS401")
+                .param("isActive", "true"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data[0].courseCode").value("CS401"));
@@ -252,8 +252,8 @@ class CourseControllerUnitTest extends BaseControllerTest {
     void shouldReturnErrorForInvalidIdFormat() throws Exception {
 
         mockMvc.perform(put("/api/courses/-1")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(testCourseDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(testCourseDTO)))
                 .andExpect(status().isBadRequest());
     }
 
@@ -263,8 +263,8 @@ class CourseControllerUnitTest extends BaseControllerTest {
         when(courseService.searchCourse(any(CourseSearchRequest.class))).thenReturn(list);
 
         mockMvc.perform(get("/api/courses/searchCourse")
-                        .param("courseCode", "CS401")
-                        .param("isActive", "true"))
+                .param("courseCode", "CS401")
+                .param("isActive", "true"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data[0].courseCode").value("CS401"));
@@ -296,5 +296,22 @@ class CourseControllerUnitTest extends BaseControllerTest {
         verify(courseService).assignInstructor(1L, 5L);
     }
 
+    @Test
+    void shouldVersionCourse() throws Exception {
+        // Given
+        Course newVersion = TestDataBuilder.createCourseWithId(2L, "CS401-V2", "Software Engineering v2",
+                "Updated description", 1L);
+        when(courseService.versionCourse(eq(1L), any(CourseDTO.class))).thenReturn(newVersion);
 
+        // When/Then
+        mockMvc.perform(post("/api/courses/1/version")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(testCourseDTO)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.id").value(2))
+                .andExpect(jsonPath("$.data.courseCode").value("CS401-V2"));
+
+        verify(courseService).versionCourse(eq(1L), any(CourseDTO.class));
+    }
 }

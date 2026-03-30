@@ -1,9 +1,13 @@
 package com.abetappteam.abetapp.repository;
 
 import com.abetappteam.abetapp.entity.MeasureResult;
+
+import jakarta.transaction.Transactional;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -46,15 +50,22 @@ public interface MeasureResultRepository extends JpaRepository<MeasureResult, Lo
 
     void deleteByMeasureIdAndProgramId(Long measureId, Long programId);
 
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM MeasureResult mr WHERE mr.measureId IN " +
+            "(SELECT m.id FROM Measure m WHERE m.courseIndicatorId = :courseIndicatorId)")
+    void deleteByCourseIndicatorId(@Param("courseIndicatorId") Long courseIndicatorId);
+
     @Query("SELECT mr FROM MeasureResult mr " +
             "WHERE (:id IS NULL OR mr.id = :id) " +
             "AND (:measureId IS NULL OR mr.measureId = :measureId) " +
             "AND (:sectionId IS NULL OR mr.sectionId = :sectionId) " +
             "AND (:programId IS NULL OR mr.programId = :programId)")
     List<MeasureResult> searchMeasureResults(@Param("id") Integer id,
-                                             @Param("measureId") Integer measureId,
-                                             @Param("sectionId") Integer sectionId,
-                                             @Param("programId") Integer programId);
+            @Param("measureId") Integer measureId,
+            @Param("sectionId") Integer sectionId,
+            @Param("programId") Integer programId);
+
     // Check if measure results has active sections
     @Query("SELECT COUNT(mr) > 0 FROM MeasureResult mr WHERE mr.sectionId = :sectionId AND mr.status NOT IN ('Rejected')")
     boolean hasActiveSections(@Param("sectionId") Long sectionId);
