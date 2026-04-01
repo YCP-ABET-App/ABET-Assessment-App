@@ -74,6 +74,7 @@ async function loadCourseData() {
   loading.value = true;
   error.value = null;
   indicatorsWithMeasures.value = [];
+  currentCourseSemesterSections.value = [];
 
   try {
 
@@ -206,6 +207,21 @@ async function deleteCourse() {
     error.value = err?.response?.data?.message || "Failed to delete course. Please try again.";
   } finally {
     deleting.value = false;
+  }
+}
+
+async function deleteSection(sectionId: number) {
+  const confirmed = window.confirm(
+    `Are you sure you want to delete this section? This action cannot be undone.`
+  );
+  if (!confirmed) return;
+
+  try {
+    await api.delete(`/section/${sectionId}`);
+    loadCourseData();
+  } catch (err: any) {
+    console.error("Failed to delete section:", err);
+    alert(err?.response?.data?.message || "Failed to delete section. Please try again.");
   }
 }
 
@@ -385,6 +401,7 @@ function openSectionDetails(sectionId: number) {
             <tr>
               <th>Section Name</th>
               <th>Primary Instructor</th>
+              <th style="width: 50px; text-align: center;">Actions</th>
             </tr>
             </thead>
             <tbody>
@@ -395,7 +412,17 @@ function openSectionDetails(sectionId: number) {
               @click="openSectionDetails(section.id)"
             >
               <td>{{ section.formattedName }}</td>
-              <td>{{ section.instructor }}</td>
+              <td>{{ section.instructor }} </td>
+              <td style="text-align: center;" @click.stop>
+                <button
+                  @click="deleteSection(section.id)"
+                  class="btn-delete-icon"
+                  title="Delete section"
+                  style="background: rgb(220, 53, 69)"
+                >
+                  <img src="@/assets/trashcan.png" alt="Delete" class="icon-trash" />
+                </button>
+              </td>
             </tr>
             <tr v-if="showNewSectionForm" class="course-row form-row">
               <td colspan="2">
@@ -1011,6 +1038,40 @@ function openSectionDetails(sectionId: number) {
 .btn-cancel:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+/* Delete Button for Sections */
+.btn-delete-icon {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  border-radius: 0.375rem;
+}
+
+
+.btn-delete-icon:hover {
+  background: rgba(220, 53, 69, 0.1);
+}
+
+.btn-delete-icon:active {
+  transform: scale(0.95);
+}
+
+.icon-trash {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.btn-delete-icon:hover .icon-trash {
+  opacity: 1;
 }
 
 /* Responsive */

@@ -35,7 +35,18 @@ public class SectionService extends BaseService<Section, Long, SectionRepository
 
         Section section = new Section(sectionNumber, courseId, semesterId);
         logger.info("Creating new section: {}", section);
-        return repository.save(section);
+        Section result = repository.save(section);
+
+        if(result != null) {
+            logger.info("Section created successfully with id {}: {}", result.getId(), result);
+
+            // TODO: In the future, we'll add performance indicators here
+
+            return result;
+        } else {
+            logger.error("Failed to create section: {}", section);
+            throw new RuntimeException("Failed to create section");
+        }
     }
 
     @Transactional
