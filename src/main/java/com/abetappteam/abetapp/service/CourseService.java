@@ -161,19 +161,19 @@ public class CourseService extends BaseService<Course, Long, CourseRepository> {
     @Transactional
     public void removeCourse(Long courseId) {
         Course course = findById(courseId);
-        if (!repository.existsById(courseId)) {
-            throw new ResourceNotFoundException("Course not found with id: " + courseId);
-        }
-        repository.deleteById(courseId);
 
-        courseIndicatorRepository.deleteByCourseId(courseId);
-        courseInstructorRepository.deleteByCourseId(courseId);
+        if (repository.countMeasuresInReviewByCourseId(courseId) > 0) {
+            throw new BusinessException("Cannot delete course with measures submitted for review");
+        }
 
         List<CourseIndicator> indicators = courseIndicatorRepository.findByCourseId(courseId);
         for (CourseIndicator indicator : indicators) {
             measureResultRepository.deleteByCourseIndicatorId(indicator.getId());
             measureRepository.deleteByCourseIndicatorId(indicator.getId());
         }
+
+        courseIndicatorRepository.deleteByCourseId(courseId);
+        courseInstructorRepository.deleteByCourseId(courseId);
 
         logger.info("Removing course with cascade: {} - {}", course.getCourseCode(), course.getCourseName());
         repository.delete(course);

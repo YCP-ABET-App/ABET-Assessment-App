@@ -81,9 +81,9 @@ public class MeasureRepositoryTest extends BaseRepositoryTest {
     @Test
     void shouldSearchById() {
         Measure saved = measureRepository.save(testMeasure);
-        measureRepository.save(TestDataBuilder.createMeasure(1L, "Other Measure", null, null, "InProgress", true));
+        measureRepository.save(TestDataBuilder.createMeasure(1L, 1L, "Other Measure", "InProgress", true));
 
-        List<Measure> found = measureRepository.searchMeasures(saved.getId().intValue(), null, null);
+        List<Measure> found = measureRepository.searchMeasures(saved.getId().intValue(), null, null, null);
 
         assertThat(found).hasSize(1);
         assertThat(found.get(0).getId()).isEqualTo(saved.getId());
@@ -92,9 +92,9 @@ public class MeasureRepositoryTest extends BaseRepositoryTest {
     @Test
     void shouldSearchByCourseIndicatorId() {
         measureRepository.save(testMeasure);
-        measureRepository.save(TestDataBuilder.createMeasure(2L, "Other Measure", null, null, "InProgress", true));
+        measureRepository.save(TestDataBuilder.createMeasure(2L, 2L, "Other Measure", "InProgress", true));
 
-        List<Measure> found = measureRepository.searchMeasures(null, 1, null);
+        List<Measure> found = measureRepository.searchMeasures(null, 1, null, null);
 
         assertThat(found).hasSize(1);
         assertThat(found.get(0).getCourseIndicatorId()).isEqualTo(1L);
@@ -103,9 +103,9 @@ public class MeasureRepositoryTest extends BaseRepositoryTest {
     @Test
     void shouldSearchByActiveStatus() {
         measureRepository.save(testMeasure);
-        measureRepository.save(TestDataBuilder.createMeasure(1L, "Inactive", null, null, "InProgress", false));
+        measureRepository.save(TestDataBuilder.createMeasure(1L, 1L, "Inactive", "InProgress", false));
 
-        List<Measure> found = measureRepository.searchMeasures(null, null, true);
+        List<Measure> found = measureRepository.searchMeasures(null, null, null, true);
 
         assertThat(found).hasSize(1);
         assertThat(found).allMatch(Measure::getActive);
@@ -114,9 +114,9 @@ public class MeasureRepositoryTest extends BaseRepositoryTest {
     @Test
     void shouldReturnAllWhenNoFilters() {
         measureRepository.save(testMeasure);
-        measureRepository.save(TestDataBuilder.createMeasure(1L, "Another Measure", null, null, "Submitted", true));
+        measureRepository.save(TestDataBuilder.createMeasure(1L, 1L, "Another Measure", "Submitted", true));
 
-        List<Measure> found = measureRepository.searchMeasures(null, null, null);
+        List<Measure> found = measureRepository.searchMeasures(null, null, null, null);
 
         assertThat(found).hasSize(2);
     }

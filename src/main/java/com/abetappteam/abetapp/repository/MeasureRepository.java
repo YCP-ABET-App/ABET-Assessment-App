@@ -19,10 +19,12 @@ public interface MeasureRepository extends JpaRepository<Measure, Long> {
         @Query("SELECT m FROM Measure m WHERE " +
                         "(:id IS NULL OR m.id = :id) AND " +
                         "(:courseIndicatorId IS NULL OR m.courseIndicatorId = :courseIndicatorId) AND " +
+                        "(:semesterId IS NULL OR m.semesterId = :semesterId) AND " +
                         "(:active IS NULL OR m.active = :active)")
         List<Measure> searchMeasures(
                         @Param("id") Integer id,
                         @Param("courseIndicatorId") Integer courseIndicatorId,
+                        @Param("semesterId") Integer semesterId,
                         @Param("active") Boolean active);
 
 }

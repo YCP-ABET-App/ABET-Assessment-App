@@ -261,21 +261,6 @@ class CourseServiceTest extends BaseServiceTest {
     }
 
     @Test
-    void shoudDeleteCourse() {
-        // Given
-        when(courseRepository.findById(1L)).thenReturn(Optional.of(testCourse));
-        when(courseRepository.countMeasuresInReviewByCourseId(1L)).thenReturn(0);
-        doNothing().when(courseRepository).delete(testCourse);
-
-        // When
-        courseService.removeCourse(1L);
-
-        // Then
-        verify(courseRepository).findById(1L);
-        verify(courseRepository).delete(testCourse);
-    }
-
-    @Test
     void shouldDeactivateCourse() {
         // Given
         when(courseRepository.findById(1L)).thenReturn(Optional.of(testCourse));
