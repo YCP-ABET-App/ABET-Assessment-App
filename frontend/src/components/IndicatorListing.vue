@@ -16,7 +16,7 @@ const { isAdmin } = storeToRefs(userStore);
 // Toast notifications
 const toast = useToast();
 
-const props = defineProps({piid: Number, section_id: Number, instructor_id:Number, course_indicator_id:Number})
+const props = defineProps({piid: Number, section_id: Number, instructor_id:Number, course_indicator_id:Number, semester_id:Number})
 
 interface Measure {
   id: number
@@ -100,14 +100,19 @@ async function edit_form_submit() {
 
 async function fetch_measures(){
   try {
-    const { data: m_data } = await api.get(`/measure`, {params:{"courseIndicatorId": props.course_indicator_id}});
+    measures.value = [];
+    const { data: m_data } = await api.get(`/measure`, {params:{"courseIndicatorId": props.course_indicator_id, "active": true}});
     for (const m_entry of m_data.data){
       const measure_id = m_entry.id;
       const {data: mr_data} = await api.get(`measure-result`, {params: {"measureId": measure_id, "sectionId": props.section_id}})
       for (const mr_entry of mr_data.data){
         measures.value.push({
           id: mr_entry.id,
+          measure_id: m_entry.id,
+          section_id: mr_entry.sectionId,
+          program_id: mr_entry.programId,
           course_indicator_id: m_entry.courseIndicatorId,
+          semester_id: m_entry.semesterId,
           measure_description: m_entry.description,
           observation: mr_entry.observation,
           recommended_action: m_entry.recommendedAction,
@@ -144,21 +149,10 @@ async function add_measure_submit(){
   const new_measure = ref({
     id: null,
     courseIndicatorId: props.course_indicator_id,
+    semesterId: props.semester_id,
     description: new_measure_form_data.value.description,
-    observation: null,
     recommendedAction: null,
-    fcar: null,
-    studentsMet: null,
-    studentsExceeded: null,
-    studentsBelow: null,
-    createdAt: null,
-    active: true,
-    deleted: null,
-    deletedAt: null,
-    new: null,
-    status: "InProgress",
-    updatedAt: null,
-    version: null
+    active: true
   }) 
 
   //POST request to server

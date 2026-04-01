@@ -4,6 +4,7 @@ import { useUserStore } from '@/stores/user-store.ts'
 import { BaseButton } from '@/components/ui'
 import { BaseInput } from '@/components/ui'
 import { BaseModal } from '@/components/ui'
+import CounterComponent from '@/components/CounterComponent.vue'
 import api from '@/api';
 
 const userStore = useUserStore()
@@ -32,26 +33,6 @@ function open_complete_form(){
   viewing.value = false
 }
 
-interface Measure {
-  id: number
-  courseIndicatorId: number
-  description: string
-  observation: string | null
-  recommendedAction: string | null
-  fcar: string | null
-  studentsMet: number | null
-  studentsExceeded: number | null
-  studentsBelow: number | null
-  createdAt: string
-  active: boolean
-  deleted: boolean | null
-  deletedAt: string | null
-  new: boolean | null
-  status: "InProgress" | "Complete" | null
-  updatedAt: string | null
-  version: number | null
-}
-
 const complete_form_data = ref({
   met: 0,
   exceeded: 0,
@@ -74,27 +55,20 @@ async function complete_form_submit() {
     return;
   }
 
-  const new_measure_payload = {
+  const new_measure_results_payload = {
     id: measure_obj.value.id,
-    courseIndicatorId: measure_obj.value.course_indicator_id,
-    description: measure_obj.value.measure_description,
+    measureId: measure_obj.value.measure_id,
+    sectionId: measure_obj.value.section_id,
+    programId: measure_obj.value.program_id,
     observation: complete_form_data.value.observation,
-    recommendedAction: measure_obj.value.recommended_action,
     studentsMet: met,
     studentsExceeded: exceeded,
     studentsBelow: below,
-    createdAt: measure_obj.value.created_at,
-    active: measure_obj.value.is_active,
-    deleted: measure_obj.value.deleted,
-    deletedAt: measure_obj.value.deleted_at,
-    new: measure_obj.value.new,
-    status: "Complete",
-    updatedAt: measure_obj.value.updated_at,
-    version: measure_obj.value.version
+    status: "Complete"
   }
 
   try {
-    await api.put(`/measure/${measure_obj.value.id}`, new_measure_payload);
+    await api.put(`/measure-result/${measure_obj.value.id}`, new_measure_results_payload);
 
     measure_obj.value.observation = complete_form_data.value.observation
     measure_obj.value.met = met
@@ -138,27 +112,17 @@ async function edit_form_submit(){
 
   //Define new measure object
   const new_measure = ref({
-    id: measure_obj.value.id,
+    id: measure_obj.value.measure_id,
     courseIndicatorId: measure_obj.value.course_indicator_id,
+    semesterId: measure_obj.value.semester_id,
     description: newDescVal,
-    observation: measure_obj.value.observation,
     recommendedAction: measure_obj.value.recommended_action,
-    studentsMet: measure_obj.value.met,
-    studentsExceeded: measure_obj.value.exceeded,
-    studentsBelow: measure_obj.value.below,
-    createdAt: measure_obj.value.created_at,
-    active: measure_obj.value.is_active,
-    deleted: measure_obj.value.deleted,
-    deletedAt: measure_obj.value.deleted_at,
-    new: measure_obj.value.new,
-    status: measure_obj.value.status,
-    updatedAt: measure_obj.value.updated_at,
-    version: measure_obj.value.version
+    active: measure_obj.value.is_active
   })
 
   //PUT request to server
   try {
-    const { data } = await api.put(`/measure/${measure_obj.value.id}`, new_measure.value);
+    const { data } = await api.put(`/measure/${measure_obj.value.measure_id}`, new_measure.value);
 
     //Update measure object
     measure_obj.value.measure_description = edit_form_data.value.description
@@ -190,7 +154,7 @@ function open_delete_form(){
 async function delete_measure(){
   //DELETE request to server
   try {
-    const { data } = await api.delete(`/measure/${measure_obj.value.id}`);
+    const { data } = await api.delete(`/measure/${measure_obj.value.measure_id}`);
 
     //Update measure object
     measure_obj.value.recommended_action = ra_form_data.value.recommended_action
@@ -280,27 +244,20 @@ function open_view(){
 }
 
 async function mark_complete(){
-  const new_measure = {
+  const new_measure_result = {
     id: measure_obj.value.id,
-    courseIndicatorId: measure_obj.value.course_indicator_id,
-    description: measure_obj.value.measure_description,
+    measureId: measure_obj.value.measure_id,
+    sectionId: measure_obj.value.section_id,
+    programId: measure_obj.value.program_id,
     observation: measure_obj.value.observation,
-    recommendedAction: measure_obj.value.recommended_action,
     studentsMet: measure_obj.value.met,
     studentsExceeded: measure_obj.value.exceeded,
     studentsBelow: measure_obj.value.below,
-    createdAt: measure_obj.value.created_at,
-    active: measure_obj.value.is_active,
-    deleted: measure_obj.value.deleted,
-    deletedAt: measure_obj.value.deleted_at,
-    new: measure_obj.value.new,
-    status: "Complete",
-    updatedAt: measure_obj.value.updated_at,
-    version: measure_obj.value.version
+    status: "Complete"
   }
 
   try {
-    const { data } = await api.put(`/measure/${measure_obj.value.id}`, new_measure);
+    const { data } = await api.put(`/measure-result/${measure_obj.value.id}`, new_measure_result);
     measure_obj.value.status = "Complete"
     set_status()
     calculate_chart_data()
@@ -324,7 +281,11 @@ function set_status(){
 
 const measure_obj = ref<{
   id: number
+  measure_id: number
+  section_id: number
+  program_id: number
   course_indicator_id: number
+  semester_id: number
   measure_description: string
   observation: string | null
   recommended_action: string | null
@@ -342,7 +303,11 @@ const measure_obj = ref<{
   rejection_note: string | null
 }>({
   id: NaN,
+  measure_id: NaN,
+  section_id: NaN,
+  program_id: NaN,
   course_indicator_id: NaN,
+  semester_id: NaN,
   measure_description: '',
   observation: null,
   recommended_action: null,
@@ -374,28 +339,14 @@ function calculate_chart_data(){
   }
 }
 
-//-----TEST DATA-----
-/*
-const measure_obj = ref({
-    id: 1,
-    course_indicator_id: 1,
-    measure_description: 'Students will be given an exam question to find the error in a section of code',
-    observation: null,
-    recommended_action: null,
-    fcar: null,
-    met: null,
-    exceeded: null,
-    below: null,
-    created_at: '2025-11-06 12:06:00.880463',
-    is_active: true
-})
-*/
-//-------------------
-
 async function initialize(){
   measure_obj.value = {
     id: props.measure_prop.id,
+    measure_id: props.measure_prop.measure_id,
+    section_id: props.measure_prop.section_id,
+    program_id: props.measure_prop.program_id,
     course_indicator_id: props.measure_prop.course_indicator_id,
+    semester_id: props.measure_prop.semester_id,
     measure_description: props.measure_prop.measure_description,
     observation: props.measure_prop.observation,
     recommended_action: props.measure_prop.recommended_ction,

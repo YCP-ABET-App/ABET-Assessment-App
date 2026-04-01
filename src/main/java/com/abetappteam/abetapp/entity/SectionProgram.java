@@ -9,11 +9,11 @@ public class SectionProgram extends BaseEntity {
 
     // @NotBlank(message = "Section is required")
     @Column(name = "section_id", nullable = false)
-    private int sectionId;
+    private Integer sectionId;
 
     // @NotBlank(message = "Program is required")
     @Column(name = "program_id", nullable = false)
-    private int programId;
+    private Integer programId;
 
     public SectionProgram() {
         super();

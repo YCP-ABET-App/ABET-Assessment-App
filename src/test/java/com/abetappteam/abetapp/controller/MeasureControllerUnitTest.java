@@ -55,20 +55,15 @@ public class MeasureControllerUnitTest {
     @BeforeEach
     void setUp() {
         testMeasure = new Measure();
+
         testMeasure.setId(1l);
+        testMeasure.setCourseIndicatorId(1l);
+        testMeasure.setSemesterId(1l);
         testMeasure.setDescription("Test Description");
         testMeasure.setRecommendedAction("Test Action");
-        testMeasure.setFcar("Test Fcar");
-        testMeasure.setCourseIndicatorId(1l);
-        testMeasure.setStatus("InProgress");
         testMeasure.setActive(true);
 
-        testDTO = new MeasureDTO();
-        testDTO.setId(1l);
-        testDTO.setDescription("New Description");
-        testDTO.setCourseIndicatorId(1l);
-        testDTO.setStatus("InReview");
-        testDTO.setActive(true);
+        testDTO = new MeasureDTO(1L, 1l,"New Description", null, true);
 
         testIndicator = new CourseIndicator();
         testIndicator.setId(1l);
@@ -94,6 +89,7 @@ public class MeasureControllerUnitTest {
         Map<String, Object> body = new HashMap<>();
         body.put("id", null);
         body.put("courseIndicatorId", null);
+        body.put("semesterId", null);
         body.put("active", null);
 
         when(service.searchMeasures(any())).thenReturn(measures);
@@ -214,7 +210,7 @@ public class MeasureControllerUnitTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Measure deleted successfully"));
 
-        verify(service, times(1)).delete(1L);
+        verify(service, times(1)).deactivate(1L);
     }
 
     // TODO: Come through and refactor these tests with updated search code

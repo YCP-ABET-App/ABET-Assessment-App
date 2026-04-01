@@ -161,10 +161,10 @@ public class CourseService extends BaseService<Course, Long, CourseRepository> {
     @Transactional
     public void removeCourse(Long courseId) {
         Course course = findById(courseId);
-
-        if (hasMeasuresInReview(courseId)) {
-            throw new BusinessException("Cannot delete course with measures submitted for review");
+        if (!repository.existsById(courseId)) {
+            throw new ResourceNotFoundException("Course not found with id: " + courseId);
         }
+        repository.deleteById(courseId);
 
         courseIndicatorRepository.deleteByCourseId(courseId);
         courseInstructorRepository.deleteByCourseId(courseId);

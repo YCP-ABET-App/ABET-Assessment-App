@@ -3,6 +3,7 @@ import { ref, watch } from "vue";
 import api from "@/api";
 import BaseModal from "@/components/ui/BaseModal.vue";
 import BaseButton from "@/components/ui/BaseButton.vue";
+import BaseSelect from "@/components/ui/BaseSelect.vue";
 
 interface Course {
   id: number;
@@ -13,62 +14,93 @@ interface Course {
 }
 
 const props = defineProps<{
-  course: Course | null;  // null when closed
+  course: Course | null;
 }>();
 
 const emit = defineEmits(["close", "saved"]);
 
-/* -----------------------------------------------
- * Form state - rehydrated when a new course is sent
- * ----------------------------------------------- */
-const courseCode = ref("");
+const selectedPrefix = ref("");
+const courseNumber = ref("");
 const courseName = ref("");
 const courseDescription = ref("");
 const isActive = ref(true);
 
 const saving = ref(false);
 const error = ref<string | null>(null);
+const showConfirmChoice = ref(false);
 
-/* -----------------------------------------------
- * Populate modal when a course is selected
- * ----------------------------------------------- */
+const prefixOptions = [
+  { value: "EGR ", label: "EGR" },
+  { value: "ECE ", label: "ECE" },
+  { value: "CS ", label: "CS" },
+  { value: "ME ", label: "ME" },
+  { value: "CVE ", label: "CVE" }
+];
+
 watch(
   () => props.course,
-  (c) => {
-    if (!c) return;
+  (newCourse) => {
+    if (!newCourse) {
+      showConfirmChoice.value = false;
+      return;
+    }
 
-    courseCode.value = c.courseCode;
-    courseName.value = c.courseName;
-    courseDescription.value = c.courseDescription ?? "";
-    isActive.value = c.isActive;
     error.value = null;
+    showConfirmChoice.value = false;
+
+    const firstSpaceIndex = newCourse.courseCode.indexOf(" ");
+
+    if (firstSpaceIndex !== -1) {
+      selectedPrefix.value = newCourse.courseCode.substring(0, firstSpaceIndex + 1);
+      courseNumber.value = newCourse.courseCode.substring(firstSpaceIndex + 1);
+    } else {
+      selectedPrefix.value = "";
+      courseNumber.value = newCourse.courseCode;
+    }
+
+    courseName.value = newCourse.courseName;
+    courseDescription.value = newCourse.courseDescription || "";
+    isActive.value = newCourse.isActive;
   },
   { immediate: true }
 );
 
-/* -----------------------------------------------
- * Save Changes
- * ----------------------------------------------- */
-async function save() {
+async function handleInitialSave() {
+  if (!selectedPrefix.value || !courseNumber.value || !courseName.value) {
+    error.value = "Please fill in all required fields.";
+    return;
+  }
+  showConfirmChoice.value = true;
+}
+
+async function executeSave(isNew: boolean) {
   if (!props.course) return;
 
   saving.value = true;
   error.value = null;
 
   try {
-    await api.put(`/course/${props.course.id}`, {
-      courseCode: courseCode.value,
+    const fullCourseCode = `${selectedPrefix.value}${courseNumber.value}`.trim();
+
+    const payload = {
+      courseCode: fullCourseCode,
       courseName: courseName.value,
       courseDescription: courseDescription.value,
       isActive: isActive.value
-    });
+    };
 
-    emit("saved");  // tell parent to refresh
+    if (isNew) {
+      await api.post("/courses", payload);
+    } else {
+      await api.put(`/courses/${props.course.id}`, payload);
+    }
+
+    emit("saved");
     emit("close");
   } catch (err: any) {
-    console.error("Failed to save course:", err);
-    error.value =
-      err?.response?.data?.message || "Failed to save course. Please try again.";
+    console.error("Save error:", err);
+    error.value = err?.response?.data?.message || "Failed to save course changes.";
+    showConfirmChoice.value = false;
   } finally {
     saving.value = false;
   }
@@ -79,104 +111,252 @@ async function save() {
   <BaseModal
     :is-open="!!course"
     @close="emit('close')"
-    @update:is-open="value => { if (!value) emit('close') }"
+    size="lg"
   >
-
     <template #header>
-      <h2>Edit Course</h2>
+      <h2>{{ showConfirmChoice ? 'Confirm Save Type' : 'Edit Course' }}</h2>
     </template>
 
-    <template #body>
-      <form class="form" @submit.prevent="save">
+    <div class="modal-content">
+      <div v-if="error" class="error-banner">
+        {{ error }}
+      </div>
 
-        <!-- Error Message -->
-        <p v-if="error" class="error-message">{{ error }}</p>
+      <form v-if="!showConfirmChoice" class="form" @submit.prevent="handleInitialSave">
+        <div class="form-group">
+          <label class="label">Course Code</label>
+          <div class="course-code-row">
+            <BaseSelect
+              v-model="selectedPrefix"
+              :options="prefixOptions"
+              class="prefix-select"
+            />
+            <input
+              v-model="courseNumber"
+              class="input number-input"
+              required
+            />
+          </div>
+        </div>
 
-        <!-- Course Code -->
-        <label class="label">Course Code</label>
-        <input
-          class="input"
-          v-model="courseCode"
-          required
-          placeholder="e.g. CMSC131"
-        />
+        <div class="form-group">
+          <label class="label">Course Name</label>
+          <input
+            v-model="courseName"
+            class="input"
+            required
+          />
+        </div>
 
-        <!-- Course Name -->
-        <label class="label">Course Name</label>
-        <input
-          class="input"
-          v-model="courseName"
-          required
-          placeholder="e.g. Object-Oriented Programming I"
-        />
+        <div class="form-group">
+          <label class="label">Description</label>
+          <textarea
+            v-model="courseDescription"
+            class="textarea"
+            rows="4"
+          />
+        </div>
 
-        <!-- Description -->
-        <label class="label">Course Description</label>
-        <textarea
-          class="textarea"
-          v-model="courseDescription"
-          rows="4"
-          placeholder="Optional description"
-        />
-
-        <!-- Active toggle -->
-        <label class="checkbox">
-          <input type="checkbox" v-model="isActive" />
-          Active
+        <label class="checkbox-container">
+          <input
+            type="checkbox"
+            :checked="isActive"
+            @click="isActive = !isActive"
+          />
+          <span class="checkbox-label">Active Course</span>
         </label>
       </form>
-    </template>
+
+      <div v-else class="choice-container">
+        <p class="prompt-text">How should these changes be saved?</p>
+
+        <div class="choice-grid">
+          <button class="choice-card" @click="executeSave(false)" :disabled="saving">
+            <div class="card-info">
+              <h4>Update Existing</h4>
+              <p>Overwrite <strong>{{ props.course?.courseCode }}</strong> with new details.</p>
+            </div>
+          </button>
+
+          <button class="choice-card highlight" @click="executeSave(true)" :disabled="saving">
+            <div class="card-info">
+              <h4>Create as New</h4>
+              <p>Keep old course and create <strong>{{ selectedPrefix }}{{ courseNumber }}</strong>.</p>
+            </div>
+          </button>
+        </div>
+      </div>
+    </div>
 
     <template #footer>
-      <BaseButton variant="secondary" @click="emit('close')" :disabled="saving">
-        Cancel
-      </BaseButton>
+      <div class="footer-layout">
+        <BaseButton
+          variant="secondary"
+          @click="showConfirmChoice ? (showConfirmChoice = false) : emit('close')"
+          :disabled="saving"
+        >
+          {{ showConfirmChoice ? 'Back' : 'Cancel' }}
+        </BaseButton>
 
-      <BaseButton variant="primary" @click="save" :disabled="saving">
-        <span v-if="saving">Saving…</span>
-        <span v-else>Save Changes</span>
-      </BaseButton>
+        <BaseButton
+          v-if="!showConfirmChoice"
+          variant="primary"
+          @click="handleInitialSave"
+          :disabled="saving"
+        >
+          Review & Save
+        </BaseButton>
+      </div>
     </template>
-
   </BaseModal>
 </template>
 
 <style scoped>
+.modal-content {
+  min-height: 250px;
+}
+
 .form {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.25rem;
 }
 
-.label {
-  font-weight: 600;
-  font-size: 0.9rem;
-}
-
-.input,
-.textarea {
-  padding: 0.6rem 0.75rem;
-  border-radius: 6px;
-  border: 1px solid var(--color-border-dark);
-  background: var(--color-bg-secondary);
-  color: var(--color-text-primary);
-  width: 100%;
-  font-size: 0.95rem;
-}
-
-.textarea {
-  resize: vertical;
-}
-
-.checkbox {
+.form-group {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 0.5rem;
 }
 
-.error-message {
-  color: var(--color-error);
+.label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.course-code-row {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.prefix-select {
+  width: 130px;
+}
+
+.number-input {
+  flex: 1;
+}
+
+.input, .textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--color-border-dark);
+  background: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+  font-size: 1rem;
+  transition: border-color 0.2s;
+}
+
+.input:focus, .textarea:focus {
+  border-color: var(--color-primary);
+  outline: none;
+}
+
+.checkbox-container {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  width: fit-content;
+}
+
+.checkbox-label {
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+/* Choice View */
+.choice-container {
+  text-align: center;
+  padding: 1rem 0;
+}
+
+.prompt-text {
+  font-size: 1.1rem;
+  margin-bottom: 2rem;
+  color: var(--color-text-primary);
+}
+
+.choice-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.choice-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem;
+  border: 1px solid var(--color-border-dark);
+  border-radius: 12px;
+  background: var(--color-bg-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.choice-card:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  transform: translateY(-3px);
+  background: var(--color-bg-tertiary);
+}
+
+.choice-card.highlight {
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary), transparent 95%);
+}
+
+.card-icon {
+  font-size: 2rem;
+}
+
+.card-info h4 {
+  margin: 0 0 0.5rem 0;
+  color: var(--color-primary);
+}
+
+.card-info p {
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.footer-layout {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  width: 100%;
+}
+
+.error-banner {
+  background: rgba(220, 53, 69, 0.1);
+  color: #dc3545;
+  padding: 0.75rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
   font-size: 0.9rem;
-  margin-bottom: 0.5rem;
+  border-left: 4px solid #dc3545;
+}
+
+@media (max-width: 600px) {
+  .choice-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>
