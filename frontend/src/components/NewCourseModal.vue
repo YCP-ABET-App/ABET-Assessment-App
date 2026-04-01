@@ -35,12 +35,12 @@
       </div>
 
       <div class="form-group">
-        <label class="label">Description</label>
+        <label class="label">Description<span class="required">*</span></label>
         <textarea
           v-model="formData.courseDescription"
           class="input"
           rows="3"
-          placeholder="Enter course description (optional)..."
+          placeholder="Enter course description..."
         ></textarea>
       </div>
 
@@ -74,7 +74,7 @@ const emit = defineEmits(["close", "submitted"]);
 
 
 const prefixes = ["N/A", "ECE", "ME", "CS", "CVE", "EGR"];
-const codePrefix = ref("N/A"); // Default to N/A
+const codePrefix = ref("N/A");
 const codeSuffix = ref("");
 const errorMessage = ref("");
 
@@ -107,14 +107,11 @@ function submitForm() {
   }
 
   const fullCourseCode = `${codePrefix.value} ${codeSuffix.value.trim()}`;
-
-  const submissionData = {
-    courseName: formData.value.courseName.trim(),
-    courseDescription: formData.value.courseDescription?.trim() || "",
+  emit("submitted", {
+    ...formData.value,
     courseCode: fullCourseCode
-  };
+  });
 
-  emit("submitted", submissionData);
   handleClose();
 }
 </script>
