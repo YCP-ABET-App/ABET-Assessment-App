@@ -161,7 +161,7 @@ CREATE TABLE course_instructor (
     -- CourseInstructor-specific
     is_active BOOLEAN DEFAULT TRUE NOT NULL,
     FOREIGN KEY (program_user_id) REFERENCES program_user(id),
-    FOREIGN KEY (course_id) REFERENCES course(id)
+    FOREIGN KEY (course_id) REFERENCES course(id) ON DELETE CASCADE
 );
 
 -- CourseIndicator table
@@ -177,7 +177,7 @@ CREATE TABLE course_indicator (
     deleted_at TIMESTAMP NULL,
     -- CourseIndicator-specific
     is_active BOOLEAN DEFAULT TRUE NOT NULL,
-    FOREIGN KEY (course_id) REFERENCES course(id),
+    FOREIGN KEY (course_id) REFERENCES course(id) ON DELETE CASCADE,
     FOREIGN KEY (indicator_id) REFERENCES performance_indicator(id)
 );
 
@@ -201,5 +201,5 @@ CREATE TABLE measure (
     deleted_at TIMESTAMP NULL,
     -- Measure-specific
     is_active BOOLEAN DEFAULT TRUE NOT NULL,
-    FOREIGN KEY (course_indicator_id) REFERENCES course_indicator(id)
+    FOREIGN KEY (course_indicator_id) REFERENCES course_indicator(id) ON DELETE CASCADE
 );

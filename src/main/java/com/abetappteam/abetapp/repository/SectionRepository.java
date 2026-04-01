@@ -13,10 +13,9 @@ import java.util.List;
 
 /**
  * Repository for Section entity
-* */
+ */
 @Repository
-public interface SectionRepository  extends JpaRepository<Section, Long>
-{
+public interface SectionRepository extends JpaRepository<Section, Long> {
     // ========== Course ID queries ==========
     Page<Section> findByCourseId(int courseId, Pageable pageable);
 
@@ -33,15 +32,15 @@ public interface SectionRepository  extends JpaRepository<Section, Long>
 
     // ========== Search Queries ==========
     @Query("SELECT DISTINCT s FROM Section s " +
-       "LEFT JOIN SectionProgram sp ON s.id = sp.sectionId " +
-       "LEFT JOIN SectionUser su ON s.id = su.sectionId " +
-       "WHERE (:#{#request.ids()} IS NULL OR s.id in :#{#request.ids()}) " +
-       "AND (:#{#request.semesterId()} IS NULL OR s.semesterId = :#{#request.semesterId()}) " +
-       "AND (:#{#request.courseId()} IS NULL OR s.courseId = :#{#request.courseId()}) " +
-       "AND (:#{#request.programId()} IS NULL OR sp.programId = :#{#request.programId()}) " +
-       "AND (:#{#request.userId()} IS NULL OR su.userId = :#{#request.userId()})")
+            "LEFT JOIN SectionProgram sp ON s.id = sp.sectionId " +
+            "LEFT JOIN SectionUser su ON s.id = su.sectionId " +
+            "WHERE (:#{#request.ids()} IS NULL OR s.id in :#{#request.ids()}) " +
+            "AND (:#{#request.semesterId()} IS NULL OR s.semesterId = :#{#request.semesterId()}) " +
+            "AND (:#{#request.courseId()} IS NULL OR s.courseId = :#{#request.courseId()}) " +
+            "AND (:#{#request.programId()} IS NULL OR sp.programId = :#{#request.programId()}) " +
+            "AND (:#{#request.userId()} IS NULL OR su.userId = :#{#request.userId()})")
     List<Section> searchSections(@Param("request") SectionSearchRequest request);
 
-    @Query("SELECT s FROM Section s WHERE s.sectionNumber = :sectionNumber AND s.semesterId = :semesterId AND s.courseId = :courseId")
-    boolean existsByCourseNumberAndSemesterIdAndCourseId(@Param("sectionNumber") String sectionNumber, @Param("semesterId") int semesterId, @Param("courseId") int courseId);
+    Boolean existsBySectionNumberAndSemesterIdAndCourseId(@Param("sectionNumber") String sectionNumber,
+            @Param("semesterId") int semesterId, @Param("courseId") int courseId);
 }

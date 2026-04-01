@@ -12,6 +12,8 @@ import com.abetappteam.abetapp.exception.ResourceNotFoundException;
 import com.abetappteam.abetapp.repository.CourseRepository;
 import com.abetappteam.abetapp.repository.CourseIndicatorRepository;
 import com.abetappteam.abetapp.repository.CourseInstructorRepository;
+import com.abetappteam.abetapp.repository.MeasureRepository;
+import com.abetappteam.abetapp.repository.MeasureResultRepository;
 import com.abetappteam.abetapp.util.TestDataBuilder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -41,6 +43,12 @@ class CourseServiceTest extends BaseServiceTest {
     @Mock
     private CourseInstructorRepository courseInstructorRepository;
 
+    @Mock
+    private MeasureResultRepository measureResultRepository;
+
+    @Mock
+    private MeasureRepository measureRepository;
+
     @InjectMocks
     private CourseService courseService;
 
@@ -54,6 +62,10 @@ class CourseServiceTest extends BaseServiceTest {
         ReflectionTestUtils.setField(courseService, "courseInstructorRepository", courseInstructorRepository);
 
         ReflectionTestUtils.setField(courseService, "courseIndicatorRepository", courseIndicatorRepository);
+
+        ReflectionTestUtils.setField(courseService, "measureResultRepository", measureResultRepository);
+
+        ReflectionTestUtils.setField(courseService, "measureRepository", measureRepository);
 
         testCourse = TestDataBuilder.createCourseWithId(1L, "CS101", "Introduction to Computer Science",
                 "Basic computer science principles", 1L);
@@ -223,13 +235,15 @@ class CourseServiceTest extends BaseServiceTest {
         // Given
         when(courseRepository.findById(1L)).thenReturn(Optional.of(testCourse));
         when(courseRepository.countMeasuresInReviewByCourseId(1L)).thenReturn(0);
-        doNothing().when(courseRepository).delete(testCourse);
+        when(courseIndicatorRepository.findByCourseId(1L)).thenReturn(List.of());
 
         // When
         courseService.removeCourse(1L);
 
         // Then
-        verify(courseRepository).findById(1L);
+        verify(courseIndicatorRepository).findByCourseId(1L);
+        verify(courseIndicatorRepository).deleteByCourseId(1L);
+        verify(courseInstructorRepository).deleteByCourseId(1L);
         verify(courseRepository).delete(testCourse);
     }
 
@@ -244,21 +258,6 @@ class CourseServiceTest extends BaseServiceTest {
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining("Cannot delete course with measures submitted for review");
         verify(courseRepository, never()).delete(any());
-    }
-
-    @Test
-    void shoudDeleteCourse() {
-        // Given
-        when(courseRepository.findById(1L)).thenReturn(Optional.of(testCourse));
-        when(courseRepository.countMeasuresInReviewByCourseId(1L)).thenReturn(0);
-        doNothing().when(courseRepository).delete(testCourse);
-
-        // When
-        courseService.removeCourse(1L);
-
-        // Then
-        verify(courseRepository).findById(1L);
-        verify(courseRepository).delete(testCourse);
     }
 
     @Test
@@ -495,5 +494,41 @@ class CourseServiceTest extends BaseServiceTest {
 
         // Then
         assertThat(response.getCompletionPercentage()).isEqualTo(0.0);
+    }
+
+    @Test
+    void shouldVersionCourse() {
+        // Given
+        CourseDTO versionDTO = TestDataBuilder.createCourseDTO("CS101-V2", "Intro to CS v2",
+                "Updated description", 1, 1.0);
+        when(courseRepository.findById(1L)).thenReturn(Optional.of(testCourse));
+        when(courseRepository.existsByCourseCodeIgnoreCase("CS101-V2")).thenReturn(false);
+        Course newVersion = TestDataBuilder.createCourseWithId(2L, "CS101-V2", "Intro to CS v2",
+                "Updated description", 1L);
+        when(courseRepository.save(any(Course.class))).thenReturn(testCourse).thenReturn(newVersion);
+
+        // When
+        Course result = courseService.versionCourse(1L, versionDTO);
+
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result.getId()).isEqualTo(2L);
+        assertThat(testCourse.getIsActive()).isFalse();
+        verify(courseRepository, times(2)).save(any(Course.class));
+    }
+
+    @Test
+    void shouldThrowConflictWhenVersioningWithDuplicateCode() {
+        // Given
+        CourseDTO versionDTO = TestDataBuilder.createCourseDTO("CS101", "Same Code",
+                "Description", 1, 1.0);
+        when(courseRepository.findById(1L)).thenReturn(Optional.of(testCourse));
+        when(courseRepository.existsByCourseCodeIgnoreCase("CS101")).thenReturn(true);
+
+        // When/Then
+        assertThatThrownBy(() -> courseService.versionCourse(1L, versionDTO))
+                .isInstanceOf(ConflictException.class)
+                .hasMessageContaining("already exists in this semester");
+        verify(courseRepository, never()).save(any());
     }
 }

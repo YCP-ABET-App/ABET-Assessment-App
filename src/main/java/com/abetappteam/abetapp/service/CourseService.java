@@ -4,6 +4,7 @@ import com.abetappteam.abetapp.dto.CourseDTO;
 import com.abetappteam.abetapp.entity.Course;
 import com.abetappteam.abetapp.entity.CourseIndicator;
 import com.abetappteam.abetapp.entity.CourseInstructor;
+import com.abetappteam.abetapp.entity.Measure;
 import com.abetappteam.abetapp.entity.Requests.Course.CourseSearchRequest;
 import com.abetappteam.abetapp.exception.BusinessException;
 import com.abetappteam.abetapp.exception.ConflictException;
@@ -11,6 +12,9 @@ import com.abetappteam.abetapp.exception.ResourceNotFoundException;
 import com.abetappteam.abetapp.repository.CourseIndicatorRepository;
 import com.abetappteam.abetapp.repository.CourseInstructorRepository;
 import com.abetappteam.abetapp.repository.CourseRepository;
+import com.abetappteam.abetapp.repository.MeasureResultRepository;
+import com.abetappteam.abetapp.repository.MeasureRepository;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -38,6 +42,11 @@ public class CourseService extends BaseService<Course, Long, CourseRepository> {
     @Autowired
     private CourseIndicatorRepository courseIndicatorRepository;
 
+    @Autowired
+    private MeasureRepository measureRepository;
+
+    @Autowired
+    private MeasureResultRepository measureResultRepository;
 
     @Override
     protected String getEntityName() {
@@ -71,22 +80,22 @@ public class CourseService extends BaseService<Course, Long, CourseRepository> {
     @Transactional(readOnly = true)
     public List<Course> searchCourse(CourseSearchRequest request) {
         logger.info("Service: searching courses with request: {}", request);
-        List<Course> result =  repository.searchCourse(
+        List<Course> result = repository.searchCourse(
                 request.id(),
                 request.courseCode(),
                 request.courseName(),
                 request.courseDescription(),
                 request.student_count(),
                 request.mirrorId(),
-                request.isActive()
-        );
+                request.isActive());
 
         System.out.print("Resulting Courses: " + result);
         return result;
     }
 
     @Transactional
-    public Course updateCourse(Long courseId, String courseCode, String courseName, String courseDescription, Integer studentCount) {
+    public Course updateCourse(Long courseId, String courseCode, String courseName, String courseDescription,
+            Integer studentCount) {
         Course course = findById(courseId);
 
         // Check for duplicate course code if it's being changed
@@ -118,6 +127,30 @@ public class CourseService extends BaseService<Course, Long, CourseRepository> {
     }
 
     @Transactional
+    public Course versionCourse(Long courseId, CourseDTO dto) {
+        Course original = findById(courseId);
+
+        String newCode = dto.getCourseCode() != null ? dto.getCourseCode() : original.getCourseCode();
+        if (repository.existsByCourseCodeIgnoreCase(newCode)) {
+            throw new ConflictException("Course with code '" + newCode + "' already exists in this semester");
+        }
+
+        Course version = new Course();
+        version.setCourseCode(newCode);
+        version.setCourseName(dto.getCourseName() != null ? dto.getCourseName() : original.getCourseName());
+        version.setCourseDescription(
+                dto.getCourseDescription() != null ? dto.getCourseDescription() : original.getCourseDescription());
+        version.setStudentCount(dto.getStudentCount() != null ? dto.getStudentCount() : original.getStudentCount());
+        version.setIsActive(true);
+
+        original.setIsActive(false);
+        repository.save(original);
+
+        logger.info("Versioning course {}: creating new version with code {}", courseId, newCode);
+        return repository.save(version);
+    }
+
+    @Transactional
     public Course updateStudentCount(Long courseId, Integer studentCount) {
         Course course = findById(courseId);
         course.setStudentCount(studentCount);
@@ -126,13 +159,24 @@ public class CourseService extends BaseService<Course, Long, CourseRepository> {
     }
 
     @Transactional
-    public void removeCourse(Long id) {
-        if (!repository.existsById(id)) {
-            throw new ResourceNotFoundException("Course not found with id: " + id);
-        }
-        repository.deleteById(id);
+    public void removeCourse(Long courseId) {
+        Course course = findById(courseId);
 
-        this.logger.info("Course with ID: {} has been permanently deleted from the database.", id);
+        if (repository.countMeasuresInReviewByCourseId(courseId) > 0) {
+            throw new BusinessException("Cannot delete course with measures submitted for review");
+        }
+
+        List<CourseIndicator> indicators = courseIndicatorRepository.findByCourseId(courseId);
+        for (CourseIndicator indicator : indicators) {
+            measureResultRepository.deleteByCourseIndicatorId(indicator.getId());
+            measureRepository.deleteByCourseIndicatorId(indicator.getId());
+        }
+
+        courseIndicatorRepository.deleteByCourseId(courseId);
+        courseInstructorRepository.deleteByCourseId(courseId);
+
+        logger.info("Removing course with cascade: {} - {}", course.getCourseCode(), course.getCourseName());
+        repository.delete(course);
     }
 
     @Transactional
@@ -255,14 +299,14 @@ public class CourseService extends BaseService<Course, Long, CourseRepository> {
                 .collect(Collectors.toList());
     }
 
-    //Return CourseIndicator
+    // Return CourseIndicator
     @Transactional(readOnly = true)
-    public Optional<CourseIndicator> getCourseIndicatorByCourseIdAndIndicatorId(Long courseId, Long indicatorId){
+    public Optional<CourseIndicator> getCourseIndicatorByCourseIdAndIndicatorId(Long courseId, Long indicatorId) {
         return courseIndicatorRepository.findByCourseIdAndIndicatorId(courseId, indicatorId);
     }
 
     @Transactional(readOnly = true)
-    public Optional<CourseIndicator> getCourseIndicatorById(Long id){
+    public Optional<CourseIndicator> getCourseIndicatorById(Long id) {
         return courseIndicatorRepository.findById(id);
     }
 
