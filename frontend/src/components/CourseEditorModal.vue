@@ -1,3 +1,140 @@
+<template>
+  <BaseModal
+    :is-open="!!course"
+    @close="emit('close')"
+    size="lg"
+  >
+    <template #header>
+      <h2>
+        {{ confirmingMode ? 'Final Confirmation' : (showConfirmChoice ? 'Choose Save Method' : 'Edit Course') }}
+      </h2>
+    </template>
+
+    <div class="modal-content">
+      <div v-if="error" class="error-banner">
+        {{ error }}
+      </div>
+
+      <form v-if="!showConfirmChoice && !confirmingMode" class="form" @submit.prevent="handleInitialSave">
+        <div class="form-group">
+          <label class="label">Course Code</label>
+          <div class="course-code-row">
+            <BaseSelect
+              v-model="selectedPrefix"
+              :options="prefixOptions"
+              class="prefix-select"
+            />
+            <input
+              v-model="courseNumber"
+              class="input number-input"
+              placeholder="e.g. 101"
+              required
+            />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="label">Course Name</label>
+          <input
+            v-model="courseName"
+            class="input"
+            placeholder="e.g. Software Engineering"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="label">Description</label>
+          <textarea
+            v-model="courseDescription"
+            class="textarea"
+            rows="4"
+            placeholder="Optional course description..."
+          />
+        </div>
+
+        <label class="checkbox-container">
+          <input
+            type="checkbox"
+            :checked="isActive"
+            @change="isActive = !isActive"
+          />
+          <span class="checkbox-label">Active Course</span>
+        </label>
+      </form>
+
+      <div v-else-if="showConfirmChoice && !confirmingMode" class="choice-container">
+        <p class="prompt-text">How should these changes be saved?</p>
+
+        <div class="choice-grid">
+          <button class="choice-card" @click="requestConfirm(false)" :disabled="saving">
+            <div class="card-info">
+              <h4>Update Existing</h4>
+              <p>Apply changes to the current record and all connected data.</p>
+            </div>
+          </button>
+
+          <button class="choice-card" @click="requestConfirm(true)" :disabled="saving">
+            <div class="card-info">
+              <h4>Create as New</h4>
+              <p>Keep the original course and start a new branch.</p>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <div v-else-if="confirmingMode" class="warning-container">
+        <div class="warning-wrapper">
+        <div class="warning-icon">⚠️</div>
+
+        <div v-if="!pendingIsNew" class="warning-text">
+          <h3>Warning: Updating Existing Record</h3>
+          <p>
+            By choosing <strong>Update Existing</strong>, this will affect all existing historic data
+            for this course. Reports of past semesters will be affected, showing this new course
+            information instead of the original details.
+          </p>
+          <p class="confirm-ask">Are you sure you want to do this?</p>
+        </div>
+
+        <div v-else class="warning-text">
+          <h3>Notice: Creating New Branch</h3>
+          <p>
+            By choosing <strong>Create as New</strong>, this will branch this current course
+            into a new record. This will <strong>not</strong> affect historical data or reports
+            from previous semesters.
+          </p>
+          <p class="confirm-ask">Are you sure you want to proceed?</p>
+        </div>
+      </div>
+      </div>
+    </div>
+
+    <template #footer>
+      <div class="footer-layout">
+        <BaseButton
+          variant="secondary"
+          @click="handleNavigationBack"
+          :disabled="saving"
+        >
+          {{ (showConfirmChoice || confirmingMode) ? 'Back' : 'Cancel' }}
+        </BaseButton>
+
+        <BaseButton
+          v-if="!showConfirmChoice || confirmingMode"
+          variant="primary"
+          @click="confirmingMode ? executeSave() : handleInitialSave()"
+          :disabled="saving"
+        >
+          <span v-if="saving">Saving...</span>
+          <span v-else-if="confirmingMode">Confirm & Save</span>
+          <span v-else>Review Changes</span>
+        </BaseButton>
+      </div>
+    </template>
+  </BaseModal>
+</template>
+
 <script setup lang="ts">
 import { ref, watch } from "vue";
 import api from "@/api";
@@ -28,6 +165,8 @@ const isActive = ref(true);
 const saving = ref(false);
 const error = ref<string | null>(null);
 const showConfirmChoice = ref(false);
+const confirmingMode = ref(false);
+const pendingIsNew = ref(false);
 
 const prefixOptions = [
   { value: "EGR ", label: "EGR" },
@@ -41,13 +180,11 @@ watch(
   () => props.course,
   (newCourse) => {
     if (!newCourse) {
-      showConfirmChoice.value = false;
+      resetUIState();
       return;
     }
 
     error.value = null;
-    showConfirmChoice.value = false;
-
     const firstSpaceIndex = newCourse.courseCode.indexOf(" ");
 
     if (firstSpaceIndex !== -1) {
@@ -65,7 +202,14 @@ watch(
   { immediate: true }
 );
 
-async function handleInitialSave() {
+function resetUIState() {
+  showConfirmChoice.value = false;
+  confirmingMode.value = false;
+  pendingIsNew.value = false;
+  error.value = null;
+}
+
+function handleInitialSave() {
   if (!selectedPrefix.value || !courseNumber.value || !courseName.value) {
     error.value = "Please fill in all required fields.";
     return;
@@ -73,7 +217,22 @@ async function handleInitialSave() {
   showConfirmChoice.value = true;
 }
 
-async function executeSave(isNew: boolean) {
+function requestConfirm(isNew: boolean) {
+  pendingIsNew.value = isNew;
+  confirmingMode.value = true;
+}
+
+function handleNavigationBack() {
+  if (confirmingMode.value) {
+    confirmingMode.value = false;
+  } else if (showConfirmChoice.value) {
+    showConfirmChoice.value = false;
+  } else {
+    emit("close");
+  }
+}
+
+async function executeSave() {
   if (!props.course) return;
 
   saving.value = true;
@@ -81,7 +240,6 @@ async function executeSave(isNew: boolean) {
 
   try {
     const fullCourseCode = `${selectedPrefix.value}${courseNumber.value}`.trim();
-
     const payload = {
       courseCode: fullCourseCode,
       courseName: courseName.value,
@@ -89,7 +247,7 @@ async function executeSave(isNew: boolean) {
       isActive: isActive.value
     };
 
-    if (isNew) {
+    if (pendingIsNew.value) {
       await api.post("/courses", payload);
     } else {
       await api.put(`/courses/${props.course.id}`, payload);
@@ -99,117 +257,13 @@ async function executeSave(isNew: boolean) {
     emit("close");
   } catch (err: any) {
     console.error("Save error:", err);
-    error.value = err?.response?.data?.message || "Failed to save course changes.";
-    showConfirmChoice.value = false;
+    error.value = err?.response?.data?.message || "Failed to save changes.";
+    confirmingMode.value = false;
   } finally {
     saving.value = false;
   }
 }
 </script>
-
-<template>
-  <BaseModal
-    :is-open="!!course"
-    @close="emit('close')"
-    size="lg"
-  >
-    <template #header>
-      <h2>{{ showConfirmChoice ? 'Confirm Save Type' : 'Edit Course' }}</h2>
-    </template>
-
-    <div class="modal-content">
-      <div v-if="error" class="error-banner">
-        {{ error }}
-      </div>
-
-      <form v-if="!showConfirmChoice" class="form" @submit.prevent="handleInitialSave">
-        <div class="form-group">
-          <label class="label">Course Code</label>
-          <div class="course-code-row">
-            <BaseSelect
-              v-model="selectedPrefix"
-              :options="prefixOptions"
-              class="prefix-select"
-            />
-            <input
-              v-model="courseNumber"
-              class="input number-input"
-              required
-            />
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label class="label">Course Name</label>
-          <input
-            v-model="courseName"
-            class="input"
-            required
-          />
-        </div>
-
-        <div class="form-group">
-          <label class="label">Description</label>
-          <textarea
-            v-model="courseDescription"
-            class="textarea"
-            rows="4"
-          />
-        </div>
-
-        <label class="checkbox-container">
-          <input
-            type="checkbox"
-            :checked="isActive"
-            @click="isActive = !isActive"
-          />
-          <span class="checkbox-label">Active Course</span>
-        </label>
-      </form>
-
-      <div v-else class="choice-container">
-        <p class="prompt-text">How should these changes be saved?</p>
-
-        <div class="choice-grid">
-          <button class="choice-card" @click="executeSave(false)" :disabled="saving">
-            <div class="card-info">
-              <h4>Update Existing</h4>
-              <p>Overwrite <strong>{{ props.course?.courseCode }}</strong> with new details.</p>
-            </div>
-          </button>
-
-          <button class="choice-card highlight" @click="executeSave(true)" :disabled="saving">
-            <div class="card-info">
-              <h4>Create as New</h4>
-              <p>Keep old course and create <strong>{{ selectedPrefix }}{{ courseNumber }}</strong>.</p>
-            </div>
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <template #footer>
-      <div class="footer-layout">
-        <BaseButton
-          variant="secondary"
-          @click="showConfirmChoice ? (showConfirmChoice = false) : emit('close')"
-          :disabled="saving"
-        >
-          {{ showConfirmChoice ? 'Back' : 'Cancel' }}
-        </BaseButton>
-
-        <BaseButton
-          v-if="!showConfirmChoice"
-          variant="primary"
-          @click="handleInitialSave"
-          :disabled="saving"
-        >
-          Review & Save
-        </BaseButton>
-      </div>
-    </template>
-  </BaseModal>
-</template>
 
 <style scoped>
 .modal-content {
@@ -278,7 +332,6 @@ async function executeSave(isNew: boolean) {
   font-weight: 500;
 }
 
-/* Choice View */
 .choice-container {
   text-align: center;
   padding: 1rem 0;
@@ -316,12 +369,9 @@ async function executeSave(isNew: boolean) {
   background: var(--color-bg-tertiary);
 }
 
-.choice-card.highlight {
-  border-color: var(--color-primary);
-  background: color-mix(in srgb, var(--color-primary), transparent 95%);
-}
 
 .card-icon {
+  text-align: center;
   font-size: 2rem;
 }
 
@@ -346,12 +396,36 @@ async function executeSave(isNew: boolean) {
 
 .error-banner {
   background: rgba(220, 53, 69, 0.1);
+  text-align: center;
   color: #dc3545;
   padding: 0.75rem;
   border-radius: 6px;
   margin-bottom: 1rem;
   font-size: 0.9rem;
   border-left: 4px solid #dc3545;
+}
+.warning-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.warning-icon {
+  font-size: 4rem;
+  margin-bottom: 0.5rem;
+}
+
+.warning-content {
+  text-align: center;
+}
+
+.warning-wrapper .prompt-text {
+  margin-bottom: 0.5rem;
+  line-height: 1.6;
 }
 
 @media (max-width: 600px) {
