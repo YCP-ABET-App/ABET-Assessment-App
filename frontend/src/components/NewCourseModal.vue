@@ -107,11 +107,14 @@ function submitForm() {
   }
 
   const fullCourseCode = `${codePrefix.value} ${codeSuffix.value.trim()}`;
-  emit("submitted", {
-    ...formData.value,
-    courseCode: fullCourseCode
-  });
 
+  const submissionData = {
+    courseName: formData.value.courseName.trim(),
+    courseDescription: formData.value.courseDescription?.trim() || "",
+    courseCode: fullCourseCode
+  };
+
+  emit("submitted", submissionData);
   handleClose();
 }
 </script>
