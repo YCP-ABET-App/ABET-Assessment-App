@@ -14,6 +14,8 @@ import com.abetappteam.abetapp.repository.CourseInstructorRepository;
 import com.abetappteam.abetapp.repository.CourseRepository;
 import com.abetappteam.abetapp.repository.MeasureResultRepository;
 import com.abetappteam.abetapp.repository.MeasureRepository;
+import com.abetappteam.abetapp.repository.SectionRepository;
+
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -41,6 +43,9 @@ public class CourseService extends BaseService<Course, Long, CourseRepository> {
 
     @Autowired
     private CourseIndicatorRepository courseIndicatorRepository;
+
+    @Autowired
+    private SectionRepository sectionRepository;
 
     @Autowired
     private MeasureRepository measureRepository;
@@ -161,10 +166,15 @@ public class CourseService extends BaseService<Course, Long, CourseRepository> {
     @Transactional
     public void removeCourse(Long courseId) {
         Course course = findById(courseId);
+        int cIdInt = courseId.intValue();
 
         if (repository.countMeasuresInReviewByCourseId(courseId) > 0) {
             throw new BusinessException("Cannot delete course with measures submitted for review");
         }
+
+        sectionRepository.deleteSectionProgramsByCourseId(cIdInt);
+        sectionRepository.deleteSectionUsersByCourseId(cIdInt);
+        sectionRepository.deleteByCourseId(courseId.intValue());
 
         List<CourseIndicator> indicators = courseIndicatorRepository.findByCourseId(courseId);
         for (CourseIndicator indicator : indicators) {
@@ -174,7 +184,6 @@ public class CourseService extends BaseService<Course, Long, CourseRepository> {
 
         courseIndicatorRepository.deleteByCourseId(courseId);
         courseInstructorRepository.deleteByCourseId(courseId);
-
         logger.info("Removing course with cascade: {} - {}", course.getCourseCode(), course.getCourseName());
         repository.delete(course);
     }
