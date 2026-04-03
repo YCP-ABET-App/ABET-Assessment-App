@@ -117,6 +117,7 @@ function selectCourse(course: Course) {
 
     </div>
 
+    <!-- @vue-ignore -->
     <CourseInspectModal
       :course="selectedCourse"
       @close="selectedCourse = null"
