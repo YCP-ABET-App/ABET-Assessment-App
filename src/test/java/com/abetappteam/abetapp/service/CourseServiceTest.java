@@ -5,15 +5,12 @@ import com.abetappteam.abetapp.dto.CourseDTO;
 import com.abetappteam.abetapp.entity.Course;
 import com.abetappteam.abetapp.entity.CourseIndicator;
 import com.abetappteam.abetapp.entity.CourseInstructor;
+import com.abetappteam.abetapp.repository.CourseIndicatorRepository;
 import com.abetappteam.abetapp.entity.Requests.Course.CourseSearchRequest;
 import com.abetappteam.abetapp.exception.BusinessException;
 import com.abetappteam.abetapp.exception.ConflictException;
 import com.abetappteam.abetapp.exception.ResourceNotFoundException;
-import com.abetappteam.abetapp.repository.CourseRepository;
-import com.abetappteam.abetapp.repository.CourseIndicatorRepository;
-import com.abetappteam.abetapp.repository.CourseInstructorRepository;
-import com.abetappteam.abetapp.repository.MeasureRepository;
-import com.abetappteam.abetapp.repository.MeasureResultRepository;
+import com.abetappteam.abetapp.repository.*;
 import com.abetappteam.abetapp.util.TestDataBuilder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,6 +23,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -49,6 +47,9 @@ class CourseServiceTest extends BaseServiceTest {
     @Mock
     private MeasureRepository measureRepository;
 
+    @Mock
+    private SectionRepository sectionRepository;
+
     @InjectMocks
     private CourseService courseService;
 
@@ -57,7 +58,13 @@ class CourseServiceTest extends BaseServiceTest {
 
     @BeforeEach
     void setUp() {
-        courseService = new CourseService(courseRepository);
+
+        // Only do this if @InjectMocks isn't working
+        courseService = new CourseService(
+                courseRepository,
+                courseIndicatorRepository
+        );
+
 
         ReflectionTestUtils.setField(courseService, "courseInstructorRepository", courseInstructorRepository);
 
@@ -66,6 +73,8 @@ class CourseServiceTest extends BaseServiceTest {
         ReflectionTestUtils.setField(courseService, "measureResultRepository", measureResultRepository);
 
         ReflectionTestUtils.setField(courseService, "measureRepository", measureRepository);
+
+        ReflectionTestUtils.setField(courseService, "sectionRepository", sectionRepository);
 
         testCourse = TestDataBuilder.createCourseWithId(1L, "CS101", "Introduction to Computer Science",
                 "Basic computer science principles", 1L);
@@ -232,18 +241,23 @@ class CourseServiceTest extends BaseServiceTest {
 
     @Test
     void shouldDeleteCourse() {
-        // Given
-        when(courseRepository.findById(1L)).thenReturn(Optional.of(testCourse));
-        when(courseRepository.countMeasuresInReviewByCourseId(1L)).thenReturn(0);
-        when(courseIndicatorRepository.findByCourseId(1L)).thenReturn(List.of());
+        Long courseId = 1L;
+        int cIdInt = courseId.intValue();
 
-        // When
-        courseService.removeCourse(1L);
+        assertNotNull(testCourse, "testCourse must be initialized in @BeforeEach");
 
-        // Then
-        verify(courseIndicatorRepository).findByCourseId(1L);
-        verify(courseIndicatorRepository).deleteByCourseId(1L);
-        verify(courseInstructorRepository).deleteByCourseId(1L);
+        when(courseRepository.findById(courseId)).thenReturn(Optional.of(testCourse));
+        when(courseRepository.countMeasuresInReviewByCourseId(courseId)).thenReturn(0);
+        when(courseIndicatorRepository.findByCourseId(courseId)).thenReturn(List.of());
+
+        courseService.removeCourse(courseId);
+
+        verify(courseRepository).countMeasuresInReviewByCourseId(courseId);
+        verify(sectionRepository).deleteSectionProgramsByCourseId(cIdInt);
+        verify(sectionRepository).deleteSectionUsersByCourseId(cIdInt);
+        verify(sectionRepository).deleteByCourseId(cIdInt);
+        verify(courseIndicatorRepository).deleteByCourseId(courseId);
+        verify(courseInstructorRepository).deleteByCourseId(courseId);
         verify(courseRepository).delete(testCourse);
     }
 

@@ -4,7 +4,6 @@ import com.abetappteam.abetapp.dto.CourseDTO;
 import com.abetappteam.abetapp.entity.Course;
 import com.abetappteam.abetapp.entity.CourseIndicator;
 import com.abetappteam.abetapp.entity.CourseInstructor;
-import com.abetappteam.abetapp.entity.Measure;
 import com.abetappteam.abetapp.entity.Requests.Course.CourseSearchRequest;
 import com.abetappteam.abetapp.exception.BusinessException;
 import com.abetappteam.abetapp.exception.ConflictException;
@@ -18,8 +17,6 @@ import com.abetappteam.abetapp.repository.SectionRepository;
 
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,7 +31,7 @@ import java.util.stream.Collectors;
 public class CourseService extends BaseService<Course, Long, CourseRepository> {
 
     @Autowired
-    public CourseService(CourseRepository repository) {
+    public CourseService(CourseRepository repository, CourseIndicatorRepository courseIndicatorRepository) {
         super(repository);
     }
 
