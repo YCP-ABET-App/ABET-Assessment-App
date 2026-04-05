@@ -48,20 +48,20 @@ class SectionServiceTest extends BaseServiceTest {
 
     @Test
     void shouldCreateSection() {
-        when(repository.existsByCourseNumberAndSemesterIdAndCourseId("001", 1, 1)).thenReturn(false);
+        when(repository.existsBySectionNumberAndSemesterIdAndCourseId("001", 1, 1)).thenReturn(false);
         when(repository.save(any(Section.class))).thenReturn(testSection);
 
         Section created = sectionService.createSection("001", 1, 1);
 
         assertThat(created).isNotNull();
         assertThat(created.getId()).isEqualTo(1L);
-        verify(repository).existsByCourseNumberAndSemesterIdAndCourseId("001", 1, 1);
+        verify(repository).existsBySectionNumberAndSemesterIdAndCourseId("001", 1, 1);
         verify(repository).save(any(Section.class));
     }
 
     @Test
     void shouldThrowWhenDuplicateSectionExists() {
-        when(repository.existsByCourseNumberAndSemesterIdAndCourseId("001", 1, 1)).thenReturn(true);
+        when(repository.existsBySectionNumberAndSemesterIdAndCourseId("001", 1, 1)).thenReturn(true);
 
         assertThatThrownBy(() -> sectionService.createSection("001", 1, 1))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -73,21 +73,21 @@ class SectionServiceTest extends BaseServiceTest {
     @Test
     void shouldUpdateSection() {
         when(repository.findById(1L)).thenReturn(Optional.of(testSection));
-        when(repository.existsByCourseNumberAndSemesterIdAndCourseId("002", 1, 1)).thenReturn(false);
+        when(repository.existsBySectionNumberAndSemesterIdAndCourseId("002", 1, 1)).thenReturn(false);
         when(repository.save(any(Section.class))).thenReturn(testSection);
 
         Section updated = sectionService.updateSection(1L, "002", 1, 1);
 
         assertThat(updated).isNotNull();
         verify(repository).findById(1L);
-        verify(repository).existsByCourseNumberAndSemesterIdAndCourseId("002", 1, 1);
+        verify(repository).existsBySectionNumberAndSemesterIdAndCourseId("002", 1, 1);
         verify(repository).save(any(Section.class));
     }
 
     @Test
     void shouldThrowWhenUpdatingWithDuplicateSectionNumber() {
         when(repository.findById(1L)).thenReturn(Optional.of(testSection));
-        when(repository.existsByCourseNumberAndSemesterIdAndCourseId("002", 1, 1)).thenReturn(true);
+        when(repository.existsBySectionNumberAndSemesterIdAndCourseId("002", 1, 1)).thenReturn(true);
 
         assertThatThrownBy(() -> sectionService.updateSection(1L, "002", 1, 1))
                 .isInstanceOf(IllegalArgumentException.class)

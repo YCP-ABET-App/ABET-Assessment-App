@@ -86,6 +86,6 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @Query(value = "SELECT COUNT(m.id) FROM measure m " +
             "JOIN course_indicator ci ON m.course_indicator_id = ci.id " +
             "WHERE ci.course_id = :courseId AND m.is_active = true " +
-            "AND m.fcar IS NOT NULL AND m.recommended_action IS NOT NULL", nativeQuery = true)
+            "AND m.recommended_action IS NOT NULL", nativeQuery = true)
     int countMeasuresInReviewByCourseId(@Param("courseId") Long courseId);
 }

@@ -4,6 +4,7 @@ import api from "@/api";
 import BaseCard from "@/components/ui/BaseCard.vue";
 import CourseInspectModal from "./CourseInspectModal.vue";
 import NewCourseModal from "./NewCourseModal.vue";
+import CourseEditorModal from "./CourseEditorModal.vue";
 
 interface Course {
   id: number
@@ -22,9 +23,15 @@ const loading = ref(false);
 const error = ref<string | null>(null);
 const courses = ref<Course[]>([]);
 
+const editingCourse = ref<Course | null>(null);
+
 const selectedCourse = ref<Course | null>(null);
 
 const isNewCourseModalOpen = ref(false);
+
+function startEdit(course: Course) {
+  editingCourse.value = course;
+}
 
 async function saveNewCourse(data: any) {
   try {
@@ -100,6 +107,14 @@ function selectCourse(course: Course) {
           <div class="course-info">
             <h3 class="course-name">{{ course.courseName }}</h3>
           </div>
+
+          <button
+            class="simple-edit-btn"
+            @click.stop="startEdit(course)"
+          >
+            Edit
+          </button>
+
         </div>
       </BaseCard>
 
@@ -126,6 +141,12 @@ function selectCourse(course: Course) {
       :is-open="isNewCourseModalOpen"
       @close="isNewCourseModalOpen = false"
       @submitted="saveNewCourse"
+    />
+
+    <CourseEditorModal
+      :course="editingCourse"
+      @close="editingCourse = null"
+      @saved="loadCourses"
     />
 
   </section>
@@ -215,5 +236,29 @@ function selectCourse(course: Course) {
 
 .error-state {
   color: var(--color-error);
+}
+
+.course-info {
+  flex: 1;
+  text-align: left;
+}
+
+.simple-edit-btn {
+  background: var(--color-bg-tertiary, #f0f0f0);
+  border: 1px solid var(--color-border-dark, #ccc);
+  color: var(--color-text-secondary, #666);
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.simple-edit-btn:hover {
+  background: var(--color-primary);
+  color: white;
+  border-color: var(--color-primary);
 }
 </style>
