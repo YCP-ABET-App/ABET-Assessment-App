@@ -81,7 +81,7 @@ public class MeasureRepositoryTest extends BaseRepositoryTest {
     @Test
     void shouldSearchById() {
         Measure saved = measureRepository.save(testMeasure);
-        measureRepository.save(TestDataBuilder.createMeasure(1L, 1L, "Other Measure", "InProgress", true));
+        measureRepository.save(TestDataBuilder.createMeasure(1L, 1L, 1L, "Other Measure", "InProgress", true));
 
         List<Measure> found = measureRepository.searchMeasures(saved.getId().intValue(), null, null, null);
 
@@ -92,7 +92,7 @@ public class MeasureRepositoryTest extends BaseRepositoryTest {
     @Test
     void shouldSearchByCourseIndicatorId() {
         measureRepository.save(testMeasure);
-        measureRepository.save(TestDataBuilder.createMeasure(2L, 2L, "Other Measure", "InProgress", true));
+        measureRepository.save(TestDataBuilder.createMeasure(2L, 2L, 2L, "Other Measure", "InProgress", true));
 
         List<Measure> found = measureRepository.searchMeasures(null, 1, null, null);
 
@@ -103,7 +103,7 @@ public class MeasureRepositoryTest extends BaseRepositoryTest {
     @Test
     void shouldSearchByActiveStatus() {
         measureRepository.save(testMeasure);
-        measureRepository.save(TestDataBuilder.createMeasure(1L, 1L, "Inactive", "InProgress", false));
+        measureRepository.save(TestDataBuilder.createMeasure(1L, 1L, 1L, "Inactive", "InProgress", false));
 
         List<Measure> found = measureRepository.searchMeasures(null, null, null, true);
 
@@ -114,7 +114,7 @@ public class MeasureRepositoryTest extends BaseRepositoryTest {
     @Test
     void shouldReturnAllWhenNoFilters() {
         measureRepository.save(testMeasure);
-        measureRepository.save(TestDataBuilder.createMeasure(1L, 1L, "Another Measure", "Submitted", true));
+        measureRepository.save(TestDataBuilder.createMeasure(1L, 1L, 1L, "Another Measure", "Submitted", true));
 
         List<Measure> found = measureRepository.searchMeasures(null, null, null, null);
 

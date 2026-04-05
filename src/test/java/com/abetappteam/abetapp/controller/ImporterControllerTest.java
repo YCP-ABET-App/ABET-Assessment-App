@@ -43,10 +43,12 @@ class ImporterControllerTest {
     @Test
     void shouldImportSummarySuccessfully() throws Exception {
         // Given
-        doNothing().when(importerService).importSummary(any(SummaryImportDTO.class), 1L);
+        doNothing().when(importerService).importSummary(any(SummaryImportDTO.class), eq(1L));
 
         // When/Then
         mockMvc.perform(post("/api/import/summary")
+
+                .param("programId", "1")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(testSummaryDTO)))
                 .andExpect(status().isOk())
@@ -54,7 +56,7 @@ class ImporterControllerTest {
                 .andExpect(jsonPath("$.message").value("OK"))
                 .andExpect(jsonPath("$.data").value("Summary imported successfully"));
 
-        verify(importerService, times(1)).importSummary(any(SummaryImportDTO.class), 1l);
+        verify(importerService, times(1)).importSummary(any(SummaryImportDTO.class), eq(1L));
     }
 
     private SummaryImportDTO createTestSummaryDTO() {
