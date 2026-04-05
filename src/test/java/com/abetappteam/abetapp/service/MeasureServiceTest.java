@@ -56,7 +56,7 @@ public class MeasureServiceTest {
         testMeasure = TestDataBuilder.createMeasure();
         testMeasure.setId(1L);
 
-        testDTO = TestDataBuilder.createMeasureDTO(1l, 1l,"New Measure",
+        testDTO = TestDataBuilder.createMeasureDTO(1l, 1l, 1l,"New Measure",
         "New Action", true);
     }
 

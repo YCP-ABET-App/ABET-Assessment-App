@@ -63,7 +63,7 @@ public class MeasureControllerUnitTest {
         testMeasure.setRecommendedAction("Test Action");
         testMeasure.setActive(true);
 
-        testDTO = new MeasureDTO(1L, 1l,"New Description", null, true);
+        testDTO = new MeasureDTO(1L, 1l, 1l,"New Description", null, true);
 
         testIndicator = new CourseIndicator();
         testIndicator.setId(1l);

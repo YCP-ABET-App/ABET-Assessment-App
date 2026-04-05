@@ -42,6 +42,7 @@ public class PerformanceIndicatorService
         indicator.setDescription(dto.getDescription());
         indicator.setIndicatorNumber(dto.getIndicatorNumber());
         indicator.setStudentOutcomeId(dto.getStudentOutcomeId());
+        indicator.setProgramId(dto.getProgramId());
         indicator.setIsActive(true);
 
         logger.info("Creating new performance indicator: {} for student outcome {}", dto.getIndicatorNumber(),

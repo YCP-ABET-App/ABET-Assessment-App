@@ -400,15 +400,16 @@ public class TestDataBuilder {
 
     // Create Measure
     public static Measure createMeasure(){
-        return createMeasure(1l, 1l,"Example Description", "Example Recommended Action",
+        return createMeasure(1l, 1l, 1l,"Example Description", "Example Recommended Action",
          true);
     }
 
     //Create Custom Measure
-    public static Measure createMeasure(Long courseIndicatorId, Long semesterId, String description, String recAction,
+    public static Measure createMeasure(Long courseIndicatorId, Long sectionIndicatorId, Long semesterId, String description, String recAction,
      Boolean active) {
         Measure measure = new Measure();
         measure.setCourseIndicatorId(courseIndicatorId);
+        measure.setSectionIndicatorId(sectionIndicatorId);
         measure.setSemesterId(semesterId);
         measure.setDescription(description);
         measure.setRecommendedAction(recAction);
@@ -417,23 +418,23 @@ public class TestDataBuilder {
     }
 
     //Create Custom Measure with ID
-    public static Measure createMeasureWithId(Long id, Long courseIndicatorId, Long semesterId, String description, String recAction,
+    public static Measure createMeasureWithId(Long id, Long courseIndicatorId, Long sectionIndicatorid, Long semesterId, String description, String recAction,
     Boolean active) {
-        Measure measure = createMeasure(courseIndicatorId, semesterId, description, recAction, active);
+        Measure measure = createMeasure(courseIndicatorId, sectionIndicatorid, semesterId, description, recAction, active);
         measure.setId(id);
         return measure;
     }
 
     //Create MeasureDTO
     public static MeasureDTO creaMeasureDTO(){
-        return createMeasureDTO(1l, 1l, "New Description",
+        return createMeasureDTO(1l, 1l, 1l, "New Description",
         "New Recommended Action", true);
     }
 
     //Create Custom MeasureDTO
-    public static MeasureDTO createMeasureDTO(Long courseIndicatorId, Long semesterId, String description, String recAction,
+    public static MeasureDTO createMeasureDTO(Long courseIndicatorId, Long sectionIndicatorId, Long semesterId, String description, String recAction,
     Boolean active){
-        MeasureDTO measureDTO = new MeasureDTO(courseIndicatorId, semesterId, description, recAction, active);
+        MeasureDTO measureDTO = new MeasureDTO(courseIndicatorId, sectionIndicatorId, semesterId, description, recAction, active);
 
         return measureDTO;
     }
@@ -443,6 +444,7 @@ public class TestDataBuilder {
         List<Measure> measures = new ArrayList<>();
         for (int i = 1; i <= count; i++) {
             measures.add(createMeasureWithId(
+                    (long) i,
                     (long) i,
                     (long) i,
                     (long) i,
@@ -474,15 +476,16 @@ public class TestDataBuilder {
 
     //Create Outcome
     public static Outcome createOutcome(){
-        return createOutcome(1, "Test Outcome", 1l, 80, "Looks good", true);
+        return createOutcome(1, "Test Outcome", 1l, 1l, 80, "Looks good", true);
     }
 
     //Create custom Outcome
-    public static Outcome createOutcome(Integer number, String description, Long semesterId, Integer value, String evaluation, Boolean active){
+    public static Outcome createOutcome(Integer number, String description, Long semesterId, Long programId, Integer value, String evaluation, Boolean active){
         Outcome outcome = new Outcome();
         outcome.setNumber(number);
         outcome.setDescription(description);
         outcome.setSemesterId(semesterId);
+        outcome.setProgramId(programId);
         outcome.setValue(value);
         outcome.setEvaluation(evaluation);
         outcome.setActive(active);
@@ -490,20 +493,20 @@ public class TestDataBuilder {
     }
 
     //Create custom Outcome with Id
-    public static Outcome createOutcomeWithId(Long id, Integer number, String description, Long semesterId, Integer value, String evaluation, Boolean active){
-        Outcome outcome = createOutcome(number, description, semesterId, value, evaluation, active);
+    public static Outcome createOutcomeWithId(Long id, Integer number, String description, Long semesterId, Long programId, Integer value, String evaluation, Boolean active){
+        Outcome outcome = createOutcome(number, description, semesterId, programId, value, evaluation, active);
         outcome.setId(id);
         return outcome;
     }
 
     //Create OutcomeDTO
     public static OutcomeDTO createOutcomeDTO(){
-        return createOutcomeDTO(2, "New Description", 1l, 20, "Looks bad", true);   
+        return createOutcomeDTO(2, "New Description", 1l, 1l, 20, "Looks bad", true);
     }
 
     //Create custom OutcomeDTO
-    public static OutcomeDTO createOutcomeDTO(Integer number, String description, Long semesterId, Integer value, String evaluation, Boolean active){
-        OutcomeDTO dto = new OutcomeDTO(number, description, evaluation, semesterId, active);
+    public static OutcomeDTO createOutcomeDTO(Integer number, String description, Long semesterId, Long programId, Integer value, String evaluation, Boolean active){
+        OutcomeDTO dto = new OutcomeDTO(number, description, evaluation, semesterId, programId, active);
 
         // dto.setValue(value);
 
@@ -518,6 +521,7 @@ public class TestDataBuilder {
                     (long) i,
                     i,
                     "Description " + i,
+                    1l,
                     1l,
                     80,
                     null,

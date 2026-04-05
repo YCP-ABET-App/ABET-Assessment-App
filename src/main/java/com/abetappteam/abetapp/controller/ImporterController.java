@@ -18,8 +18,8 @@ public class ImporterController extends BaseController {
     private ImporterService importer;
 
     @PostMapping("/summary")
-    public ResponseEntity<ApiResponse<String>> importSummary(@RequestBody SummaryImportDTO dto) {
-        importer.importSummary(dto);
+    public ResponseEntity<ApiResponse<String>> importSummary(@RequestBody SummaryImportDTO dto, Long programId) {
+        importer.importSummary(dto, programId);
         return success("Summary imported successfully", "OK");
     }
 }

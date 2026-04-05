@@ -12,6 +12,9 @@ public class Measure extends BaseEntity {
     @Column(name = "course_indicator_id", nullable = false)
     private Long courseIndicatorId;
 
+    @Column(name = "section_indicator_id", nullable = false)
+    private Long sectionIndicatorId;
+
     @Column(name = "semester_id", nullable = false)
     private Long semesterId;
 
@@ -38,12 +41,14 @@ public class Measure extends BaseEntity {
 
     public Measure(
             Long courseIndicatorId,
+            Long sectionIndicatorId,
             Long semesterId,
             String description,
             String recommendedAction,
             Boolean active
     ) {
         this.courseIndicatorId = courseIndicatorId;
+        this.sectionIndicatorId = sectionIndicatorId;
         this.semesterId = semesterId;
         this.description = description;
         this.recommendedAction = recommendedAction;
@@ -59,6 +64,13 @@ public class Measure extends BaseEntity {
     }
     public void setCourseIndicatorId(Long courseIndicatorId) {
         this.courseIndicatorId = courseIndicatorId;
+    }
+
+    public Long getSectionIndicatorId() {
+        return sectionIndicatorId;
+    }
+    public void setSectionIndicatorId(Long sectionIndicatorId) {
+        this.sectionIndicatorId = sectionIndicatorId;
     }
 
     public Long getSemesterId() {
@@ -98,6 +110,7 @@ public class Measure extends BaseEntity {
         return "Measure{" +
                 "id=" + getId() +
                 ", courseIndicatorId=" + courseIndicatorId +
+                ", sectionIndicatorId=" + sectionIndicatorId +
                 ", semesterId=" + semesterId +
                 ", description='" + description + '\'' +
                 ", recommendedAction='" + recommendedAction + '\'' +
