@@ -36,15 +36,18 @@ services:
 
   backend:
     build:
-      context: /
+      context: .
+      dockerfile: Dockerfile
     container_name: spring-backend
     restart: always
     ports:
       - "8080:8080"
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mariadb://localhost:3306/abet_assessment_local
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://mariadb-local:3306/abet_assessment_local
       - SPRING_DATASOURCE_USERNAME=username
       - SPRING_DATASOURCE_PASSWORD=password
+    networks:
+      - web-network
     depends_on:
       liquibase:
         condition: service_completed_successfully
@@ -52,10 +55,13 @@ services:
   frontend:
     build:
       context: ./frontend
+      dockerfile: Dockerfile
     container_name: vue-frontend
     restart: always
     ports:
       - "80:80"
+    networks:
+      - web-network
     depends_on:
       - backend
 
