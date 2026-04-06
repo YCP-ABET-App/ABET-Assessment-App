@@ -185,6 +185,12 @@ public class CourseService extends BaseService<Course, Long, CourseRepository> {
         repository.delete(course);
     }
 
+    public List<Long> getIdsByCourseIndicator(Long courseIndicatorId) {
+        CourseIndicator ci = courseIndicatorRepository.findById(courseIndicatorId)
+                .orElseThrow(() -> new RuntimeException("CourseIndicator not found: " + courseIndicatorId));
+        return List.of(ci.getCourseId(), ci.getIndicatorId());
+    }
+
     @Transactional
     public void deactivateCourse(Long courseId) {
         Course course = findById(courseId);

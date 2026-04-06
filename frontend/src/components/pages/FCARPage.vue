@@ -42,36 +42,46 @@ async function fetch_fcar_data() {
   try {
     const { data: mRes } = await api.get(`/measure/${measure_id.value}`);
     const measure = mRes.data;
+    console.log("measure:", measure);
+
 
     const { data: idRes } = await api.get(`/courses/courseIndicator/getIds/${measure.courseIndicatorId}`);
+    console.log("idRes.data:", idRes.data);
     const [course_id, ind_id] = idRes.data;
 
     const [cRes, iRes, resultsRes] = await Promise.all([
       api.get(`/courses/${course_id}`),
       api.get(`/performance-indicators/${ind_id}`),
-      api.get(`/measure-results/measure/${measure_id.value}`)
+      api.get(`/measure-result`, { params: { measureId: measure_id.value } })
     ]);
+
+    console.log("course:", cRes.data.data);
+    console.log("pi:", iRes.data.data);
+    console.log("results raw:", resultsRes.data.data);
 
     const course = cRes.data.data;
     const pi = iRes.data.data;
-    const results = resultsRes.data.data;
+    const raw = resultsRes.data.data;
+    const result = Array.isArray(raw) ? raw[0] : raw;
 
     form.value = {
       course_display: `${course.courseCode} - ${course.courseName}`,
-      outcome_code: `${pi.studentOutcomeId}.${pi.id}`,
-      outcome_description: pi.outcomeDescription || pi.description || "",
-      performance_indicator_description: pi.lvlDescription || pi.description || "",
+      outcome_code: `${pi.studentOutcomeId}.${pi.indicatorNumber}`,
+      outcome_description: pi.description || "",
+      performance_indicator_description: pi.description || "",
       work_used: measure.workUsed || "",
-      activity_description: measure.measure_description || measure.description || "",
+      activity_description: measure.description || "",
       target_goal: `${pi.thresholdPercentage}`,
-      count_below: String(results.below || 0),
-      count_met: String(results.met || 0),
-      count_exceeded: String(results.exceeded || 0),
-      summary_observations: results.observation || "",
+      count_below: String(result?.studentsBelow || 0),
+      count_met: String(result?.studentsMet || 0),
+      count_exceeded: String(result?.studentsExceeded || 0),
+      summary_observations: result?.observation || "",
       outcome_evaluation: "",
     };
-  } catch (error) {
-    console.error(error);
+  } catch (error: any) {
+    console.error("Failed on URL:", error?.config?.url);
+    console.error("Status:", error?.response?.status);
+    console.error("Message:", error?.response?.data);
   }
 }
 

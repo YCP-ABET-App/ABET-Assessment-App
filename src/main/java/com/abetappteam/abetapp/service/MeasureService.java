@@ -33,6 +33,7 @@ public class MeasureService extends BaseService<Measure, Long, MeasureRepository
     private final CourseIndicatorService courseIndicatorService;
     private final SectionProgramService sectionProgramService;
     private final MeasureResultService measureResultService;
+    private final MeasureRepository measureRepository;
 
     @Autowired
     public MeasureService(
@@ -42,7 +43,7 @@ public class MeasureService extends BaseService<Measure, Long, MeasureRepository
             SectionService sectionService,
             CourseIndicatorService courseIndicatorService,
             SectionProgramService sectionProgramService,
-            MeasureResultService measureResultService) {
+            MeasureResultService measureResultService, MeasureRepository measureRepository) {
         super(repository);
         this.courseIndicatorRepository = courseIndicatorRepository;
         this.courseRepository = courseRepository;
@@ -50,6 +51,7 @@ public class MeasureService extends BaseService<Measure, Long, MeasureRepository
         this.courseIndicatorService = courseIndicatorService;
         this.sectionProgramService = sectionProgramService;
         this.measureResultService = measureResultService;
+        this.measureRepository = measureRepository;
     }
 
     @Override
@@ -100,6 +102,10 @@ public class MeasureService extends BaseService<Measure, Long, MeasureRepository
         return measure;
     }
 
+    public Measure findById(Long id) {
+        return measureRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Measure not found with id: " + id));
+    }
     // Update Existing Measure
     @Transactional
     public Measure update(Long id, MeasureDTO dto) {
