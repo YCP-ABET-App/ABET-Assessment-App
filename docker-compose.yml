@@ -40,7 +40,7 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mariadb://mariadb-local-abet:3307/abet_assessment_local
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://mariadb-local-abet:3306/abet_assessment_local
       - SPRING_DATASOURCE_USERNAME=username
       - SPRING_DATASOURCE_PASSWORD=password
     networks:
@@ -56,7 +56,7 @@ services:
     container_name: vue-frontend
     restart: always
     ports:
-      - "67:67"
+      - "3000:80"
     networks:
       - web-network
     depends_on:
