@@ -24,13 +24,10 @@ services:
     depends_on:
       - local-database
     volumes:
-      - ./src/main/resources/db/changelog:/liquibase/changelog
-      - ./src/main/resources/db/changelog:/liquibase/db/changelognp
+      - ./src/main/resources:/liquibase/resources
+    working_dir: /liquibase/resources
     command: >
-      /bin/bash -c "
-      wget -O /liquibase/mariadb.jar https://repo1.maven.org/maven2/org/mariadb/jdbc/mariadb-java-client/3.3.2/mariadb-java-client-3.3.2.jar &&
-      liquibase --classpath=/liquibase/mariadb.jar --username=username --password=password --url='jdbc:mariadb://mariadb-local-abet:3306/abet_assessment_local' --changelog-file=/changelog/changelog-master.yaml update
-      "
+      /bin/bash -c "sleep 15 && liquibase --username=username --password=password --url='jdbc:mariadb://mariadb-local-abet:3306/abet_assessment_local' --changelog-file=db/changelog/changelog-master.yaml update"
     networks:
       - web-network
 
@@ -43,7 +40,7 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mariadb://mariadb-local-abet:3306/abet_assessment_local
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://mariadb-local-abet:3307/abet_assessment_local
       - SPRING_DATASOURCE_USERNAME=username
       - SPRING_DATASOURCE_PASSWORD=password
     networks:
