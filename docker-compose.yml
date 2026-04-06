@@ -36,7 +36,7 @@ services:
 
   backend:
     build:
-      context: ./src/main
+      context: /
     container_name: spring-backend
     restart: always
     ports:
