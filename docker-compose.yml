@@ -10,7 +10,7 @@ services:
       MARIADB_PASSWORD: password
       MARIADB_DATABASE: abet_assessment_local
     ports:
-      - "3306:3306"
+      - "3307:3306"
     networks:
       - web-network
     volumes:
