@@ -1,0 +1,64 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-schedule-entry-table
+      author: ohornbeck
+      preConditions:
+        - onFail: MARK_RAN
+          not:
+            tableExists:
+              tableName: schedule_entry
+      changes:
+        - createTable:
+            tableName: schedule_entry
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: semester_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: course_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: program_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: indicator_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: version
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: deleted
+                  type: BOOLEAN
+                  constraints:
+                    nullable: false
+              - column:
+                  name: deleted_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false

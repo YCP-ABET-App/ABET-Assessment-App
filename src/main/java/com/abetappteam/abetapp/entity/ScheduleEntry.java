@@ -1,9 +1,13 @@
 package com.abetappteam.abetapp.entity;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import org.aspectj.asm.IProgramElement;
 
+@Entity
+@Table(name = "schedule_entry")
 public class ScheduleEntry extends BaseEntity {
 
     @NotBlank(message = "Semester is required")

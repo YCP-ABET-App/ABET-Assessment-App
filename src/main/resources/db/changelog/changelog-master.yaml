@@ -35,4 +35,10 @@ databaseChangeLog:
   - include:
       file: db/changelog/03282026AddCascadeDeleteToCourse.yaml
   - include:
-      file: db/changelog/04052026AddSectionIndicatorToMeasure.yaml
+      file: db/changelog/040526AddSectionIndicatorToMeasure.yaml
+  - include:
+      file: db/changelog/040526AddScheduleEntryTable.yaml
+  - include:
+      file: db/changelog/04052026AddProgramToPI.yaml
+  - include:
+      file: db/changelog/04052026AddProgramToSO.yaml

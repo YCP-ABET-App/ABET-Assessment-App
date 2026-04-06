@@ -16,18 +16,15 @@ import java.util.List;
  */
 @Repository
 public interface SectionProgramRepository extends JpaRepository<SectionProgram, Long> {
+
     // ========== Section ID queries ==========
     Page<SectionProgram> findBySectionId(int sectionId, Pageable pageable);
-
     List<SectionProgram> findBySectionId(int sectionId);
-
     long countBySectionId(int sectionId);
 
     // ========== Program ID queries ==========
     Page<SectionProgram> findByProgramId(int programId, Pageable pageable);
-
     List<SectionProgram> findByProgramId(int programId);
-
     long countByProgramId(int programId);
 
     @Query("SELECT sp FROM SectionProgram sp " +

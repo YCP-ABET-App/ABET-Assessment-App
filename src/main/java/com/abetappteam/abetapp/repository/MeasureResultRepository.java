@@ -18,18 +18,13 @@ public interface MeasureResultRepository extends JpaRepository<MeasureResult, Lo
 
     // Measure queries
     List<MeasureResult> findByMeasureId(Long measureId);
-
     Page<MeasureResult> findByMeasureId(Long measureId, Pageable pageable);
-
     long countByMeasureId(Long measureId);
 
     // Status queries
     List<MeasureResult> findByMeasureIdAndStatus(Long measureId, String status);
-
     List<MeasureResult> findByStatus(String status);
-
     Page<MeasureResult> findByMeasureIdAndStatus(Long measureId, String status, Pageable pageable);
-
     long countByMeasureIdAndStatus(Long measureId, String status);
 
     // Find specific relationship
