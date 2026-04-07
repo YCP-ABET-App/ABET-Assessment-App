@@ -48,6 +48,8 @@ services:
     depends_on:
       liquibase:
         condition: service_completed_successfully
+      local-database:
+        condition: service_started
 
   frontend:
     build:
