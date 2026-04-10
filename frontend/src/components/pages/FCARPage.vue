@@ -42,36 +42,32 @@ async function fetch_fcar_data() {
   try {
     const { data: mRes } = await api.get(`/measure/${measure_id.value}`);
     const measure = mRes.data;
-    console.log("measure:", measure);
-
 
     const { data: idRes } = await api.get(`/courses/courseIndicator/getIds/${measure.courseIndicatorId}`);
-    console.log("idRes.data:", idRes.data);
     const [course_id, ind_id] = idRes.data;
 
-    const [cRes, iRes, resultsRes] = await Promise.all([
+    const iRes = await api.get(`/performance-indicators/${ind_id}`);
+    const pi = iRes.data.data;
+
+    const [cRes, resultsRes, outcomeRes] = await Promise.all([
       api.get(`/courses/${course_id}`),
-      api.get(`/performance-indicators/${ind_id}`),
-      api.get(`/measure-result`, { params: { measureId: measure_id.value } })
+      api.get(`/measure-result`, { params: { measureId: measure_id.value } }),
+    api.get(`/outcome/${pi.studentOutcomeId}`)
     ]);
 
-    console.log("course:", cRes.data.data);
-    console.log("pi:", iRes.data.data);
-    console.log("results raw:", resultsRes.data.data);
-
     const course = cRes.data.data;
-    const pi = iRes.data.data;
     const raw = resultsRes.data.data;
+    const outcome = outcomeRes.data.data;
     const result = Array.isArray(raw) ? raw[0] : raw;
 
     form.value = {
       course_display: `${course.courseCode} - ${course.courseName}`,
       outcome_code: `${pi.studentOutcomeId}.${pi.indicatorNumber}`,
-      outcome_description: pi.description || "",
+      outcome_description: outcome.out_description || outcome.description || "",
       performance_indicator_description: pi.description || "",
       work_used: measure.workUsed || "",
       activity_description: measure.description || "",
-      target_goal: `${pi.thresholdPercentage}`,
+      target_goal: (pi.thresholdPercentage == null) ? "" : String(pi.thresholdPercentage),
       count_below: String(result?.studentsBelow || 0),
       count_met: String(result?.studentsMet || 0),
       count_exceeded: String(result?.studentsExceeded || 0),
@@ -79,9 +75,8 @@ async function fetch_fcar_data() {
       outcome_evaluation: "",
     };
   } catch (error: any) {
-    console.error("Failed on URL:", error?.config?.url);
-    console.error("Status:", error?.response?.status);
-    console.error("Message:", error?.response?.data);
+    console.error("Critical Fetch Error:", error);
+    console.error("Failed URL:", error?.config?.url);
   }
 }
 
@@ -192,7 +187,11 @@ initialize();
           <div class="info-row stats-row">
             <div class="info-field">
               <span class="field-label">Target Goal %</span>
-              <input v-model="form.target_goal" class="styled-input" />
+              <input
+                v-model="form.target_goal"
+                class="styled-input"
+                placeholder="--"
+              />
             </div>
             <div class="info-field">
               <span class="field-label">Below</span>
