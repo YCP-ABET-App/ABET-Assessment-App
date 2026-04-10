@@ -222,9 +222,6 @@ initialize();
                 <option value="Met">Met</option>
                 <option value="Met Comfortably">Met Comfortably</option>
               </select>
-              <p v-if="suggestedEvaluation" class="suggestion">
-                Suggested based on data: <strong>{{ suggestedEvaluation }}</strong>
-              </p>
             </div>
 
             <div class="info-field">

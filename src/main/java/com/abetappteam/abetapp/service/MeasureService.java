@@ -104,7 +104,7 @@ public class MeasureService extends BaseService<Measure, Long, MeasureRepository
 
     public Measure findById(Long id) {
         return measureRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Measure not found with id: " + id));
+                .orElseThrow(() -> new RuntimeException("Measure Not found with id: " + id));
     }
     // Update Existing Measure
     @Transactional
