@@ -29,8 +29,7 @@ public class MeasureResultService extends BaseService<MeasureResult, Long, Measu
     public MeasureResult create(MeasureResultDTO dto) {
         MeasureResult measureResult = new MeasureResult();
         measureResult.setMeasureId(dto.getMeasureId());
-        measureResult.setSectionId(dto.getSectionId());
-        measureResult.setProgramId(dto.getProgramId());
+        measureResult.setSectionProgramId(dto.getSectionProgramId());
         measureResult.setStudentsMet(dto.getStudentsMet());
         measureResult.setStudentsExceeded(dto.getStudentsExceeded());
         measureResult.setStudentsBelow(dto.getStudentsBelow());
@@ -48,8 +47,7 @@ public class MeasureResultService extends BaseService<MeasureResult, Long, Measu
         MeasureResult measureResult = findById(id);
 
         measureResult.setMeasureId(dto.getMeasureId());
-        measureResult.setSectionId(dto.getSectionId());
-        measureResult.setProgramId(dto.getProgramId());
+        measureResult.setSectionProgramId(dto.getSectionProgramId());
         measureResult.setStudentsMet(dto.getStudentsMet());
         measureResult.setStudentsExceeded(dto.getStudentsExceeded());
         measureResult.setStudentsBelow(dto.getStudentsBelow());
@@ -66,8 +64,7 @@ public class MeasureResultService extends BaseService<MeasureResult, Long, Measu
         return repository.searchMeasureResults(
                 request.id(),
                 request.measureId(),
-                request.sectionId(),
-                request.programId()
+                request.sectionProgramId()
         );
     }
 

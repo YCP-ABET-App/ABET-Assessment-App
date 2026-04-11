@@ -61,7 +61,7 @@ public class ImporterService {
 
                         Measure measure = new Measure();
 
-                        measure.setCourseIndicatorId(ci.getId());
+                        //measure.setCourseIndicatorId(ci.getId());
 
                         measure.setActive(true);
 

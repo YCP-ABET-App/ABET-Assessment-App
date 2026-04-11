@@ -400,17 +400,15 @@ public class TestDataBuilder {
 
     // Create Measure
     public static Measure createMeasure(){
-        return createMeasure(1l, 1l, 1l,"Example Description", "Example Recommended Action",
+        return createMeasure(1l, "Example Description", "Example Recommended Action",
          true);
     }
 
     //Create Custom Measure
-    public static Measure createMeasure(Long courseIndicatorId, Long sectionIndicatorId, Long semesterId, String description, String recAction,
+    public static Measure createMeasure(Long scheduleEntryId, String description, String recAction,
      Boolean active) {
         Measure measure = new Measure();
-        measure.setCourseIndicatorId(courseIndicatorId);
-        measure.setSectionIndicatorId(sectionIndicatorId);
-        measure.setSemesterId(semesterId);
+        measure.setScheduleEntryId(scheduleEntryId);
         measure.setDescription(description);
         measure.setRecommendedAction(recAction);
         measure.setActive(active);
@@ -418,23 +416,23 @@ public class TestDataBuilder {
     }
 
     //Create Custom Measure with ID
-    public static Measure createMeasureWithId(Long id, Long courseIndicatorId, Long sectionIndicatorid, Long semesterId, String description, String recAction,
+    public static Measure createMeasureWithId(Long id, Long scheduleEntryId, String description, String recAction,
     Boolean active) {
-        Measure measure = createMeasure(courseIndicatorId, sectionIndicatorid, semesterId, description, recAction, active);
+        Measure measure = createMeasure(scheduleEntryId, description, recAction, active);
         measure.setId(id);
         return measure;
     }
 
     //Create MeasureDTO
     public static MeasureDTO creaMeasureDTO(){
-        return createMeasureDTO(1l, 1l, 1l, "New Description",
+        return createMeasureDTO( 1l,  "New Description",
         "New Recommended Action", true);
     }
 
     //Create Custom MeasureDTO
-    public static MeasureDTO createMeasureDTO(Long courseIndicatorId, Long sectionIndicatorId, Long semesterId, String description, String recAction,
+    public static MeasureDTO createMeasureDTO(Long scheduleEntryId, String description, String recAction,
     Boolean active){
-        MeasureDTO measureDTO = new MeasureDTO(courseIndicatorId, sectionIndicatorId, semesterId, description, recAction, active);
+        MeasureDTO measureDTO = new MeasureDTO(scheduleEntryId, description, recAction, active);
 
         return measureDTO;
     }
@@ -444,8 +442,6 @@ public class TestDataBuilder {
         List<Measure> measures = new ArrayList<>();
         for (int i = 1; i <= count; i++) {
             measures.add(createMeasureWithId(
-                    (long) i,
-                    (long) i,
                     (long) i,
                     (long) i,
                     "Description" + i,
