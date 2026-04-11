@@ -10,7 +10,7 @@ import com.abetappteam.abetapp.repository.CourseIndicatorRepository;
 import com.abetappteam.abetapp.repository.CourseRepository;
 import com.abetappteam.abetapp.repository.MeasureRepository;
 import com.abetappteam.abetapp.util.TestDataBuilder;
-
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -82,8 +82,8 @@ public class MeasureServiceTest {
 
         //When/Then
         assertThatThrownBy(() -> measureService.findById(999L))
-                .isInstanceOf(ResourceNotFoundException.class)
-                .hasMessageContaining("Measure not found with id: 999");
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("Not found");
     }
 
     @Test

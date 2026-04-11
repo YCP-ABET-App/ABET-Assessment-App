@@ -33,6 +33,7 @@ public class MeasureService extends BaseService<Measure, Long, MeasureRepository
     private final ScheduleEntryService scheduleEntryService;
     private final SectionProgramService sectionProgramService;
     private final MeasureResultService measureResultService;
+    private final MeasureRepository measureRepository;
 
     @Autowired
     public MeasureService(
@@ -46,6 +47,7 @@ public class MeasureService extends BaseService<Measure, Long, MeasureRepository
         this.scheduleEntryService = scheduleEntryService;
         this.sectionProgramService = sectionProgramService;
         this.measureResultService = measureResultService;
+        this.measureRepository = measureRepository;
     }
 
     @Override
@@ -103,6 +105,10 @@ public class MeasureService extends BaseService<Measure, Long, MeasureRepository
         return measure;
     }
 
+    public Measure findById(Long id) {
+        return measureRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Measure Not found with id: " + id));
+    }
     // Update Existing Measure
     @Transactional
     public Measure update(Long id, MeasureDTO dto) {

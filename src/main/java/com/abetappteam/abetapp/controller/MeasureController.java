@@ -33,6 +33,13 @@ public class MeasureController extends BaseController{
         return success(measures, "Measures retrieved successfully");
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<Measure>> getMeasureById(@PathVariable Long id) {
+        logger.info("Fetching measure with id: {}", id);
+        Measure measure = service.findById(id);
+        return success(measure, "Measure retrieved successfully");
+    }
+
     //Create a new measure
     @PostMapping
     public ResponseEntity<ApiResponse<Measure>> createMeasure(@Valid @RequestBody MeasureDTO dto) {
