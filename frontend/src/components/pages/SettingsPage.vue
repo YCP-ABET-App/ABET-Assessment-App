@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { ref, onMounted, computed } from "vue";
+import { useToast } from '@/composables/use-toast';
 import api from "@/api";
 import { useUserStore } from "@/stores/user-store";
 
@@ -7,6 +8,10 @@ import BaseCard from "@/components/ui/BaseCard.vue";
 import BaseSelect from "@/components/ui/BaseSelect.vue";
 import BaseButton from "@/components/ui/BaseButton.vue";
 import BaseSpinner from "@/components/ui/BaseSpinner.vue";
+import BaseModal from "@/components/ui/BaseModal.vue";
+import BaseInput from "@/components/ui/BaseInput.vue";
+
+const toast = useToast();
 
 // Store
 const userStore = useUserStore();
@@ -14,6 +19,7 @@ const userStore = useUserStore();
 // STATE
 const loading = ref(true);
 const saving = ref(false);
+const addingProgram = ref(false);
 const profileError = ref<string | null>(null);
 
 // User profile info
@@ -83,10 +89,71 @@ async function saveSettings() {
 onMounted(() => {
   loadProfile();
 });
+
+const add_program_form_data = ref({
+  programName: ""
+})
+
+async function openAddProgramForm(){
+  addingProgram.value = true;
+}
+
+async function createNewProgram(){
+  if (!add_program_form_data.value.programName.trim()) {
+    toast.error('Program name is required');
+    return;
+  }
+
+  //Define new program object with description from form
+  let new_program = {
+    name: add_program_form_data.value.programName,
+    institution: "York College of PA", //Change when institutions are added
+    active: true
+  }
+  let new_program_id: number;
+
+  //POST request to server
+  try {
+    const response = await api.post(`/program`, new_program);
+    console.log(response);
+    new_program_id = response.data.data.id;
+
+    console.log()
+
+    toast.success('Program created successfully');
+  } catch (error) {
+    console.error('Error creating program:', error);
+    toast.error('Failed to create program');
+    return;
+  }
+
+  //Add user to program
+  try {
+    await api.post(`/program/${new_program_id}/users`, {"userId": userStore.userId, "isAdmin": true});
+  }
+  catch (error){
+    console.error('Error adding user to program:', error);
+    toast.error('Failed to add user to program');
+    return;
+  }
+
+  addingProgram.value = false;
+}
 </script>
 
 <template>
   <div class="settings-wrapper">
+    <BaseModal v-model:isOpen="addingProgram" title="Create New Program" size="md">
+      <div class="input-grid">
+        <BaseInput
+          v-model="add_program_form_data.programName"
+          label="Program Name"
+          placeholder="Computer Science"
+        />
+      </div>
+      <BaseButton variant="primary" @click="createNewProgram">Submit</BaseButton>
+    </BaseModal>
+
     <h1 class="page-title">Settings</h1>
 
     <!-- LOADING -->
@@ -102,7 +169,7 @@ onMounted(() => {
       </div>
 
       <!-- PROFILE CARD -->
-      <BaseCard title="Your Profile" variant="elevated">
+      <BaseCard title="Your Profile" variant="elevated" class="settings-section">
         <div class="profile-grid">
           <div class="item">
             <span class="label">Name:</span>
@@ -143,7 +210,7 @@ onMounted(() => {
       </BaseCard>
 
       <!-- THEME -->
-      <BaseCard title="Appearance" variant="elevated">
+      <BaseCard title="Appearance" variant="elevated" class="settings-section">
         <BaseSelect
           v-model="selectedTheme"
           :options="[
@@ -155,7 +222,7 @@ onMounted(() => {
       </BaseCard>
 
       <!-- PROGRAM PREFERENCE -->
-      <BaseCard title="Program Preferences" variant="elevated">
+      <BaseCard title="Program Preferences" variant="elevated" class="settings-section">
         <BaseSelect
           v-model="selectedProgram"
           :options="
@@ -166,6 +233,17 @@ onMounted(() => {
           "
           label="Preferred Program"
         />
+      </BaseCard>
+
+      <!-- ADD NEW PROGRAM -->
+      <BaseCard title="Add New Program" variant="elevated" class="settings-section">
+        <BaseButton
+          variant="primary"
+          size="lg"
+          @click="openAddProgramForm"
+        >
+          <span v-if="!saving">Add Program</span>
+        </BaseButton>
       </BaseCard>
 
       <!-- SAVE BUTTON -->
@@ -258,5 +336,13 @@ onMounted(() => {
 .loading-state {
   text-align: center;
   padding: 2rem;
+}
+
+.settings-section {
+  margin-bottom: 1rem;
+}
+
+.input-grid {
+  margin-bottom: 1rem;
 }
 </style>
