@@ -47,6 +47,7 @@ function handleLogout() {
     <footer class="footer">
       <p>© 2025 ABET Assessment App</p>
       <p>Definitions adapted from ABET documentation.</p>
+      <p><a href="https://ycp-abet-app.github.io/ABET-Assessment-App-Wiki/" target="_blank">Public Documentation</a> </p>
     </footer>
 
     <GlobalToast />
