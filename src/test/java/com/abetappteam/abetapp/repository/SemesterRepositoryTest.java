@@ -62,87 +62,7 @@ class SemesterRepositoryTest extends BaseRepositoryTest {
         assertThat(found.get().getCode()).isEqualTo("FALL-2024");
         assertThat(found.get().getProgramId()).isEqualTo(1L);
     }
-//  TODO: Come through and refactor these tests with updated search code
-//    @Test
-//    void shouldFindByCodeIgnoreCase() {
-//        // Given
-//        semesterRepository.save(testSemester);
-//        flush();
-//        clearContext();
-//
-//        // When
-//        Optional<Semester> found = semesterRepository.findByCodeIgnoreCase("fall-2024");
-//
-//        // Then
-//        assertThat(found).isPresent();
-//        assertThat(found.get().getCode()).isEqualTo("FALL-2024");
-//    }
-//
-//    @Test
-//    void shouldFindByProgramId() {
-//        // Given
-//        semesterRepository.save(testSemester);
-//        semesterRepository.save(TestDataBuilder.createSemester("Spring 2024", "SPRING-2024",
-//                LocalDate.of(2024, 1, 15), LocalDate.of(2024, 5, 15),
-//                2024, Semester.SemesterType.SPRING, 1L));
-//        flush();
-//        clearContext();
-//
-//        // When
-//        List<Semester> programSemesters = semesterRepository.findByProgramId(1L);
-//
-//        // Then
-//        assertThat(programSemesters).hasSize(2);
-//        assertThat(programSemesters).allMatch(semester -> semester.getProgramId().equals(1L));
-//    }
-//
-//    @Test
-//    void shouldFindByAcademicYear() {
-//        // Given
-//        semesterRepository.save(testSemester);
-//        semesterRepository.save(TestDataBuilder.createSemester("Spring 2024", "SPRING-2024",
-//                LocalDate.of(2024, 1, 15), LocalDate.of(2024, 5, 15),
-//                2024, Semester.SemesterType.SPRING, 1L));
-//        flush();
-//        clearContext();
-//
-//        // When
-//        List<Semester> yearSemesters = semesterRepository.findByAcademicYear(2024);
-//
-//        // Then
-//        assertThat(yearSemesters).hasSize(2);
-//        assertThat(yearSemesters).allMatch(semester -> semester.getAcademicYear().equals(2024));
-//    }
-//
-//    @Test
-//    void shouldFindByStatus() {
-//        // Given
-//        LocalDate fixedDate = LocalDate.of(2024, 6, 15);
-//
-//        Semester activeSemester = TestDataBuilder.createSemesterWithStatus(
-//                "Active Semester", "ACTIVE-2024",
-//                fixedDate.minusDays(10), fixedDate.plusDays(50),
-//                2024, Semester.SemesterType.SPRING, 1L,
-//                Semester.SemesterStatus.ACTIVE);
-//
-//        Semester upcomingSemester = TestDataBuilder.createSemesterWithStatus(
-//                "Upcoming Semester", "UPCOMING-2024",
-//                fixedDate.plusDays(10), fixedDate.plusDays(100),
-//                2024, Semester.SemesterType.FALL, 1L,
-//                Semester.SemesterStatus.UPCOMING);
-//
-//        semesterRepository.save(activeSemester);
-//        semesterRepository.save(upcomingSemester);
-//        flush();
-//        clearContext();
-//
-//        // When
-//        List<Semester> activeSemesters = semesterRepository.findByStatus(Semester.SemesterStatus.ACTIVE);
-//
-//        // Then
-//        assertThat(activeSemesters).hasSize(1);
-//        assertThat(activeSemesters.get(0).getStatus()).isEqualTo(Semester.SemesterStatus.ACTIVE);
-//    }
+    // TODO: Come through and refactor these tests with updated search code
 
     @Test
     void shouldFindByIsCurrentTrue() {
@@ -161,23 +81,102 @@ class SemesterRepositoryTest extends BaseRepositoryTest {
         assertThat(currentSemesters.get(0).getIsCurrent()).isTrue();
     }
 
-//    @Test
-//    void shouldFindByType() {
-//        // Given
-//        semesterRepository.save(testSemester);
-//        semesterRepository.save(TestDataBuilder.createSemester("Fall 2023", "FALL-2023",
-//                LocalDate.of(2023, 9, 1), LocalDate.of(2023, 12, 15),
-//                2023, Semester.SemesterType.FALL, 1L));
-//        flush();
-//        clearContext();
-//
-//        // When
-//        List<Semester> fallSemesters = semesterRepository.findByType(Semester.SemesterType.FALL);
-//
-//        // Then
-//        assertThat(fallSemesters).hasSize(2);
-//        assertThat(fallSemesters).allMatch(semester -> semester.getType().equals(Semester.SemesterType.FALL));
-//    }
+    @Test
+    void shouldFindCurrentSemesterByProgram() {
+        // Given
+        Semester currentSemester = TestDataBuilder.createCurrentSemester();
+        semesterRepository.save(currentSemester);
+        semesterRepository.save(testSemester);
+        flush();
+        clearContext();
+
+        // When
+        Optional<Semester> found = semesterRepository.findCurrentSemesterByProgram(currentSemester.getProgramId());
+
+        // Then
+        assertThat(found).isPresent();
+        assertThat(found.get().getIsCurrent()).isTrue();
+    }
+
+    @Test
+    void shouldReturnEmptyWhenNoCurrentSemesterForProgram() {
+        // Given
+        semesterRepository.save(testSemester);
+        flush();
+        clearContext();
+
+        // When
+        Optional<Semester> found = semesterRepository.findCurrentSemesterByProgram(testSemester.getProgramId());
+
+        // Then
+        assertThat(found).isEmpty();
+    }
+
+    @Test
+    void shouldSearchByName() {
+        semesterRepository.save(testSemester);
+        semesterRepository.save(TestDataBuilder.createSemester("Spring 2024", "SPRING-2024",
+                LocalDate.of(2024, 1, 15), LocalDate.of(2024, 5, 15),
+                2024, Semester.SemesterType.SPRING, 1L));
+        flush();
+        clearContext();
+
+        List<Semester> found = semesterRepository.searchByNameOrCode("Fall");
+
+        assertThat(found).hasSize(1);
+        assertThat(found.get(0).getName()).isEqualTo("Fall 2024");
+    }
+
+    @Test
+    void shouldSearchByCode() {
+        semesterRepository.save(testSemester);
+        semesterRepository.save(TestDataBuilder.createSemester("Spring 2024", "SPRING-2024",
+                LocalDate.of(2024, 1, 15), LocalDate.of(2024, 5, 15),
+                2024, Semester.SemesterType.SPRING, 1L));
+        flush();
+        clearContext();
+
+        List<Semester> found = semesterRepository.searchByNameOrCode("SPRING");
+
+        assertThat(found).hasSize(1);
+        assertThat(found.get(0).getCode()).isEqualTo("SPRING-2024");
+    }
+
+    @Test
+    void shouldCountByProgramId() {
+        semesterRepository.save(testSemester);
+        semesterRepository.save(TestDataBuilder.createSemester("Spring 2024", "SPRING-2024",
+                LocalDate.of(2024, 1, 15), LocalDate.of(2024, 5, 15),
+                2024, Semester.SemesterType.SPRING, 1L));
+        semesterRepository.save(TestDataBuilder.createSemester("Summer 2024", "SUMMER-2024",
+                LocalDate.of(2024, 6, 1), LocalDate.of(2024, 8, 15),
+                2024, Semester.SemesterType.SUMMER, 2L));
+        flush();
+        clearContext();
+
+        long count = semesterRepository.countByProgramId(1L);
+
+        assertThat(count).isEqualTo(2);
+    }
+
+    @Test
+    void shouldClearCurrentSemesterFlag() {
+        // Given
+        Semester currentSemester = TestDataBuilder.createCurrentSemester();
+        semesterRepository.save(currentSemester);
+        flush();
+        clearContext();
+
+        // When
+        semesterRepository.clearCurrentSemesterFlag(currentSemester.getProgramId());
+        flush();
+        clearContext();
+
+        // Then
+        Optional<Semester> found = semesterRepository.findById(currentSemester.getId());
+        assertThat(found).isPresent();
+        assertThat(found.get().getIsCurrent()).isFalse();
+    }
 
     @Test
     void shouldCheckExistsByCodeIgnoreCase() {
@@ -227,5 +226,66 @@ class SemesterRepositoryTest extends BaseRepositoryTest {
         assertThat(found).isPresent();
         assertThat(found.get().getName()).isEqualTo("Updated Semester Name");
         assertThat(found.get().getDescription()).isEqualTo("Updated Description");
+    }
+
+    @Test
+    void shouldUpdateSemesterStatus() {
+        // Given
+        Semester saved = semesterRepository.save(testSemester);
+        flush();
+        clearContext();
+
+        // When
+        semesterRepository.updateSemesterStatus(saved.getId(), Semester.SemesterStatus.ACTIVE);
+        flush();
+        clearContext();
+
+        // Then
+        Semester updated = semesterRepository.findById(saved.getId()).orElseThrow();
+        assertThat(updated.getStatus()).isEqualTo(Semester.SemesterStatus.ACTIVE);
+    }
+
+    @Test
+    void shouldSearchByAcademicYear() {
+        semesterRepository.save(testSemester);
+        semesterRepository.save(TestDataBuilder.createSemester("Fall 2023", "FALL-2023",
+                LocalDate.of(2023, 9, 1), LocalDate.of(2023, 12, 15),
+                2023, Semester.SemesterType.FALL, 1L));
+        flush();
+        clearContext();
+
+        List<Semester> found = semesterRepository.searchSemesters(null, null, 2024, null, null, null, null, null);
+
+        assertThat(found).hasSize(1);
+        assertThat(found.get(0).getAcademicYear()).isEqualTo(2024);
+    }
+
+    @Test
+    void shouldSearchByNameFragment() {
+        semesterRepository.save(testSemester);
+        semesterRepository.save(TestDataBuilder.createSemester("Spring 2024", "SPRING-2024",
+                LocalDate.of(2024, 1, 15), LocalDate.of(2024, 5, 15),
+                2024, Semester.SemesterType.SPRING, 1L));
+        flush();
+        clearContext();
+
+        List<Semester> found = semesterRepository.searchSemesters(null, null, null, null, null, null, "Fall", null);
+
+        assertThat(found).hasSize(1);
+        assertThat(found.get(0).getName()).isEqualTo("Fall 2024");
+    }
+
+    @Test
+    void shouldReturnAllSemestersWhenNoFilters() {
+        semesterRepository.save(testSemester);
+        semesterRepository.save(TestDataBuilder.createSemester("Spring 2024", "SPRING-2024",
+                LocalDate.of(2024, 1, 15), LocalDate.of(2024, 5, 15),
+                2024, Semester.SemesterType.SPRING, 1L));
+        flush();
+        clearContext();
+
+        List<Semester> found = semesterRepository.searchSemesters(null, null, null, null, null, null, null, null);
+
+        assertThat(found).hasSize(2);
     }
 }

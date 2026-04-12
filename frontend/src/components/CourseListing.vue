@@ -4,6 +4,7 @@ import api from "@/api";
 import BaseCard from "@/components/ui/BaseCard.vue";
 import CourseInspectModal from "./CourseInspectModal.vue";
 import NewCourseModal from "./NewCourseModal.vue";
+import CourseEditorModal from "./CourseEditorModal.vue";
 
 interface Course {
   id: number
@@ -22,9 +23,15 @@ const loading = ref(false);
 const error = ref<string | null>(null);
 const courses = ref<Course[]>([]);
 
+const editingCourse = ref<Course | null>(null);
+
 const selectedCourse = ref<Course | null>(null);
 
 const isNewCourseModalOpen = ref(false);
+
+function startEdit(course: Course) {
+  editingCourse.value = course;
+}
 
 async function saveNewCourse(data: any) {
   try {
@@ -63,7 +70,6 @@ async function loadCourses() {
 watch(() => [props.programId, props.semesterId], loadCourses);
 onMounted(loadCourses);
 
-// 3. UPDATE this function to set the ref instead of navigating
 function selectCourse(course: Course) {
   selectedCourse.value = course;
 }
@@ -100,6 +106,14 @@ function selectCourse(course: Course) {
           <div class="course-info">
             <h3 class="course-name">{{ course.courseName }}</h3>
           </div>
+
+          <button
+            class="simple-edit-btn"
+            @click.stop="startEdit(course)"
+            title="Edit course"
+          >
+            <img src="@/assets/icons/edit-pencil.svg" alt="Edit" class="edit-icon" />
+          </button>
         </div>
       </BaseCard>
 
@@ -129,6 +143,12 @@ function selectCourse(course: Course) {
       @submitted="saveNewCourse"
     />
 
+    <CourseEditorModal
+      :course="editingCourse"
+      @close="editingCourse = null"
+      @saved="loadCourses"
+    />
+
   </section>
 </template>
 
@@ -147,7 +167,6 @@ function selectCourse(course: Course) {
   gap: 1.25rem;
 }
 
-/* Make BaseCard fill the available height */
 .course-card :deep(.base-card) {
   height: 100%;
   display: flex;
@@ -155,7 +174,6 @@ function selectCourse(course: Course) {
   background: var(--color-bg-secondary);
 }
 
-/* Make card-body expand to fill available space */
 .course-card :deep(.card-body) {
   flex: 1;
   display: flex;
@@ -216,5 +234,33 @@ function selectCourse(course: Course) {
 
 .error-state {
   color: var(--color-error);
+}
+
+.course-info {
+  flex: 1;
+  text-align: left;
+}
+
+.simple-edit-btn {
+  background: var(--color-primary);
+  border: none;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+  flex-shrink: 0;
+}
+
+.simple-edit-btn:hover {
+  opacity: 0.25;
+}
+
+.edit-icon {
+  width: 18px;
+  height: 18px;
+  display: block;
 }
 </style>

@@ -5,10 +5,12 @@ import com.abetappteam.abetapp.entity.Requests.Section.SectionSearchRequest;
 import com.abetappteam.abetapp.entity.Section;
 import com.abetappteam.abetapp.exception.ResourceNotFoundException;
 import com.abetappteam.abetapp.repository.SectionRepository;
+import com.abetappteam.abetapp.repository.SectionUserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
 import java.util.Optional;
@@ -26,10 +28,15 @@ class SectionServiceTest extends BaseServiceTest {
     @InjectMocks
     private SectionService sectionService;
 
+    @Mock
+    private SectionUserRepository sectionUserRepository;
+
     private Section testSection;
 
     @BeforeEach
     void setUp() {
+        ReflectionTestUtils.setField(sectionService, "sectionUserRepository", sectionUserRepository);
+
         testSection = new Section("001", 1, 1);
         testSection.setId(1L);
     }
@@ -48,20 +55,20 @@ class SectionServiceTest extends BaseServiceTest {
 
     @Test
     void shouldCreateSection() {
-        when(repository.existsByCourseNumberAndSemesterIdAndCourseId("001", 1, 1)).thenReturn(false);
+        when(repository.existsBySectionNumberAndSemesterIdAndCourseId("001", 1, 1)).thenReturn(false);
         when(repository.save(any(Section.class))).thenReturn(testSection);
 
         Section created = sectionService.createSection("001", 1, 1);
 
         assertThat(created).isNotNull();
         assertThat(created.getId()).isEqualTo(1L);
-        verify(repository).existsByCourseNumberAndSemesterIdAndCourseId("001", 1, 1);
+        verify(repository).existsBySectionNumberAndSemesterIdAndCourseId("001", 1, 1);
         verify(repository).save(any(Section.class));
     }
 
     @Test
     void shouldThrowWhenDuplicateSectionExists() {
-        when(repository.existsByCourseNumberAndSemesterIdAndCourseId("001", 1, 1)).thenReturn(true);
+        when(repository.existsBySectionNumberAndSemesterIdAndCourseId("001", 1, 1)).thenReturn(true);
 
         assertThatThrownBy(() -> sectionService.createSection("001", 1, 1))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -73,21 +80,21 @@ class SectionServiceTest extends BaseServiceTest {
     @Test
     void shouldUpdateSection() {
         when(repository.findById(1L)).thenReturn(Optional.of(testSection));
-        when(repository.existsByCourseNumberAndSemesterIdAndCourseId("002", 1, 1)).thenReturn(false);
+        when(repository.existsBySectionNumberAndSemesterIdAndCourseId("002", 1, 1)).thenReturn(false);
         when(repository.save(any(Section.class))).thenReturn(testSection);
 
         Section updated = sectionService.updateSection(1L, "002", 1, 1);
 
         assertThat(updated).isNotNull();
         verify(repository).findById(1L);
-        verify(repository).existsByCourseNumberAndSemesterIdAndCourseId("002", 1, 1);
+        verify(repository).existsBySectionNumberAndSemesterIdAndCourseId("002", 1, 1);
         verify(repository).save(any(Section.class));
     }
 
     @Test
     void shouldThrowWhenUpdatingWithDuplicateSectionNumber() {
         when(repository.findById(1L)).thenReturn(Optional.of(testSection));
-        when(repository.existsByCourseNumberAndSemesterIdAndCourseId("002", 1, 1)).thenReturn(true);
+        when(repository.existsBySectionNumberAndSemesterIdAndCourseId("002", 1, 1)).thenReturn(true);
 
         assertThatThrownBy(() -> sectionService.updateSection(1L, "002", 1, 1))
                 .isInstanceOf(IllegalArgumentException.class)

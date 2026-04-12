@@ -16,24 +16,26 @@ import java.util.List;
  * Service class for Section entity
  */
 @Service
-public class SectionService extends BaseService<Section, Long, SectionRepository>
-{
+public class SectionService extends BaseService<Section, Long, SectionRepository> {
     @Autowired
-    public SectionService(SectionRepository repository) {super(repository);}
+    public SectionService(SectionRepository repository) {
+        super(repository);
+    }
 
     @Autowired
     private SectionUserRepository sectionUserRepository;
 
     @Override
-    protected String getEntityName() {return "Section";}
+    protected String getEntityName() {
+        return "Section";
+    }
 
     @Transactional
-    public Section createSection(String sectionNumber, int courseId, int semesterId)
-    {
+    public Section createSection(String sectionNumber, int courseId, int semesterId) {
         // Check for duplicates
-        if(repository.existsByCourseNumberAndSemesterIdAndCourseId(sectionNumber, semesterId, courseId))
-        {
-            throw new IllegalArgumentException("A section with the same section number already exists for the given course and semester.");
+        if (repository.existsBySectionNumberAndSemesterIdAndCourseId(sectionNumber, semesterId, courseId)) {
+            throw new IllegalArgumentException(
+                    "A section with the same section number already exists for the given course and semester.");
         }
 
         Section section = new Section(sectionNumber, courseId, semesterId);
@@ -53,27 +55,31 @@ public class SectionService extends BaseService<Section, Long, SectionRepository
     }
 
     @Transactional
-    public Section updateSection(Long id, String sectionNumber, int courseId, int semesterId)
-    {
+    public Section updateSection(Long id, String sectionNumber, int courseId, int semesterId) {
         Section section = findById(id);
 
         // Check for a duplication section number for the same course and semester
-        if(repository.existsByCourseNumberAndSemesterIdAndCourseId(sectionNumber, semesterId, courseId))
-        {
-            throw new IllegalArgumentException("A section with the same section number already exists for the given course and semester.");
+        if (repository.existsBySectionNumberAndSemesterIdAndCourseId(sectionNumber, semesterId, courseId)) {
+            throw new IllegalArgumentException(
+                    "A section with the same section number already exists for the given course and semester.");
         }
 
-        if(sectionNumber != null) {section.setSectionNumber(sectionNumber);}
-        if(courseId != 0) {section.setCourseId(courseId);}
-        if(semesterId != 0) {section.setSemesterId(semesterId);}
+        if (sectionNumber != null) {
+            section.setSectionNumber(sectionNumber);
+        }
+        if (courseId != 0) {
+            section.setCourseId(courseId);
+        }
+        if (semesterId != 0) {
+            section.setSemesterId(semesterId);
+        }
 
         logger.info("Updating section with id {}: {}", id, section);
         return repository.save(section);
     }
 
     @Transactional
-    public void removeSection(Long id)
-    {
+    public void removeSection(Long id) {
         Section section = findById(id);
         logger.info("Removing section with id {}: {}", id, section);
 
@@ -88,8 +94,7 @@ public class SectionService extends BaseService<Section, Long, SectionRepository
     }
 
     @Transactional(readOnly = true)
-    public List<Section> searchSections(SectionSearchRequest request)
-    {
+    public List<Section> searchSections(SectionSearchRequest request) {
         logger.info("Searching for sections with criteria: {}", request);
         return repository.searchSections(request);
     }

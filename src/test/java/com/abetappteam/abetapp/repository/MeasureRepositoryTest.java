@@ -13,28 +13,28 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.Optional;
 import java.util.List;
 
-public class MeasureRepositoryTest extends BaseRepositoryTest{
-    
+public class MeasureRepositoryTest extends BaseRepositoryTest {
+
     @Autowired
     private MeasureRepository measureRepository;
 
     private Measure testMeasure;
 
     @BeforeEach
-    void setUp(){
+    void setUp() {
         testMeasure = TestDataBuilder.createMeasure();
     }
 
     @Test
     void shouldSaveAndRetrieveMeasure() {
-        //Given
+        // Given
         Measure saved = measureRepository.save(testMeasure);
         clearContext();
 
-        //When
+        // When
         Optional<Measure> found = measureRepository.findById(saved.getId());
 
-        //Then
+        // Then
         assertThat(found).isPresent();
         assertThat(found.get().getCourseIndicatorId()).isEqualTo(1l);
         assertThat(found.get().getDescription()).isEqualTo("Example Description");
@@ -42,20 +42,20 @@ public class MeasureRepositoryTest extends BaseRepositoryTest{
     }
 
     @Test
-    void shouldUpdateMeasure(){
-        //Given
+    void shouldUpdateMeasure() {
+        // Given
         Measure saved = measureRepository.save(testMeasure);
         entityManager.flush();
         entityManager.clear();
 
-        //When
+        // When
         Measure toUpdate = measureRepository.findById(saved.getId()).orElseThrow();
         toUpdate.setDescription("New Description");
         measureRepository.save(toUpdate);
         entityManager.flush();
         entityManager.clear();
 
-        //Then
+        // Then
         Optional<Measure> found = measureRepository.findById(toUpdate.getId());
         assertThat(found).isPresent();
         assertThat(found.get().getDescription()).isEqualTo("New Description");
@@ -63,92 +63,61 @@ public class MeasureRepositoryTest extends BaseRepositoryTest{
 
     @Test
     void shouldDeleteMeasure() {
-        //Given
+        // Given
         Measure saved = measureRepository.save(testMeasure);
         entityManager.flush();
         Long id = saved.getId();
         entityManager.clear();
 
-        //When
+        // When
         measureRepository.deleteById(id);
         entityManager.flush();
         entityManager.clear();
 
-        //Then
+        // Then
         assertThat(measureRepository.findById(id)).isEmpty();
     }
-// TODO: Come through and refactor these tests with updated search code
-//    @Test
-//    void shouldFindAllActiveMeasures() {
-//        Measure active1 = TestDataBuilder.createMeasure(
-//                1L, "Active Measure 1", null, null,  "InProgress", true
-//        );
-//
-//        Measure active2 = TestDataBuilder.createMeasure(
-//                1L, "Active Measure 2", null, null, "InProgress", true
-//        );
-//
-//        Measure inactive = TestDataBuilder.createMeasure(
-//                1L, "Inactive Measure", null, null, "InProgress", false
-//        );
-//
-//        measureRepository.save(active1);
-//        measureRepository.save(active2);
-//        measureRepository.save(inactive);
-//
-//        List<Measure> activeMeasures = measureRepository.findByActiveTrue();
-//
-//        assertThat(activeMeasures).hasSize(2);
-//        assertThat(activeMeasures).allMatch(Measure::getActive);
-//    }
-//
-//    @Test
-//    void shouldFindActiveMeasuresByCourseIndicatorId(){
-//        //Given
-//        measureRepository.save(testMeasure);
-//        entityManager.flush();
-//        entityManager.clear();
-//
-//        //When
-//        List<Measure> found = measureRepository.findActiveMeasuresByCourseIndicatorId(1l);
-//
-//        //Then
-//        assertThat(found).hasSize(1);
-//        assertThat(found).extracting(Measure::getCourseIndicatorId).containsExactlyInAnyOrder(1l);
-//        assertThat(found).extracting(Measure::getActive).containsExactly(true);
-//    }
-//
-//    @Test
-//    void shouldFindActiveMeasuresByCourseIndicatorIdAndStatus(){
-//        //Given
-//        measureRepository.save(testMeasure);
-//        entityManager.flush();
-//        entityManager.clear();
-//
-//        //When
-//        List<Measure> found = measureRepository.findActiveMeasuresByCourseIndicatorIdAndStatus(1l, "InProgress");
-//
-//        //Then
-//        assertThat(found).hasSize(1);
-//        assertThat(found).extracting(Measure::getActive).containsExactly(true);
-//        assertThat(found).extracting(Measure::getStatus).containsExactly("InProgress");
-//        assertThat(found).extracting(Measure::getCourseIndicatorId).containsExactly(1l);
-//    }
-//
-//    @Test
-//    void shouldFindInactiveMeasuresByCourseId(){
-//        //Given
-//        testMeasure.setActive(false);
-//        measureRepository.save(testMeasure);
-//        entityManager.flush();
-//        entityManager.clear();
-//
-//        //When
-//        List<Measure> found = measureRepository.findInactiveMeasuresByCourseIndicatorId(1l);
-//
-//        //Then
-//        assertThat(found).hasSize(1);
-//        assertThat(found).extracting(Measure::getActive).containsExactly(false);
-//        assertThat(found).extracting(Measure::getCourseIndicatorId).containsExactly(1l);
-//    }
+
+    @Test
+    void shouldSearchById() {
+        Measure saved = measureRepository.save(testMeasure);
+        measureRepository.save(TestDataBuilder.createMeasure(1L, 1L, "Other Measure", "InProgress", true));
+
+        List<Measure> found = measureRepository.searchMeasures(saved.getId().intValue(), null, null, null);
+
+        assertThat(found).hasSize(1);
+        assertThat(found.get(0).getId()).isEqualTo(saved.getId());
+    }
+
+    @Test
+    void shouldSearchByCourseIndicatorId() {
+        measureRepository.save(testMeasure);
+        measureRepository.save(TestDataBuilder.createMeasure(2L, 2L, "Other Measure", "InProgress", true));
+
+        List<Measure> found = measureRepository.searchMeasures(null, 1, null, null);
+
+        assertThat(found).hasSize(1);
+        assertThat(found.get(0).getCourseIndicatorId()).isEqualTo(1L);
+    }
+
+    @Test
+    void shouldSearchByActiveStatus() {
+        measureRepository.save(testMeasure);
+        measureRepository.save(TestDataBuilder.createMeasure(1L, 1L, "Inactive", "InProgress", false));
+
+        List<Measure> found = measureRepository.searchMeasures(null, null, null, true);
+
+        assertThat(found).hasSize(1);
+        assertThat(found).allMatch(Measure::getActive);
+    }
+
+    @Test
+    void shouldReturnAllWhenNoFilters() {
+        measureRepository.save(testMeasure);
+        measureRepository.save(TestDataBuilder.createMeasure(1L, 1L, "Another Measure", "Submitted", true));
+
+        List<Measure> found = measureRepository.searchMeasures(null, null, null, null);
+
+        assertThat(found).hasSize(2);
+    }
 }
