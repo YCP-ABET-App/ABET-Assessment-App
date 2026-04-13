@@ -10,6 +10,8 @@ import com.abetappteam.abetapp.entity.Measure;
 import com.abetappteam.abetapp.entity.MeasureResult;
 import com.abetappteam.abetapp.entity.Outcome;
 import com.abetappteam.abetapp.entity.PerformanceIndicator;
+import com.abetappteam.abetapp.entity.Section;
+import com.abetappteam.abetapp.entity.SectionProgram;
 import com.abetappteam.abetapp.entity.Semester;
 import com.abetappteam.abetapp.exception.BusinessException;
 import com.abetappteam.abetapp.repository.CourseIndicatorRepository;
@@ -18,6 +20,8 @@ import com.abetappteam.abetapp.repository.MeasureRepository;
 import com.abetappteam.abetapp.repository.MeasureResultRepository;
 import com.abetappteam.abetapp.repository.OutcomeRepository;
 import com.abetappteam.abetapp.repository.PerformanceIndicatorRepository;
+import com.abetappteam.abetapp.repository.SectionProgramRepository;
+import com.abetappteam.abetapp.repository.SectionRepository;
 import com.abetappteam.abetapp.repository.SemesterRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,6 +53,8 @@ public class MultiYearReportService {
     private final MeasureResultRepository measureResultRepository;
     private final OutcomeRepository outcomeRepository;
     private final PerformanceIndicatorRepository performanceIndicatorRepository;
+    private final SectionProgramRepository sectionProgramRepository;
+    private final SectionRepository sectionRepository;
 
     @Autowired
     public MultiYearReportService(
@@ -58,7 +64,9 @@ public class MultiYearReportService {
             MeasureRepository measureRepository,
             MeasureResultRepository measureResultRepository,
             OutcomeRepository outcomeRepository,
-            PerformanceIndicatorRepository performanceIndicatorRepository) {
+            PerformanceIndicatorRepository performanceIndicatorRepository,
+            SectionProgramRepository sectionProgramRepository,
+            SectionRepository sectionRepository) {
         this.semesterRepository = semesterRepository;
         this.courseRepository = courseRepository;
         this.courseIndicatorRepository = courseIndicatorRepository;
@@ -66,6 +74,8 @@ public class MultiYearReportService {
         this.measureResultRepository = measureResultRepository;
         this.outcomeRepository = outcomeRepository;
         this.performanceIndicatorRepository = performanceIndicatorRepository;
+        this.sectionProgramRepository = sectionProgramRepository;
+        this.sectionRepository = sectionRepository;
     }
 
     // Returns the semesters for the given program whose dates fall within
@@ -122,6 +132,46 @@ public class MultiYearReportService {
 
         logger.info("Building hierarchical report for program {} from {} to {}", programId, startDate, endDate);
 
+        // Get sections assigned to this program in the date range
+        List<SectionProgram> sectionPrograms = sectionProgramRepository.findByProgramId(programId.intValue());
+
+        if (sectionPrograms.isEmpty()) {
+            throw new BusinessException("No sections assigned to this program");
+        }
+
+        // Get section IDs and filter sections by the semesters in date range
+        Set<Integer> sectionIds = sectionPrograms.stream()
+                .map(SectionProgram::getSectionId)
+                .collect(Collectors.toSet());
+
+        List<Section> sectionsInRange = semesters.stream()
+                .flatMap(sem -> sectionRepository.findBySemesterId(sem.getId().intValue()).stream()
+                        .filter(s -> sectionIds.contains(s.getId().intValue())))
+                .toList();
+
+        if (sectionsInRange.isEmpty()) {
+            throw new BusinessException("No sections found for this program in the selected date range");
+        }
+
+        logger.info("Found {} sections for program {} in date range [{}, {}]",
+                sectionsInRange.size(), programId, startDate, endDate);
+
+        // Get all distinct courses from these sections
+        Set<Integer> courseIds = sectionsInRange.stream()
+                .map(Section::getCourseId)
+                .collect(Collectors.toSet());
+
+        List<Course> courses = courseIds.stream()
+                .map(courseId -> courseRepository.findById((long) courseId).orElse(null))
+                .filter(c -> c != null && c.getIsActive())
+                .toList();
+
+        if (courses.isEmpty()) {
+            throw new BusinessException("No active courses found for this program in the selected date range");
+        }
+
+        logger.info("Found {} active courses for program {} in date range", courses.size(), programId);
+
         // Get distinct outcomes from all semesters in range
         Set<Outcome> outcomeSet = new HashSet<>();
         for (Semester semester : semesters) {
@@ -134,9 +184,6 @@ public class MultiYearReportService {
         }
 
         logger.info("Found {} distinct outcomes for program {}", outcomeSet.size(), programId);
-
-        // Get all active courses for the program
-        List<Course> courses = courseRepository.findActiveCoursesByProgramId(programId);
 
         // Build hierarchical structure
         List<OutcomeReportData> reportOutcomes = new ArrayList<>();
