@@ -15,6 +15,7 @@ import java.util.List;
  */
 @Service
 public class SectionService extends BaseService<Section, Long, SectionRepository> {
+
     @Autowired
     public SectionService(SectionRepository repository) {
         super(repository);
@@ -29,6 +30,7 @@ public class SectionService extends BaseService<Section, Long, SectionRepository
 
     @Transactional
     public Section createSection(String sectionNumber, int courseId, int semesterId) {
+
         // Check for duplicates
         if (repository.existsBySectionNumberAndSemesterIdAndCourseId(sectionNumber, semesterId, courseId)) {
             throw new IllegalArgumentException(
