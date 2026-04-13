@@ -14,6 +14,7 @@ DROP TABLE IF EXISTS semester;
 DROP TABLE IF EXISTS program_user;
 DROP TABLE IF EXISTS program;
 DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS course_indicator;
 
 CREATE TABLE users (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -258,6 +259,22 @@ CREATE TABLE measure_result (
     is_active BOOLEAN DEFAULT TRUE NOT NULL,
     FOREIGN KEY (measure_id) REFERENCES measure(id),
     FOREIGN KEY (section_program_id) REFERENCES section_program(id)
+);
+
+CREATE TABLE course_indicator (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    course_id BIGINT NOT NULL,
+    indicator_id BIGINT NOT NULL,
+    -- From BaseEntity
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    version BIGINT DEFAULT 0,
+    deleted BOOLEAN DEFAULT FALSE NOT NULL,
+    deleted_at TIMESTAMP NULL,
+    -- CourseIndicator-specific
+    is_active BOOLEAN DEFAULT TRUE NOT NULL,
+    FOREIGN KEY (course_id) REFERENCES course(id),
+    FOREIGN KEY (indicator_id) REFERENCES performance_indicator(id)
 );
 
 -----------------------------------------
