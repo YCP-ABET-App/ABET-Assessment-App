@@ -100,7 +100,7 @@ const edit_form_data = ref({
   description: ''
 })
 
-async function edit_form_submit(){
+async function edit_form_submit() {
   //Check that met, exceeded, below are all ints
   let newDescVal = edit_form_data.value.description
 
