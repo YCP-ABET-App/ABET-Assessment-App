@@ -57,14 +57,14 @@ public class MeasureControllerUnitTest {
         testMeasure = new Measure();
 
         testMeasure.setId(1l);
-        testMeasure.setCourseIndicatorId(1l);
-        testMeasure.setSemesterId(1l);
+        testMeasure.setScheduleEntryId(1l);
         testMeasure.setDescription("Test Description");
         testMeasure.setRecommendedAction("Test Action");
         testMeasure.setActive(true);
 
-        testDTO = new MeasureDTO(1L, 1l, 1l,"New Description", null, true);
+        testDTO = new MeasureDTO(1L, "New Description", null, true);
 
+        // TODO: refactor with ScheduleEntry
         testIndicator = new CourseIndicator();
         testIndicator.setId(1l);
         testIndicator.setCourseId(1l);

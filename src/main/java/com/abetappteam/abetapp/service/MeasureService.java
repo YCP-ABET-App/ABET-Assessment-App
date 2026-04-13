@@ -41,7 +41,9 @@ public class MeasureService extends BaseService<Measure, Long, MeasureRepository
             ScheduleEntryService scheduleEntryService,
             SectionProgramService sectionProgramService,
             SectionService sectionService,
-            MeasureResultService measureResultService) {
+            MeasureResultService measureResultService,
+            MeasureRepository measureRepository
+    ) {
         super(repository);
         this.sectionService = sectionService;
         this.scheduleEntryService = scheduleEntryService;

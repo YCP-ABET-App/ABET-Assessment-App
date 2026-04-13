@@ -54,7 +54,7 @@ public interface MeasureResultRepository extends JpaRepository<MeasureResult, Lo
 
     // Check if measure results has active section & program
     @Query("SELECT COUNT(mr) > 0 FROM MeasureResult mr WHERE mr.sectionProgramId = :sectionProgramId AND mr.status NOT IN ('Rejected')")
-    boolean hasActiveSections(@Param("sectionProgramId") Long sectionProgramId);
+    boolean hasActiveSectionPrograms(@Param("sectionProgramId") Long sectionProgramId);
 
 //    // Check if measure results has active programs
 //    @Query("SELECT COUNT(mr) > 0 FROM MeasureResult mr WHERE mr.programId = :programId AND mr.status NOT IN ('Rejected')")

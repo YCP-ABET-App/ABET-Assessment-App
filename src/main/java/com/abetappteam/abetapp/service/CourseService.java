@@ -187,6 +187,9 @@ public class CourseService extends BaseService<Course, Long, CourseRepository> {
 
         courseIndicatorRepository.deleteByCourseId(courseId);
         courseInstructorRepository.deleteByCourseId(courseId);
+
+        scheduleEntryRepository.deleteByCourseId(cIdInt);
+
         logger.info("Removing course with cascade: {} - {}", course.getCourseCode(), course.getCourseName());
         repository.delete(course);
     }

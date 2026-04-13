@@ -34,21 +34,19 @@ class CourseServiceTest extends BaseServiceTest {
 
     @Mock
     private CourseRepository courseRepository;
-
     @Mock
     private CourseIndicatorRepository courseIndicatorRepository;
-
     @Mock
     private CourseInstructorRepository courseInstructorRepository;
-
     @Mock
     private MeasureResultRepository measureResultRepository;
-
     @Mock
     private MeasureRepository measureRepository;
-
     @Mock
     private SectionRepository sectionRepository;
+    @Mock
+    private ScheduleEntryRepository scheduleEntryRepository;
+
 
     @InjectMocks
     private CourseService courseService;
@@ -67,14 +65,11 @@ class CourseServiceTest extends BaseServiceTest {
 
 
         ReflectionTestUtils.setField(courseService, "courseInstructorRepository", courseInstructorRepository);
-
         ReflectionTestUtils.setField(courseService, "courseIndicatorRepository", courseIndicatorRepository);
-
         ReflectionTestUtils.setField(courseService, "measureResultRepository", measureResultRepository);
-
         ReflectionTestUtils.setField(courseService, "measureRepository", measureRepository);
-
         ReflectionTestUtils.setField(courseService, "sectionRepository", sectionRepository);
+        ReflectionTestUtils.setField(courseService, "scheduleEntryRepository", scheduleEntryRepository);
 
         testCourse = TestDataBuilder.createCourseWithId(1L, "CS101", "Introduction to Computer Science",
                 "Basic computer science principles", 1L);
@@ -248,7 +243,8 @@ class CourseServiceTest extends BaseServiceTest {
 
         when(courseRepository.findById(courseId)).thenReturn(Optional.of(testCourse));
         when(courseRepository.countMeasuresInReviewByCourseId(courseId)).thenReturn(0);
-        when(courseIndicatorRepository.findByCourseId(courseId)).thenReturn(List.of());
+
+        //when(courseIndicatorRepository.findByCourseId(courseId)).thenReturn(List.of());
 
         courseService.removeCourse(courseId);
 
@@ -256,6 +252,7 @@ class CourseServiceTest extends BaseServiceTest {
         verify(sectionRepository).deleteSectionProgramsByCourseId(cIdInt);
         verify(sectionRepository).deleteSectionUsersByCourseId(cIdInt);
         verify(sectionRepository).deleteByCourseId(cIdInt);
+        verify(scheduleEntryRepository).deleteByCourseId(cIdInt);
         verify(courseIndicatorRepository).deleteByCourseId(courseId);
         verify(courseInstructorRepository).deleteByCourseId(courseId);
         verify(courseRepository).delete(testCourse);

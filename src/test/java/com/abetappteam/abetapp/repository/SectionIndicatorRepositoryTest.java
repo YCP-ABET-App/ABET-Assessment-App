@@ -22,8 +22,8 @@ public class SectionIndicatorRepositoryTest extends BaseRepositoryTest {
 
     @BeforeEach
     void setUp() {
-        si1 = new SectionIndicator(1, 1);
-        si2 = new SectionIndicator(1, 2);
+        si1 = new SectionIndicator(1, 1, true);
+        si2 = new SectionIndicator(1, 2, false);
     }
 
     @Test
@@ -42,7 +42,7 @@ public class SectionIndicatorRepositoryTest extends BaseRepositoryTest {
     void shouldSearchBySectionId() {
         sectionIndicatorRepository.save(si1);
         sectionIndicatorRepository.save(si2);
-        sectionIndicatorRepository.save(new SectionIndicator(2, 1)); // different section
+        sectionIndicatorRepository.save(new SectionIndicator(2, 1, true)); // different section
 
         SectionIndicatorRequest request = new SectionIndicatorRequest(null, List.of(1), null);
         List<SectionIndicator> found = sectionIndicatorRepository.searchSectionIndicators(
@@ -56,7 +56,7 @@ public class SectionIndicatorRepositoryTest extends BaseRepositoryTest {
     void shouldSearchByIndicatorId() {
         sectionIndicatorRepository.save(si1);
         sectionIndicatorRepository.save(si2);
-        sectionIndicatorRepository.save(new SectionIndicator(2, 1)); // same indicator as si1
+        sectionIndicatorRepository.save(new SectionIndicator(2, 1, true)); // same indicator as si1
 
         SectionIndicatorRequest request = new SectionIndicatorRequest(null, null, List.of(1));
         List<SectionIndicator> found = sectionIndicatorRepository.searchSectionIndicators(
@@ -84,8 +84,8 @@ public class SectionIndicatorRepositoryTest extends BaseRepositoryTest {
     void shouldSearchByMultipleSectionIds() {
         sectionIndicatorRepository.save(si1);
         sectionIndicatorRepository.save(si2);
-        sectionIndicatorRepository.save(new SectionIndicator(2, 3));
-        sectionIndicatorRepository.save(new SectionIndicator(3, 1));
+        sectionIndicatorRepository.save(new SectionIndicator(2, 3, true));
+        sectionIndicatorRepository.save(new SectionIndicator(3, 1, true));
 
         SectionIndicatorRequest request = new SectionIndicatorRequest(null, List.of(1, 2), null);
         List<SectionIndicator> found = sectionIndicatorRepository.searchSectionIndicators(
