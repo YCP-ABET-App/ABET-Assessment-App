@@ -10,8 +10,8 @@ import ProgramCoursesPage from '@/components/pages/ProgramCoursesPage.vue'
 import ProgramInstructorsPage from '@/components/pages/ProgramInstructorsPage.vue'
 import LogInPage from '@/components/pages/LogIn.vue'
 import SignUpPage from '@/components/pages/SignUp.vue'
-import ExamplePage from "@/components/pages/ExamplePage.vue";
 import ManagementPage from "@/components/ManagementPage.vue";
+import InstitutionLoginPage from "@/components/pages/InstitutionLoginPage.vue";
 
 const routes = [
   {
@@ -77,6 +77,11 @@ const routes = [
     component: LogInPage,
   },
   {
+    path: '/institution-login',
+    name: 'Institution Log In',
+    component: InstitutionLoginPage,
+  },
+  {
     path: '/signup',
     name: 'Sign Up',
     component: SignUpPage,
@@ -121,7 +126,7 @@ router.beforeEach((to, from, next) => {
   if (requiresAuth && !userStore.isLoggedIn) {
     // Redirect to login, save intended destination
     next({
-      name: 'Log In',
+      name: 'Institution Log In',
       query: { redirect: to.fullPath }
     })
   } else if (requiresAdmin && !userStore.isAdmin) {
