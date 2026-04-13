@@ -1,19 +1,12 @@
 package com.abetappteam.abetapp.service;
 
 import com.abetappteam.abetapp.dto.CourseDTO;
-import com.abetappteam.abetapp.entity.Course;
-import com.abetappteam.abetapp.entity.CourseIndicator;
-import com.abetappteam.abetapp.entity.CourseInstructor;
+import com.abetappteam.abetapp.entity.*;
 import com.abetappteam.abetapp.entity.Requests.Course.CourseSearchRequest;
 import com.abetappteam.abetapp.exception.BusinessException;
 import com.abetappteam.abetapp.exception.ConflictException;
 import com.abetappteam.abetapp.exception.ResourceNotFoundException;
-import com.abetappteam.abetapp.repository.CourseIndicatorRepository;
-import com.abetappteam.abetapp.repository.CourseInstructorRepository;
-import com.abetappteam.abetapp.repository.CourseRepository;
-import com.abetappteam.abetapp.repository.MeasureResultRepository;
-import com.abetappteam.abetapp.repository.MeasureRepository;
-import com.abetappteam.abetapp.repository.SectionRepository;
+import com.abetappteam.abetapp.repository.*;
 
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,6 +42,9 @@ public class CourseService extends BaseService<Course, Long, CourseRepository> {
 
     @Autowired
     private MeasureResultRepository measureResultRepository;
+
+    @Autowired
+    private ScheduleEntryRepository scheduleEntryRepository;
 
     @Override
     protected String getEntityName() {
@@ -173,14 +169,27 @@ public class CourseService extends BaseService<Course, Long, CourseRepository> {
         sectionRepository.deleteSectionUsersByCourseId(cIdInt);
         sectionRepository.deleteByCourseId(courseId.intValue());
 
-        List<CourseIndicator> indicators = courseIndicatorRepository.findByCourseId(courseId);
-        for (CourseIndicator indicator : indicators) {
-            measureResultRepository.deleteByCourseIndicatorId(indicator.getId());
-            measureRepository.deleteByCourseIndicatorId(indicator.getId());
+        List<ScheduleEntry> entries = scheduleEntryRepository.findByCourseId(cIdInt);
+
+        for (ScheduleEntry se : entries) {
+
+            List<Measure> measures = measureRepository.findByScheduleEntryId(se.getId());
+
+            for (Measure m : measures) {
+                measureResultRepository.deleteByMeasureId(m.getId());
+            }
+
+            measureRepository.deleteByScheduleEntryId(se.getId());
         }
+
+        // Delete schedule entries
+        // scheduleEntryRepository.deleteByCourseId(courseId);
 
         courseIndicatorRepository.deleteByCourseId(courseId);
         courseInstructorRepository.deleteByCourseId(courseId);
+
+        scheduleEntryRepository.deleteByCourseId(cIdInt);
+
         logger.info("Removing course with cascade: {} - {}", course.getCourseCode(), course.getCourseName());
         repository.delete(course);
     }

@@ -5,6 +5,7 @@ import com.abetappteam.abetapp.dto.MeasureDTO;
 import com.abetappteam.abetapp.entity.Measure;
 import com.abetappteam.abetapp.entity.Course;
 import com.abetappteam.abetapp.entity.CourseIndicator;
+import com.abetappteam.abetapp.entity.ScheduleEntry;
 import com.abetappteam.abetapp.exception.ResourceNotFoundException;
 import com.abetappteam.abetapp.repository.CourseIndicatorRepository;
 import com.abetappteam.abetapp.repository.CourseRepository;
@@ -36,6 +37,7 @@ public class MeasureServiceTest {
     @Mock 
     private MeasureRepository measureRepository;
     @Mock private CourseIndicatorService courseIndicatorService;
+    @Mock private ScheduleEntryService scheduleEntryService;
     @Mock private SectionService sectionService;
     @Mock private SectionProgramService sectionProgramService;
     @Mock private MeasureResultService measureResultService;
@@ -56,7 +58,7 @@ public class MeasureServiceTest {
         testMeasure = TestDataBuilder.createMeasure();
         testMeasure.setId(1L);
 
-        testDTO = TestDataBuilder.createMeasureDTO(1l, 1l,"New Measure",
+        testDTO = TestDataBuilder.createMeasureDTO(1L, "New Measure",
         "New Action", true);
     }
 
@@ -71,7 +73,7 @@ public class MeasureServiceTest {
         //Then
         assertThat(found).isNotNull();
         assertThat(found.getActive()).isTrue();
-        assertThat(found.getCourseIndicatorId()).isEqualTo(1l);
+        assertThat(found.getScheduleEntryId()).isEqualTo(1l);
         verify(measureRepository).findById(1L);
     }
 
@@ -141,8 +143,15 @@ public class MeasureServiceTest {
         ci.setId(1L);
         ci.setCourseId(1L);
 
-        when(courseIndicatorService.findById(any()))
-                .thenReturn(ci);
+        ScheduleEntry se = new ScheduleEntry();
+        se.setId(1L);
+        se.setSemesterId(1);
+        se.setCourseId(1);
+        se.setProgramId(1);
+        se.setIndicatorId(1);
+
+        when(scheduleEntryService.findById(any()))
+                .thenReturn(se);
 
         when(sectionService.searchSections(any()))
                 .thenReturn(List.of()); // no sections → skips loops

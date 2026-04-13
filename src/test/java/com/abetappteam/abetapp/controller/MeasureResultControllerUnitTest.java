@@ -49,15 +49,14 @@ public class MeasureResultControllerUnitTest {
         testMeasureResult = new MeasureResult();
         testMeasureResult.setId(1L);
         testMeasureResult.setMeasureId(1L);
-        testMeasureResult.setSectionId(1L);
-        testMeasureResult.setProgramId(1L);
+        testMeasureResult.setSectionProgramId(1L);
         testMeasureResult.setStudentsMet(10);
         testMeasureResult.setStudentsExceeded(5);
         testMeasureResult.setStudentsBelow(3);
         testMeasureResult.setObservation("Test Observation");
         testMeasureResult.setStatus("InProgress");
 
-        testDTO = new MeasureResultDTO(1L, 1L, 1L, 10, 5, 3, "Test Observation", "InProgress", null);
+        testDTO = new MeasureResultDTO(1L, 1L,  10, 5, 3, "Test Observation", "InProgress", null);
 
     }
 

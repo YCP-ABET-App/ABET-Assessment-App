@@ -9,21 +9,16 @@ import jakarta.validation.constraints.NotBlank;
 @Table(name = "measure")
 public class Measure extends BaseEntity {
 
-    @Column(name = "course_indicator_id", nullable = false)
-    private Long courseIndicatorId;
-
-    @Column(name = "semester_id", nullable = false)
-    private Long semesterId;
+    @Column(name = "schedule_entry_id", nullable = false)
+    private Long scheduleEntryId;
 
     // Description (required)
     @NotBlank(message = "Description of Measure is required")
     @Column(name = "measure_description", nullable = false, length = 3000)
     private String description;
 
-
     @Column(name = "recommended_action", length = 3000)
     private String recommendedAction;
-
 
     @Column(name = "is_active", nullable = false)
     private Boolean active;
@@ -37,14 +32,12 @@ public class Measure extends BaseEntity {
     }
 
     public Measure(
-            Long courseIndicatorId,
-            Long semesterId,
+            Long scheduleEntryId,
             String description,
             String recommendedAction,
             Boolean active
     ) {
-        this.courseIndicatorId = courseIndicatorId;
-        this.semesterId = semesterId;
+        this.scheduleEntryId = scheduleEntryId;
         this.description = description;
         this.recommendedAction = recommendedAction;
         this.active = active;
@@ -53,20 +46,8 @@ public class Measure extends BaseEntity {
     // ------------------------------------------
     // Getters & Setters
     // ------------------------------------------
-
-    public Long getCourseIndicatorId() {
-        return courseIndicatorId;
-    }
-    public void setCourseIndicatorId(Long courseIndicatorId) {
-        this.courseIndicatorId = courseIndicatorId;
-    }
-
-    public Long getSemesterId() {
-        return semesterId;
-    }
-    public void setSemesterId(Long semesterId) {
-        this.semesterId = semesterId;
-    }
+    public Long getScheduleEntryId() { return scheduleEntryId; }
+    public void setScheduleEntryId(Long scheduleEntryId) { this.scheduleEntryId = scheduleEntryId; }
 
     public String getDescription() {
         return description;
@@ -97,8 +78,7 @@ public class Measure extends BaseEntity {
     public String toString() {
         return "Measure{" +
                 "id=" + getId() +
-                ", courseIndicatorId=" + courseIndicatorId +
-                ", semesterId=" + semesterId +
+                ", scheduleEntryId='" + scheduleEntryId + '\'' +
                 ", description='" + description + '\'' +
                 ", recommendedAction='" + recommendedAction + '\'' +
                 ", active=" + active +

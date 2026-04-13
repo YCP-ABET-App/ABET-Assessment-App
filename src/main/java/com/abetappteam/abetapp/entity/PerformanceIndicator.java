@@ -30,6 +30,10 @@ public class PerformanceIndicator extends BaseEntity {
     @Column(name = "student_outcome_id", nullable = false)
     private Long studentOutcomeId;
 
+    @NotNull(message = "Program ID is required")
+    @Column(name = "program_id", nullable = false)
+    private Long programId;
+
     @Column(name = "threshold_percentage")
     private Double thresholdPercentage = 70.00;
 
@@ -40,10 +44,11 @@ public class PerformanceIndicator extends BaseEntity {
     public PerformanceIndicator() {
     }
 
-    public PerformanceIndicator(String description, Integer indicatorNumber, Long studentOutcomeId) {
+    public PerformanceIndicator(String description, Integer indicatorNumber, Long studentOutcomeId, Long programId) {
         this.description = description;
         this.indicatorNumber = indicatorNumber;
         this.studentOutcomeId = studentOutcomeId;
+        this.programId = programId;
         this.isActive = true;
     }
 
@@ -51,7 +56,6 @@ public class PerformanceIndicator extends BaseEntity {
     public String getDescription() {
         return description;
     }
-
     public void setDescription(String description) {
         this.description = description;
     }
@@ -59,7 +63,6 @@ public class PerformanceIndicator extends BaseEntity {
     public Integer getIndicatorNumber() {
         return indicatorNumber;
     }
-
     public void setIndicatorNumber(Integer indicatorNumber) {
         this.indicatorNumber = indicatorNumber;
     }
@@ -67,15 +70,16 @@ public class PerformanceIndicator extends BaseEntity {
     public Long getStudentOutcomeId() {
         return studentOutcomeId;
     }
-
     public void setStudentOutcomeId(Long studentOutcomeId) {
         this.studentOutcomeId = studentOutcomeId;
     }
 
+    public Long getProgramId() { return programId; }
+    public void setProgramId(Long programId) { this.programId = programId; }
+
     public Boolean getIsActive() {
         return isActive;
     }
-
     public void setIsActive(Boolean isActive) {
         this.isActive = isActive;
     }
@@ -83,7 +87,6 @@ public class PerformanceIndicator extends BaseEntity {
     public Integer getIndicatorValue() {
         return indicatorValue;
     }
-
     public void setIndicatorValue(Integer indicatorValue) {
         this.indicatorValue = indicatorValue;
     }
@@ -91,7 +94,6 @@ public class PerformanceIndicator extends BaseEntity {
     public String getEvaluation() {
         return evaluation;
     }
-
     public void setEvaluation(String evaluation) {
         this.evaluation = evaluation;
     }
@@ -99,7 +101,6 @@ public class PerformanceIndicator extends BaseEntity {
     public Double getThresholdPercentage() {
         return thresholdPercentage;
     }
-
     public void setThresholdPercentage(Double thresholdPercentage) {
         this.thresholdPercentage = thresholdPercentage;
     }
@@ -113,6 +114,7 @@ public class PerformanceIndicator extends BaseEntity {
                 ", indicatorValue=" + indicatorValue +
                 ", evaluation='" + evaluation + '\'' +
                 ", studentOutcomeId=" + studentOutcomeId +
+                ", programId=" + programId +
                 ", thresholdPercentage=" + thresholdPercentage +
                 ", isActive=" + isActive +
                 ", createdAt=" + getCreatedAt() +

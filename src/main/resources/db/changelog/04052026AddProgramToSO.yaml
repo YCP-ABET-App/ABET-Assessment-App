@@ -1,0 +1,17 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-program-to-student-outcome
+      author: ohornbeck
+      preConditions:
+        - onFail: MARK_RAN
+          tableExists:
+            tableName: student_outcome
+      changes:
+        - addColumn:
+            tableName: student_outcome
+            columns:
+              - column:
+                  name: program_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
