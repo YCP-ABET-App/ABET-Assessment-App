@@ -9,33 +9,43 @@ import jakarta.validation.constraints.NotBlank;
 @Table(name = "section_indicator")
 public class SectionIndicator extends BaseEntity {
 
-    @NotBlank(message = "Section is required")
+    // @NotBlank(message = "Section is required")
     @Column(name = "section_id", nullable = false)
     private int sectionId;
 
-    @NotBlank(message = "Indicator is required")
+    // @NotBlank(message = "Indicator is required")
     @Column(name = "indicator_id", nullable = false)
     private int indicatorId;
 
-    public SectionIndicator(){super();}
+    public SectionIndicator() {
+        super();
+    }
 
     public SectionIndicator(
             int sectionId,
-            int indicatorId
-    ) {
+            int indicatorId) {
         this.sectionId = sectionId;
         this.indicatorId = indicatorId;
     }
 
-    public int getSectionId(){return sectionId;}
-    public void setSectionId(int sectionId){this.sectionId = sectionId;}
+    public int getSectionId() {
+        return sectionId;
+    }
 
-    public int getIndicatorId(){return indicatorId;}
-    public void setIndicatorId(int indicatorId){this.indicatorId = indicatorId;}
+    public void setSectionId(int sectionId) {
+        this.sectionId = sectionId;
+    }
+
+    public int getIndicatorId() {
+        return indicatorId;
+    }
+
+    public void setIndicatorId(int indicatorId) {
+        this.indicatorId = indicatorId;
+    }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return "SectionIndicator{" +
                 "id=" + getId() +
                 ", sectionId=" + sectionId +

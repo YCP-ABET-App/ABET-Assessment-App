@@ -170,7 +170,6 @@ watch(
   () => props.course,
   (newCourse) => {
     if (newCourse) {
-      console.log(newCourse)
       loadCourseData();
     } else {
       console.log("No course provided, clearing data");
@@ -190,7 +189,7 @@ async function deleteCourse() {
   if (!props.course) return;
 
   const confirmed = window.confirm(
-    `Are you sure you want to delete ${props.course.courseCode}? This action cannot be undone.`
+    `Are you sure you want to delete ${props.course.courseCode}? This action will also delete all associated indicators and measures. This cannot be undone.`
   );
   if (!confirmed) return;
 
@@ -204,7 +203,18 @@ async function deleteCourse() {
     window.location.reload();
   } catch (err: any) {
     console.error("Failed to delete course:", err);
-    error.value = err?.response?.data?.message || "Failed to delete course. Please try again.";
+
+    const backendMessage = err?.response?.data?.message;
+
+    if (err?.response?.status === 400 || err?.response?.status === 409) {
+      error.value = backendMessage || "This course cannot be deleted because it has measures currently in review.";
+    } else {
+      error.value = "An unexpected error occurred. Please try again later.";
+    }
+
+    const modalBody = document.querySelector('.course-details');
+    if (modalBody) modalBody.scrollTop = 0;
+
   } finally {
     deleting.value = false;
   }
@@ -366,29 +376,19 @@ function openSectionDetails(sectionId: number) {
       {{ course?.courseCode }}
     </div>
 
+    <div v-if="error" class="error-banner">
+      <p>{{ error }}</p>
+      <button @click="error = null" class="error-close">×</button>
+    </div>
 
-    <!-- Loading State -->
     <div v-if="loading" class="loading-container">
       <BaseSpinner size="lg" text="Loading course details..." />
     </div>
 
-    <!-- Error State -->
-    <div v-else-if="error" class="error-container">
-      <p class="error-message">{{ error }}</p>
-    </div>
-
-    <!-- Course Details -->
     <div v-else class="course-details">
-      <!-- Course Info -->
       <section class="info-section">
         <p v-if="course?.courseDescription" class="description">
           {{ course.courseDescription }}
-        </p>
-        <p v-if="course?.studentCount" class="student-count">
-          <strong>Student Count:</strong> {{ course.studentCount }}
-        </p>
-        <p v-if="course?.threshold !== undefined && course?.threshold !== null" class="threshold">
-          <strong>Threshold:</strong> {{ course.threshold }}
         </p>
       </section>
 
@@ -486,7 +486,6 @@ function openSectionDetails(sectionId: number) {
         <p>No performance indicators attached to this course.</p>
       </div>
 
-      <!-- Indicators and Measures -->
       <div v-else class="indicators-container">
         <BaseCard
           v-for="item in indicatorsWithMeasures"
@@ -494,20 +493,13 @@ function openSectionDetails(sectionId: number) {
           variant="bordered"
           class="indicator-card"
         >
-          <!-- Indicator Header -->
           <div class="indicator-header">
             <div class="indicator-title">
               <span class="indicator-number">PI {{ item.indicator.indicatorNumber }}</span>
               <h3>{{ item.indicator.description }}</h3>
             </div>
-            <div class="indicator-meta">
-              <span class="threshold">
-                Threshold: {{ item.indicator.thresholdPercentage }}%
-              </span>
-            </div>
           </div>
 
-          <!-- Measures -->
           <div v-if="item.measures.length > 0" class="measures-section">
             <h4 class="measures-title">Measures ({{ item.measures.length }})</h4>
 
@@ -658,7 +650,6 @@ function openSectionDetails(sectionId: number) {
   font-size: 1rem;
 }
 
-/* Loading & Error */
 .loading-container,
 .error-container {
   display: flex;
@@ -672,7 +663,6 @@ function openSectionDetails(sectionId: number) {
   font-size: 1rem;
 }
 
-/* Course Details */
 .course-details {
   display: flex;
   flex-direction: column;
@@ -696,14 +686,12 @@ function openSectionDetails(sectionId: number) {
   margin: 0;
 }
 
-/* Empty State */
 .empty-state {
   text-align: center;
   padding: 2rem;
   color: var(--color-text-secondary);
 }
 
-/* Indicators */
 .indicators-container {
   display: flex;
   flex-direction: column;
@@ -759,7 +747,6 @@ function openSectionDetails(sectionId: number) {
   font-weight: 500;
 }
 
-/* Measures Section */
 .measures-section {
   padding: 1.25rem;
 }
@@ -800,7 +787,6 @@ function openSectionDetails(sectionId: number) {
   color: var(--color-text-primary);
 }
 
-/* Status Badge */
 .status-badge {
   padding: 0.25rem 0.75rem;
   border-radius: 0.25rem;
@@ -830,7 +816,6 @@ function openSectionDetails(sectionId: number) {
   color: white;
 }
 
-/* Measure Data */
 .measure-data {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -865,7 +850,6 @@ function openSectionDetails(sectionId: number) {
   font-size: 0.875rem;
 }
 
-/* Observation & Action */
 .measure-observation,
 .measure-action {
   margin-top: 0.75rem;
@@ -898,34 +882,31 @@ function openSectionDetails(sectionId: number) {
   font-style: italic;
 }
 
-/* Container to push buttons to opposite sides */
 .footer-container {
   display: flex;
   justify-content: space-between;
   align-items: center;
   width: 100%;
-  gap: 1rem; /* Adds a safety gap */
+  gap: 1rem;
 }
 
-/* Shared sizing for both buttons */
 .btn-action {
-  padding: 0.625rem 1.5rem; /* Matches your existing .btn-close padding */
+  padding: 0.625rem 1.5rem;
   border-radius: 0.375rem;
   font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
-  height: 40px; /* Forces identical height */
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 140px; /* Ensures buttons look balanced */
+  min-width: 140px;
 }
 
-/* Specific Delete styles */
 .btn-delete {
   background-color: transparent;
-  color: #dc3545; /* Standard red */
+  color: #dc3545;
   border: 1px solid #dc3545;
 }
 
@@ -960,6 +941,44 @@ function openSectionDetails(sectionId: number) {
   align-items: center;
   padding: 0.75rem 0;
 }
+.error-banner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background-color: #fff5f5;
+  border-left: 4px solid #dc3545;
+  color: #dc3545;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  border-radius: 4px;
+  animation: slideIn 0.3s ease-out;
+}
+
+.error-icon {
+  font-size: 1.2rem;
+}
+
+.error-banner p {
+  margin: 0;
+  flex: 1;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.error-close {
+  background: none;
+  border: none;
+  color: #dc3545;
+  font-size: 1.5rem;
+  cursor: pointer;
+  line-height: 1;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 
 .section-input {
   flex: 1;

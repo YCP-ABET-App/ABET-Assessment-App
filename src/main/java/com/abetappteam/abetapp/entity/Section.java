@@ -14,11 +14,11 @@ public class Section extends BaseEntity {
     @Column(name = "section_number", nullable = false, length = 50)
     private String sectionNumber;
 
-    @NotNull(message = "Course is required")
+    // @NotBlank(message = "Course is required")
     @Column(name = "course_id", nullable = false)
     private int courseId;
 
-    @NotNull(message = "Semester is required")
+    // @NotBlank(message = "Semester is required")
     @Column(name = "semester_id", nullable = false)
     private int semesterId;
 

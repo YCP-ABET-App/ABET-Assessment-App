@@ -25,9 +25,7 @@ public class CourseController extends BaseController {
     @Autowired
     private CourseService courseService;
 
-
-
-        /**
+    /**
      * Search courses by name or course code
      */
     @GetMapping("/searchCourse")
@@ -38,17 +36,31 @@ public class CourseController extends BaseController {
             @RequestParam(required = false) String courseDescription,
             @RequestParam(required = false) Integer student_count,
             @RequestParam(required = false) Integer mirrorId,
-            @RequestParam(required = false) boolean isActive
-            ) {
-        CourseSearchRequest request = new CourseSearchRequest(id, courseCode, courseName, courseDescription, student_count, mirrorId, isActive);
+            @RequestParam(required = false) boolean isActive) {
+        CourseSearchRequest request = new CourseSearchRequest(id, courseCode, courseName, courseDescription,
+                student_count, mirrorId, isActive);
 
         logger.info("Search request received for: {}", request);
 
         List<Course> courses = courseService.searchCourse(request);
-        
+
         return success(courses, "Courses retrieved successfully");
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<Course>> getCourseById(@PathVariable Long id) {
+        logger.info("Fetching course with ID: {}", id);
+        validateId(id);
+        Course course = courseService.findById(id);
+        return success(course, "Course retrieved successfully");
+    }
+
+    @GetMapping("/courseIndicator/getIds/{courseIndicatorId}")
+    public ResponseEntity<ApiResponse<List<Long>>> getIdsByCourseIndicator(@PathVariable Long courseIndicatorId) {
+        logger.info("Fetching course and indicator IDs for courseIndicatorId: {}", courseIndicatorId);
+        List<Long> ids = courseService.getIdsByCourseIndicator(courseIndicatorId);
+        return success(ids, "IDs retrieved successfully");
+    }
 
     /**
      * Create a new course
@@ -130,6 +142,19 @@ public class CourseController extends BaseController {
         return success(course, "Course activated successfully");
     }
 
+    /**
+     * Create a new version of a course (preserves original as inactive)
+     */
+    @PostMapping("/{id}/version")
+    public ResponseEntity<ApiResponse<Course>> versionCourse(
+            @PathVariable Long id,
+            @Valid @RequestBody CourseDTO dto) {
+
+        logger.info("Versioning course with ID: {}", id);
+        validateId(id);
+        Course versioned = courseService.versionCourse(id, dto);
+        return created(versioned);
+    }
 
     // Instructor assignments
     @PostMapping("/{courseId}/instructors/{programUserId}")

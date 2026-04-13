@@ -11,7 +11,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class PerformanceIndicatorRepositoryTest extends BaseRepositoryTest {
+public class PerformanceIndicatorRepositoryTest extends BaseRepositoryTest {
 
     @Autowired
     private PerformanceIndicatorRepository repository;
