@@ -351,6 +351,25 @@ public class CourseService extends BaseService<Course, Long, CourseRepository> {
                 programUserId, semesterId);
     }
 
+    @Transactional(readOnly = true)
+    public List<Course> getActiveCoursesByProgramId(Long programId) {
+        logger.debug("Fetching active courses for program ID: {}", programId);
+        return repository.findActiveCoursesByProgramId(programId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Course> findDeletedCourses() {
+        logger.debug("Fetching all soft-deleted courses");
+        return repository.findByIsActive(false);
+    }
+
+    @Transactional
+    public void permanentDeleteCourse(Long courseId) {
+        Course course = findById(courseId);
+        logger.info("Permanently deleting course with ID: {} - {}", courseId, course.getCourseName());
+        repository.delete(course);
+    }
+
     // Helper methods for business logic
     private boolean hasMeasuresInReview(Long courseId) {
         return repository.countMeasuresInReviewByCourseId(courseId) > 0;

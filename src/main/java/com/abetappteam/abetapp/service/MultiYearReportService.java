@@ -108,8 +108,8 @@ public class MultiYearReportService {
                         true);
 
                 for (CourseIndicator ci : indicators) {
-                    output.addAll(measureRepository.searchMeasures(
-                            null, ci.getId().intValue(), semester.getId().intValue(), true));
+                    output.addAll(measureRepository.searchMeasuresByIndicatorAndSemester(
+                            ci.getIndicatorId().intValue(), semester.getId().intValue(), true));
                 }
             }
         }
@@ -219,8 +219,8 @@ public class MultiYearReportService {
                     // Get measures for this course-indicator in the date range
                     List<Measure> measures = new ArrayList<>();
                     for (Semester semester : semesters) {
-                        measures.addAll(measureRepository.searchMeasures(
-                                null, courseIndicator.getId().intValue(),
+                        measures.addAll(measureRepository.searchMeasuresByIndicatorAndSemester(
+                                courseIndicator.getIndicatorId().intValue(),
                                 semester.getId().intValue(), true));
                     }
 

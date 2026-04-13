@@ -28,4 +28,14 @@ public interface MeasureRepository extends JpaRepository<Measure, Long> {
                         @Param("scheduleEntryId") Integer scheduleEntryId,
                         @Param("active") Boolean active);
 
+        @Query("SELECT m FROM Measure m " +
+                        "INNER JOIN ScheduleEntry se ON m.scheduleEntryId = se.id " +
+                        "WHERE se.indicatorId = :indicatorId " +
+                        "AND se.semesterId = :semesterId " +
+                        "AND (:active IS NULL OR m.active = :active)")
+        List<Measure> searchMeasuresByIndicatorAndSemester(
+                        @Param("indicatorId") Integer indicatorId,
+                        @Param("semesterId") Integer semesterId,
+                        @Param("active") Boolean active);
+
 }
