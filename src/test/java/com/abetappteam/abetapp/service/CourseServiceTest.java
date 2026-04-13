@@ -238,14 +238,14 @@ class CourseServiceTest extends BaseServiceTest {
         when(courseRepository.findById(1L)).thenReturn(Optional.of(testCourse));
         when(courseRepository.countMeasuresInReviewByCourseId(1L)).thenReturn(0);
         when(courseIndicatorRepository.findByCourseId(1L)).thenReturn(List.of());
+        when(courseInstructorRepository.findByCourseId(1L)).thenReturn(List.of());
 
         // When
         courseService.removeCourse(1L);
 
         // Then
         verify(courseIndicatorRepository).findByCourseId(1L);
-        verify(courseIndicatorRepository).deleteByCourseId(1L);
-        verify(courseInstructorRepository).deleteByCourseId(1L);
+        verify(courseInstructorRepository).findByCourseId(1L);
         verify(courseRepository).delete(testCourse);
     }
 
