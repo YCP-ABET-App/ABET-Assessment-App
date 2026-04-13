@@ -241,8 +241,7 @@ CREATE TABLE measure (
 CREATE TABLE measure_result (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     measure_id BIGINT NOT NULL,
-    section_id BIGINT NOT NULL,
-    program_id BIGINT NOT NULL,
+    section_program_id BIGINT NOT NULL,
     met SMALLINT NULL,
     exceeded SMALLINT NULL,
     below SMALLINT NULL,
@@ -258,8 +257,7 @@ CREATE TABLE measure_result (
     -- Measure Results-specific
     is_active BOOLEAN DEFAULT TRUE NOT NULL,
     FOREIGN KEY (measure_id) REFERENCES measure(id),
-    FOREIGN KEY (section_id) REFERENCES section(id),
-    FOREIGN KEY (program_id) REFERENCES program(id)
+    FOREIGN KEY (section_program_id) REFERENCES section_program(id)
 );
 
 -----------------------------------------
@@ -505,7 +503,7 @@ VALUES
 ------------------------------------------------------------
 
 -- CS 101 Measures
-INSERT INTO measure (id, course_indicator_id, measure_description, recommended_action, is_active)
+INSERT INTO measure (id, schedule_entry_id, measure_description, recommended_action, is_active)
 VALUES
     -- 1.1-cs101: Assignment 3 MS1
     (1, 1, 'Assignment 3 MS1, Dominoes Initialization', NULL, TRUE),
@@ -515,27 +513,21 @@ VALUES
     (3, 3, 'Assignment 4, Roulette (functions)', NULL, TRUE);
 
 -- Section 1 Measure Results
-INSERT INTO measure_result (id, measure_id, section_id, program_id, met, exceeded, below, observation, rejection_note, m_status, is_active)
+INSERT INTO measure_result (id, measure_id, section_program_id, met, exceeded, below, observation, rejection_note, m_status, is_active)
 VALUES
-    -- 1.1-cs101s1: Assignment 3 MS1
-    (1, 1, 1, 1, 35, 3, 6, NULL, NULL, 'Complete', TRUE),
-    -- 1.3-cs101: Assignment 3 MS2
-    (2, 2, 1, 1, 32, 4, 5, NULL, NULL, 'Complete', TRUE),
-    -- 6.1-cs101: Assignment 4
-    (3, 3, 1, 1, 30, 4, 10, NULL, NULL, 'Complete', TRUE);
+    (1, 1, 1, 35, 3, 6, NULL, NULL, 'Complete', TRUE),
+    (2, 2, 1, 32, 4, 5, NULL, NULL, 'Complete', TRUE),
+    (3, 3, 1, 30, 4, 10, NULL, NULL, 'Complete', TRUE);
 
 --Section 2 Measure Results
-INSERT INTO measure_result (id, measure_id, section_id, program_id, met, exceeded, below, observation, rejection_note, m_status, is_active)
+INSERT INTO measure_result (id, measure_id, section_program_id, met, exceeded, below, observation, rejection_note, m_status, is_active)
 VALUES
-    -- 1.1-cs101s2: Assignment 3 MS1
-    (4, 1, 2, 1, 32, 5, 7, NULL, NULL, 'Complete', TRUE),
-    -- 1.3-cs101s2: Assignment 3 MS2
-    (5, 2, 2, 1, 36, 2, 3, NULL, NULL, 'Complete', TRUE),
-    -- 6.1-cs101s2: Assignment 4
-    (6, 3, 2, 1, 31, 2, 11, NULL, NULL, 'Complete', TRUE);
+    (4, 1, 2, 32, 5, 7, NULL, NULL, 'Complete', TRUE),
+    (5, 2, 2, 36, 2, 3, NULL, NULL, 'Complete', TRUE),
+    (6, 3, 2, 31, 2, 11, NULL, NULL, 'Complete', TRUE);
 
 -- CS 201 Measures
-INSERT INTO measure (id, course_indicator_id, measure_description, recommended_action, is_active)
+INSERT INTO measure (id, schedule_entry_id, measure_description, recommended_action, is_active)
 VALUES
     -- 1.1-cs201: Assignment 6
     (4, 4, 'Assignment 6, Final project', NULL, TRUE),
@@ -552,17 +544,17 @@ VALUES
     -- 6.4-cs201: Lab 6 and Assignment 6
     (9, 10, 'Lab 6 and Assignment 6, Unit tests', NULL, TRUE);
 
-INSERT INTO measure_result (id, measure_id, section_id, program_id, met, exceeded, below, observation, rejection_note, m_status, is_active)
+INSERT INTO measure_result (id, measure_id, section_program_id, met, exceeded, below, observation, rejection_note, m_status, is_active)
 VALUES
-    (7, 4, 3, 1, 15, 3, 10, NULL, NULL, 'Complete', TRUE),
-    (8, 5, 3, 1, 15, 3, 10, NULL, NULL, 'Complete', TRUE),
-    (9, 6, 3, 1, 15, 3, 10, 'This indicator was used rather than 2.5 as the course material covered asymptotic behavior instead of empirical benchmarking.', NULL, 'Complete', TRUE),
-    (10, 7, 3, 1, 18, 4, 6, NULL, NULL, 'Complete', TRUE),
-    (11, 8, 3, 1, 20, 4, 4, NULL, NULL, 'Complete', TRUE),
-    (12, 9, 3, 1, 17, 3, 8, 'This indicator was used rather than 6.3 as the course material covered unit testing instead of concurrency.', NULL, 'Complete', TRUE);
+    (7, 4, 3, 15, 3, 10, NULL, NULL, 'Complete', TRUE),
+    (8, 5, 3, 15, 3, 10, NULL, NULL, 'Complete', TRUE),
+    (9, 6, 3, 15, 3, 10, 'This indicator was used rather than 2.5 as the course material covered asymptotic behavior instead of empirical benchmarking.', NULL, 'Complete', TRUE),
+    (10, 7, 3, 18, 4, 6, NULL, NULL, 'Complete', TRUE),
+    (11, 8, 3, 20, 4, 4, NULL, NULL, 'Complete', TRUE),
+    (12, 9, 3, 17, 3, 8, 'This indicator was used rather than 6.3 as the course material covered unit testing instead of concurrency.', NULL, 'Complete', TRUE);
 
 -- CS 330 Measures
-INSERT INTO measure (id, course_indicator_id, measure_description, recommended_action, is_active)
+INSERT INTO measure (id, schedule_entry_id, measure_description, recommended_action, is_active)
 VALUES
     -- 2.6-cs330: Lab 2
     (10, 11, 'Lab 2, HTTP', NULL, TRUE),
@@ -571,14 +563,14 @@ VALUES
     -- 2.7-cs330: Quiz 3
     (12, 12, 'Quiz 3, Question 11, Symmetric Key Cryptography', NULL, TRUE);
 
-INSERT INTO measure_result (id, measure_id, section_id, program_id, met, exceeded, below, observation, rejection_note, m_status, is_active)
+INSERT INTO measure_result (id, measure_id, section_program_id, met, exceeded, below, observation, rejection_note, m_status, is_active)
 VALUES
-    (13, 10, 4, 1, 11, 2, 3, NULL, NULL, 'Complete', TRUE),
-    (14, 11, 4, 1, 16, 0, 0, NULL, NULL, 'Complete', TRUE),
-    (15, 12, 4, 1, 16, 0, 0, NULL, NULL, 'Complete', TRUE);
+    (13, 10, 4, 11, 2, 3, NULL, NULL, 'Complete', TRUE),
+    (14, 11, 4, 16, 0, 0, NULL, NULL, 'Complete', TRUE),
+    (15, 12, 4, 16, 0, 0, NULL, NULL, 'Complete', TRUE);
 
 -- CS 335 Measures
-INSERT INTO measure (id, course_indicator_id, measure_description, recommended_action, is_active)
+INSERT INTO measure (id, schedule_entry_id, measure_description, recommended_action, is_active)
 VALUES
     -- 2.6-cs335: Lab 1
     (13, 13, 'Lab 1, Shellshock attack', NULL, TRUE),
@@ -599,30 +591,30 @@ VALUES
     -- 6.5-cs335: Quiz 2
     (21, 16, 'Quiz 2, Question 14, "Man-in-the-Middle" attacks', NULL, TRUE);
 
-INSERT INTO measure_result (id, measure_id, section_id, program_id, met, exceeded, below, observation, rejection_note, m_status, is_active)
+INSERT INTO measure_result (id, measure_id, section_program_id, met, exceeded, below, observation, rejection_note, m_status, is_active)
 VALUES
-    (16, 13, 5, 1, 9, 2, 2, NULL, NULL, 'Complete', TRUE),
-    (17, 14, 5, 1, 13, 0, 0, NULL, NULL, 'Complete', TRUE),
-    (18, 15, 5, 1, 7, 2, 4, NULL, NULL, 'Complete', TRUE),
-    (19, 16, 5, 1, 8, 2, 3, NULL, NULL, 'Complete', TRUE),
-    (20, 17, 5, 1, 10, 2, 1, NULL, NULL, 'Complete', TRUE),
-    (21, 18, 5, 1, 13, 0, 0, NULL, NULL, 'Complete', TRUE),
-    (22, 19, 5, 1, 13, 0, 0, NULL, NULL, 'Complete', TRUE),
-    (23, 20, 5, 1, 13, 0, 0, NULL, NULL, 'Complete', TRUE),
-    (24, 21, 5, 1, 13, 0, 0, NULL, NULL, 'Complete', TRUE);
+    (16, 13, 5, 9, 2, 2, NULL, NULL, 'Complete', TRUE),
+    (17, 14, 5, 13, 0, 0, NULL, NULL, 'Complete', TRUE),
+    (18, 15, 5, 7, 2, 4, NULL, NULL, 'Complete', TRUE),
+    (19, 16, 5, 8, 2, 3, NULL, NULL, 'Complete', TRUE),
+    (20, 17, 5, 10, 2, 1, NULL, NULL, 'Complete', TRUE),
+    (21, 18, 5, 13, 0, 0, NULL, NULL, 'Complete', TRUE),
+    (22, 19, 5, 13, 0, 0, NULL, NULL, 'Complete', TRUE),
+    (23, 20, 5, 13, 0, 0, NULL, NULL, 'Complete', TRUE),
+    (24, 21, 5, 13, 0, 0, NULL, NULL, 'Complete', TRUE);
 
 -- CS 340 Measures
-INSERT INTO measure (id, course_indicator_id, measure_description, recommended_action, is_active)
+INSERT INTO measure (id, schedule_entry_id, measure_description, recommended_action, is_active)
 VALUES
     -- 6.1-cs340: Final Project
     (22, 17, 'Final Project, Compiler Design', NULL, TRUE);
 
-INSERT INTO measure_result (id, measure_id, section_id, program_id, met, exceeded, below, observation, rejection_note, m_status, is_active)
+INSERT INTO measure_result (id, measure_id, section_program_id, met, exceeded, below, observation, rejection_note, m_status, is_active)
 VALUES
-    (25, 22, 6, 1, 10, 2, 3, NULL, NULL, 'Complete', TRUE);
+    (25, 22, 6, 10, 2, 3, NULL, NULL, 'Complete', TRUE);
 
 -- CS 360 Measures
-INSERT INTO measure (id, course_indicator_id, measure_description, recommended_action, is_active)
+INSERT INTO measure (id, schedule_entry_id, measure_description, recommended_action, is_active)
 VALUES
     -- 1.1-cs360: Exam 1 Takehome
     (23, 18, 'Exam 1 Takehome, Question 3a, Derive recursive equation', NULL, TRUE),
@@ -643,20 +635,20 @@ VALUES
     -- 2.5-cs360: Exam 2
     (31, 22, 'Exam 2, Question 3d, Empirical benchmark median', 'A bit more instruction on constructing multiple curve graphs. Students also struggled with this on the subsequent empirical comparison report', TRUE);
 
-INSERT INTO measure_result (id, measure_id, section_id, program_id, met, exceeded, below, observation, rejection_note, m_status, is_active)
+INSERT INTO measure_result (id, measure_id, section_program_id, met, exceeded, below, observation, rejection_note, m_status, is_active)
 VALUES
-    (26, 23, 7, 1, 11, 2, 2, NULL, NULL, 'Complete', TRUE),
-    (27, 24, 7, 1, 4, 2, 9, NULL, NULL, 'Complete', TRUE),
-    (28, 25, 7, 1, 4, 2, 9, NULL, NULL, 'Complete', TRUE),
-    (29, 26, 7, 1, 9, 2, 4, NULL, NULL, 'Complete', TRUE),
-    (30, 27, 7, 1, 12, 2, 1, NULL, NULL, 'Complete', TRUE),
-    (31, 28, 7, 1, 5, 2, 8, NULL, NULL, 'Complete', TRUE),
-    (32, 29, 7, 1, 7, 2, 6, NULL, NULL, 'Complete', TRUE),
-    (33, 30, 7, 1, 10, 2, 3, NULL, NULL, 'Complete', TRUE),
-    (34, 31, 7, 1, 8, 2, 5, NULL, NULL, 'Complete', TRUE);
+    (26, 23, 7, 11, 2, 2, NULL, NULL, 'Complete', TRUE),
+    (27, 24, 7, 4, 2, 9, NULL, NULL, 'Complete', TRUE),
+    (28, 25, 7, 4, 2, 9, NULL, NULL, 'Complete', TRUE),
+    (29, 26, 7, 9, 2, 4, NULL, NULL, 'Complete', TRUE),
+    (30, 27, 7, 12, 2, 1, NULL, NULL, 'Complete', TRUE),
+    (31, 28, 7, 5, 2, 8, NULL, NULL, 'Complete', TRUE),
+    (32, 29, 7, 7, 2, 6, NULL, NULL, 'Complete', TRUE),
+    (33, 30, 7, 10, 2, 3, NULL, NULL, 'Complete', TRUE),
+    (34, 31, 7, 8, 2, 5, NULL, NULL, 'Complete', TRUE);
 
 -- CS 400 Measures
-INSERT INTO measure (id, course_indicator_id, measure_description, recommended_action, is_active)
+INSERT INTO measure (id, schedule_entry_id, measure_description, recommended_action, is_active)
 VALUES
     -- 1.4-cs400: Assignment 3 Requirements
     (32, 23, 'Assignment 3, Requirements', NULL, TRUE),
@@ -683,23 +675,23 @@ VALUES
     -- 6.4-cs400: Assignment 6
     (43, 34, 'Assignment 6, 50% Working System - Testing Framework', NULL, TRUE);
 
-INSERT INTO measure_result (id, measure_id, section_id, program_id, met, exceeded, below, observation, rejection_note, m_status, is_active)
+INSERT INTO measure_result (id, measure_id, section_program_id, met, exceeded, below, observation, rejection_note, m_status, is_active)
 VALUES
-    (35, 32, 8, 1, 18, 4, 5, NULL, NULL, 'Completed', TRUE),
-    (36, 33, 8, 1, 13, 3, 11, NULL, NULL, 'Completed', TRUE),
-    (37, 34, 8, 1, 13, 3, 11, NULL, NULL, 'Completed', TRUE),
-    (38, 35, 8, 1, 22, 4, 1, NULL, NULL, 'Completed', TRUE),
-    (39, 36, 8, 1, 18, 4, 5, NULL, NULL, 'Completed', TRUE),
-    (40, 37, 8, 1, 13, 3, 11, NULL, NULL, 'Completed', TRUE),
-    (41, 38, 8, 1, 22, 4, 1, NULL, NULL, 'Completed', TRUE),
-    (42, 39, 8, 1, 21, 4, 2, NULL, NULL, 'Completed', TRUE),
-    (43, 40, 8, 1, 18, 4, 5, NULL, NULL, 'Completed', TRUE),
-    (44, 41, 8, 1, 19, 4, 4, NULL, NULL, 'Completed', TRUE),
-    (45, 42, 8, 1, 19, 4, 4, NULL, NULL, 'Completed', TRUE),
-    (46, 43, 8, 1, 20, 4, 3, NULL, NULL, 'Completed', TRUE);
+    (35, 32, 8, 18, 4, 5, NULL, NULL, 'Completed', TRUE),
+    (36, 33, 8, 13, 3, 11, NULL, NULL, 'Completed', TRUE),
+    (37, 34, 8, 13, 3, 11, NULL, NULL, 'Completed', TRUE),
+    (38, 35, 8, 22, 4, 1, NULL, NULL, 'Completed', TRUE),
+    (39, 36, 8, 18, 4, 5, NULL, NULL, 'Completed', TRUE),
+    (40, 37, 8, 13, 3, 11, NULL, NULL, 'Completed', TRUE),
+    (41, 38, 8, 22, 4, 1, NULL, NULL, 'Completed', TRUE),
+    (42, 39, 8, 21, 4, 2, NULL, NULL, 'Completed', TRUE),
+    (43, 40, 8, 18, 4, 5, NULL, NULL, 'Completed', TRUE),
+    (44, 41, 8, 19, 4, 4, NULL, NULL, 'Completed', TRUE),
+    (45, 42, 8, 19, 4, 4, NULL, NULL, 'Completed', TRUE),
+    (46, 43, 8, 20, 4, 3, NULL, NULL, 'Completed', TRUE);
 
 -- CS 420 Measures
-INSERT INTO measure (id, course_indicator_id, measure_description, recommended_action, is_active)
+INSERT INTO measure (id, schedule_entry_id, measure_description, recommended_action, is_active)
 VALUES
     -- 6.1-cs420: Programming Assignment #2
     (44, 35, 'Programming Assignment #2, Shared Memory', NULL, TRUE),
@@ -708,8 +700,8 @@ VALUES
     -- 6.5-cs420: Programming Assignment #1
     (46, 37, 'Programming Assignment #1, Error Checking', NULL, TRUE);
 
-INSERT INTO measure_result (id, measure_id, section_id, program_id, met, exceeded, below, observation, rejection_note, m_status, is_active)
+INSERT INTO measure_result (id, measure_id, section_program_id, met, exceeded, below, observation, rejection_note, m_status, is_active)
 VALUES
-    (47, 44, 9, 1, 20, 3, 2, NULL, NULL, 'Complete', TRUE),
-    (48, 45, 9, 1, 19, 3, 3, NULL, NULL, 'Complete', TRUE),
-    (49, 46, 9, 1, 25, 0, 0, NULL, NULL, 'Complete', TRUE);
+    (47, 44, 9, 20, 3, 2, NULL, NULL, 'Complete', TRUE),
+    (48, 45, 9, 19, 3, 3, NULL, NULL, 'Complete', TRUE),
+    (49, 46, 9, 25, 0, 0, NULL, NULL, 'Complete', TRUE);
