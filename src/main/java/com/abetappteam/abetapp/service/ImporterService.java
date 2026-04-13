@@ -30,14 +30,14 @@ public class ImporterService {
     private MeasureResultService measureResultService;
 
     @Transactional
-    public void importSummary(SummaryImportDTO dto) {
+    public void importSummary(SummaryImportDTO dto, Long programId) {
 
         Semester semester = semesterService.findById(dto.getSemesterId());
 
         for (OutcomeImportDTO o : dto.getOutcomes()) {
 
             // ========== OUTCOME ==========
-            Outcome outcome = getOrCreateOutcome(semester.getId(), o);
+            Outcome outcome = getOrCreateOutcome(semester.getId(), programId, o);
 
             for (IndicatorImportDTO ind : o.getIndicators()) {
 
@@ -45,7 +45,7 @@ public class ImporterService {
                 // Extract the indicator number (the part after the decimal)
                 int indicatorNumber = extractIndicatorNumber(ind.getNumber());
 
-                PerformanceIndicator pi = getOrCreateIndicator(outcome.getId(), indicatorNumber);
+                PerformanceIndicator pi = getOrCreateIndicator(outcome.getId(), indicatorNumber, programId);
 
                 for (CourseImportDTO c : ind.getCourses()) {
 
@@ -61,7 +61,7 @@ public class ImporterService {
 
                         Measure measure = new Measure();
 
-                        measure.setCourseIndicatorId(ci.getId());
+                        //measure.setCourseIndicatorId(ci.getId());
 
                         measure.setActive(true);
 
@@ -136,7 +136,7 @@ public class ImporterService {
      * Find or create an outcome for the given semester and outcome number.
      * First tries to find an existing active outcome by number and semester.
      */
-    private Outcome getOrCreateOutcome(Long semesterId, OutcomeImportDTO o) {
+    private Outcome getOrCreateOutcome(Long semesterId, Long programId, OutcomeImportDTO o) {
         // Try to find existing outcome by semester and outcome number
         List<Outcome> allOutcomes = outcomeService.findActiveOutcomesBySemester(semesterId);
 
@@ -152,6 +152,7 @@ public class ImporterService {
                 ("Imported outcome " + o.getNumber()),
                 (o.getStatus() != null ? o.getStatus() : "Pending"),
                 semesterId,
+                programId,
                 true);
 
         return outcomeService.create(dto);
@@ -161,7 +162,7 @@ public class ImporterService {
      * Find or create a performance indicator for the given outcome.
      * Matches by indicator number within the outcome.
      */
-    private PerformanceIndicator getOrCreateIndicator(Long outcomeId, int indicatorNumber) {
+    private PerformanceIndicator getOrCreateIndicator(Long outcomeId, int indicatorNumber, Long programId) {
         // Get all indicators for this outcome
         List<PerformanceIndicator> indicators = indicatorService.getIndicatorsByStudentOutcome(outcomeId);
 
@@ -176,7 +177,8 @@ public class ImporterService {
         PerformanceIndicatorDTO dto = new PerformanceIndicatorDTO(
                 ("Imported indicator " + indicatorNumber),
                 indicatorNumber,
-                outcomeId
+                outcomeId,
+                programId
         );
         dto.setIsActive(true);
 

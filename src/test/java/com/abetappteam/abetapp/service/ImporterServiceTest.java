@@ -76,7 +76,7 @@ class ImporterServiceTest {
         when(courseIndicatorService.getOrCreate(1L, 1L)).thenReturn(courseIndicator);
         when(measureService.createFromImport(any())).thenReturn(new Measure());
 
-        importerService.importSummary(dto);
+        importerService.importSummary(dto, 1l);
 
         verify(outcomeService).create(any());
         verify(indicatorService).createPerformanceIndicator(any());
@@ -96,7 +96,7 @@ class ImporterServiceTest {
         when(courseIndicatorService.getOrCreate(1L, 1L)).thenReturn(courseIndicator);
         when(measureService.createFromImport(any())).thenReturn(new Measure());
 
-        importerService.importSummary(dto);
+        importerService.importSummary(dto, 1l);
 
         verify(outcomeService, never()).create(any());
     }
@@ -112,7 +112,7 @@ class ImporterServiceTest {
         when(courseIndicatorService.getOrCreate(1L, 1L)).thenReturn(courseIndicator);
         when(measureService.createFromImport(any())).thenReturn(new Measure());
 
-        importerService.importSummary(dto);
+        importerService.importSummary(dto, 1l);
 
         verify(indicatorService, never()).createPerformanceIndicator(any());
     }
@@ -128,7 +128,7 @@ class ImporterServiceTest {
         when(courseIndicatorService.getOrCreate(1L, 1L)).thenReturn(courseIndicator);
         when(measureService.createFromImport(any())).thenReturn(new Measure());
 
-        importerService.importSummary(dto);
+        importerService.importSummary(dto, 1l);
 
         verify(courseService, never()).createCourse(any());
     }
@@ -147,7 +147,7 @@ class ImporterServiceTest {
         when(courseIndicatorService.getOrCreate(anyLong(), anyLong())).thenReturn(courseIndicator);
         when(measureService.createFromImport(any())).thenReturn(new Measure());
 
-        importerService.importSummary(dto);
+        importerService.importSummary(dto, 1l);
 
         verify(indicatorService).createPerformanceIndicator(argThat(pi -> pi.getIndicatorNumber() == 1));
     }
@@ -166,7 +166,7 @@ class ImporterServiceTest {
         when(courseIndicatorService.getOrCreate(anyLong(), anyLong())).thenReturn(courseIndicator);
         when(measureService.createFromImport(any())).thenReturn(new Measure());
 
-        importerService.importSummary(dto);
+        importerService.importSummary(dto, 1l);
 
         verify(indicatorService).createPerformanceIndicator(argThat(pi -> pi.getIndicatorNumber() == 3));
     }
@@ -192,7 +192,7 @@ class ImporterServiceTest {
 
         setupMocks();
 
-        importerService.importSummary(dto);
+        importerService.importSummary(dto, 1l);
 
         // verify(measureService).createFromImport(argThat(m -> "InReview".equals(m.getStatus())));
     }
@@ -205,7 +205,7 @@ class ImporterServiceTest {
 
         setupMocks();
 
-        importerService.importSummary(dto);
+        importerService.importSummary(dto, 1l);
 
         // verify(measureService).createFromImport(argThat(m -> "InProgress".equals(m.getStatus())));
     }
@@ -220,7 +220,7 @@ class ImporterServiceTest {
 
         setupMocks();
 
-        importerService.importSummary(dto);
+        importerService.importSummary(dto, 1l);
 
         verify(measureResultService).createFromImport(
                 argThat(mr -> mr.getStudentsExceeded() == 10 && mr.getStudentsMet() == 14
@@ -235,7 +235,7 @@ class ImporterServiceTest {
 
         setupMocks();
 
-        importerService.importSummary(dto);
+        importerService.importSummary(dto, 1l);
 
         verify(measureResultService).createFromImport(
                 argThat(mr -> mr.getStudentsExceeded() == 4 && mr.getStudentsMet() == 17
@@ -252,7 +252,7 @@ class ImporterServiceTest {
 
         setupMocks();
 
-        importerService.importSummary(dto);
+        importerService.importSummary(dto, 1l);
 
         verify(measureResultService).createFromImport(
                 argThat(mr -> mr.getStudentsExceeded() == 0 && mr.getStudentsMet() == 12
@@ -267,7 +267,7 @@ class ImporterServiceTest {
 
         setupMocks();
 
-        importerService.importSummary(dto);
+        importerService.importSummary(dto, 1l);
 
         verify(measureService).createFromImport(argThat(m -> "Action 1\nAction 2".equals(m.getRecommendedAction())));
     }
@@ -280,7 +280,7 @@ class ImporterServiceTest {
 
         setupMocks();
 
-        importerService.importSummary(dto);
+        importerService.importSummary(dto, 1l);
 
         verify(measureService).createFromImport(argThat(m -> m.getRecommendedAction() == null));
     }
@@ -292,7 +292,7 @@ class ImporterServiceTest {
 
         setupMocks();
 
-        importerService.importSummary(dto);
+        importerService.importSummary(dto, 1l);
 
         verify(courseService).createCourse(argThat(c -> "CS101".equals(c.getCourseCode())));
     }
@@ -304,7 +304,7 @@ class ImporterServiceTest {
 
         setupMocks();
 
-        importerService.importSummary(dto);
+        importerService.importSummary(dto, 1l);
 
         verify(courseService).createCourse(argThat(c -> "CS101".equals(c.getCourseCode())));
     }

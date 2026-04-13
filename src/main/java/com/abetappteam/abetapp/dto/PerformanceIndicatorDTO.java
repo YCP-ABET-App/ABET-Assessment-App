@@ -17,16 +17,20 @@ public class PerformanceIndicatorDTO {
     @NotNull(message = "Student outcome ID is required")
     private final Long studentOutcomeId;
 
+    @NotNull(message = "Program ID is required")
+    private final Long programId;
+
     private Double thresholdPercentage;
     private Boolean isActive;
 
     // Constructors
 
-    public PerformanceIndicatorDTO(String description, Integer indicatorNumber, Long studentOutcomeId) {
+    public PerformanceIndicatorDTO(String description, Integer indicatorNumber, Long studentOutcomeId, Long programId) {
 
         this.description = description;
         this.indicatorNumber = indicatorNumber;
         this.studentOutcomeId = studentOutcomeId;
+        this.programId = programId;
         this.isActive = true;
         this.thresholdPercentage = 70.00;
     }
@@ -65,6 +69,8 @@ public class PerformanceIndicatorDTO {
         return studentOutcomeId;
     }
 
+    public Long getProgramId() {return programId;}
+
     public Double getThresholdPercentage() {
         return thresholdPercentage;
     }
@@ -87,6 +93,7 @@ public class PerformanceIndicatorDTO {
                 ", indicatorValue=" + indicatorValue +
                 ", evaluation='" + evaluation + '\'' +
                 ", studentOutcomeId=" + studentOutcomeId +
+                ", programId=" + programId +
                 ", thresholdPercentage=" + thresholdPercentage +
                 ", isActive=" + isActive +
                 '}';

@@ -8,6 +8,7 @@ import com.abetappteam.abetapp.entity.Requests.MeasureResults.MeasureResultsSear
 import com.abetappteam.abetapp.entity.Requests.Section.SectionSearchRequest;
 import com.abetappteam.abetapp.entity.Requests.SectionProgram.SectionProgramSearchRequest;
 
+import com.abetappteam.abetapp.repository.SectionProgramRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +18,7 @@ import com.abetappteam.abetapp.entity.MeasureResult;
 import com.abetappteam.abetapp.entity.Section;
 import com.abetappteam.abetapp.entity.SectionProgram;
 import com.abetappteam.abetapp.entity.Course;
+import com.abetappteam.abetapp.entity.ScheduleEntry;
 import com.abetappteam.abetapp.entity.CourseIndicator;
 import com.abetappteam.abetapp.dto.MeasureDTO;
 import com.abetappteam.abetapp.dto.MeasureResultDTO;
@@ -27,10 +29,8 @@ import com.abetappteam.abetapp.repository.MeasureRepository;
 @Service
 public class MeasureService extends BaseService<Measure, Long, MeasureRepository> {
 
-    private final CourseIndicatorRepository courseIndicatorRepository;
-    private final CourseRepository courseRepository;
     private final SectionService sectionService;
-    private final CourseIndicatorService courseIndicatorService;
+    private final ScheduleEntryService scheduleEntryService;
     private final SectionProgramService sectionProgramService;
     private final MeasureResultService measureResultService;
     private final MeasureRepository measureRepository;
@@ -38,17 +38,15 @@ public class MeasureService extends BaseService<Measure, Long, MeasureRepository
     @Autowired
     public MeasureService(
             MeasureRepository repository,
-            CourseIndicatorRepository courseIndicatorRepository,
-            CourseRepository courseRepository,
-            SectionService sectionService,
-            CourseIndicatorService courseIndicatorService,
+            ScheduleEntryService scheduleEntryService,
             SectionProgramService sectionProgramService,
-            MeasureResultService measureResultService, MeasureRepository measureRepository) {
+            SectionService sectionService,
+            MeasureResultService measureResultService,
+            MeasureRepository measureRepository
+    ) {
         super(repository);
-        this.courseIndicatorRepository = courseIndicatorRepository;
-        this.courseRepository = courseRepository;
         this.sectionService = sectionService;
-        this.courseIndicatorService = courseIndicatorService;
+        this.scheduleEntryService = scheduleEntryService;
         this.sectionProgramService = sectionProgramService;
         this.measureResultService = measureResultService;
         this.measureRepository = measureRepository;
@@ -62,39 +60,46 @@ public class MeasureService extends BaseService<Measure, Long, MeasureRepository
     // Create new Measure
     @Transactional
     public Measure create(MeasureDTO dto) {
+
         // Create and store measure
         Measure measure = new Measure();
-        measure.setCourseIndicatorId(dto.getCourseIndicatorId());
-        measure.setSemesterId(dto.getSemesterId());
+        measure.setScheduleEntryId(dto.getScheduleEntryId());
         measure.setDescription(dto.getDescription());
         measure.setRecommendedAction(dto.getRecommendedAction());
         measure.setActive(dto.getActive());
+
         measure = repository.saveAndFlush(measure);
         Long measureId = measure.getId();
         logger.info("Created Measure with ID: {}", measureId);
 
-        // Retrieve the Course ID from the CourseIndicator
-        CourseIndicator ci = courseIndicatorService.findById(measure.getCourseIndicatorId());
+        // Retrieve the Course ID from the ScheduleEntry
+        ScheduleEntry se = scheduleEntryService.findById(dto.getScheduleEntryId());
 
-        // Find relevant Sections
+        int courseId = se.getCourseId();
+        int programId = se.getProgramId();
+
+        // Find relevant Sections of this Course
         SectionSearchRequest sectionSearchRequest = new SectionSearchRequest(
-                null, null, null, ci.getCourseId().intValue(), null);
+                null, null, null, courseId, null);
         List<Section> sections = sectionService.searchSections(sectionSearchRequest);
 
-        // Loop through Sections and Programs to create Results
+        // Find program specific sections
         for (Section section : sections) {
             SectionProgramSearchRequest spSearchRequest = new SectionProgramSearchRequest(
-                    null, section.getId().intValue(), null);
+                            null, section.getId().intValue(), programId);
             List<SectionProgram> sectionPrograms = sectionProgramService.searchSectionProgram(spSearchRequest);
 
+            // Create MeasureResults using ONLY sectionProgramId
             for (SectionProgram sp : sectionPrograms) {
+
                 MeasureResultDTO resultDto = new MeasureResultDTO(
                         measureId,
-                        section.getId(),
-                        (long) sp.getProgramId(),
+                        sp.getId(),
                         null, null, null, null,
                         "InProgress",
-                        null);
+                        null
+                );
+
                 measureResultService.create(resultDto);
             }
         }
@@ -111,8 +116,7 @@ public class MeasureService extends BaseService<Measure, Long, MeasureRepository
     public Measure update(Long id, MeasureDTO dto) {
         Measure measure = findById(id);
 
-        measure.setCourseIndicatorId(dto.getCourseIndicatorId());
-        measure.setSemesterId(dto.getSemesterId());
+        measure.setScheduleEntryId(dto.getScheduleEntryId());
         measure.setDescription(dto.getDescription());
         measure.setRecommendedAction(dto.getRecommendedAction());
 
@@ -173,7 +177,7 @@ public class MeasureService extends BaseService<Measure, Long, MeasureRepository
     @Transactional
     public List<Measure> searchMeasures(MeasureSearchRequest request) {
         logger.info("Fetching all measures");
-        return repository.searchMeasures(request.id(), request.courseIndicatorId(), request.semesterId(),
+        return repository.searchMeasures(request.id(), request.scheduleEntryId(),
                 request.active());
     }
 

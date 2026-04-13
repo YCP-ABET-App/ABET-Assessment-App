@@ -26,6 +26,9 @@ public class Outcome extends BaseEntity{
     @JoinColumn(name = "semester_id")
     private Long semesterId;
 
+    @JoinColumn(name = "program_id")
+    private Long programId;
+
     @Column(name = "is_active", nullable = false)
     private Boolean active;
 
@@ -34,12 +37,13 @@ public class Outcome extends BaseEntity{
         super();
     }
 
-    public Outcome(Integer number, Integer value, String description, String evaluation, Long semesterId, Boolean active){
+    public Outcome(Integer number, Integer value, String description, String evaluation, Long semesterId, Long programId, Boolean active){
         this.number = number;
         this.value = value;
         this.description = description;
         this.evaluation = evaluation;
         this.semesterId = semesterId;
+        this.programId = programId;
         this.active = active;
     }
 
@@ -47,7 +51,6 @@ public class Outcome extends BaseEntity{
     public Integer getNumber(){
         return number;
     }
-
     public void setNumber(Integer number){
         this.number = number;
     }
@@ -55,7 +58,6 @@ public class Outcome extends BaseEntity{
     public Integer getValue(){
         return value;
     }
-
     public void setValue(Integer value){
         this.value = value;
     }
@@ -63,7 +65,6 @@ public class Outcome extends BaseEntity{
     public String getDescription(){
         return description;
     }
-
     public void setDescription(String description){
         this.description = description;
     }
@@ -71,7 +72,6 @@ public class Outcome extends BaseEntity{
     public String getEvaluation(){
         return evaluation;
     }
-
     public void setEvaluation(String evaluation){
         this.evaluation = evaluation;
     }
@@ -79,15 +79,16 @@ public class Outcome extends BaseEntity{
     public Long getSemesterId(){
         return semesterId;
     }
-
     public void setSemesterId(Long semesterId){
         this.semesterId = semesterId;
     }
 
+    public Long getProgramId(){ return programId; }
+    public void setProgramId(Long programId){ this.programId = programId; }
+
     public Boolean getActive(){
         return active;
     }
-
     public void setActive(Boolean active){
         this.active = active;
     }
@@ -99,6 +100,7 @@ public class Outcome extends BaseEntity{
                 ", number=" + number +
                 ", value='" + value + '\'' +
                 ", semesterId='" + semesterId + '\'' +
+                ", programId='" + programId + '\'' +
                 ", description='" + description + '\'' +
                 ", evaluation='" + evaluation + '\'' +
                 ", active=" + active +

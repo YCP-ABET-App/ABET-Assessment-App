@@ -4,8 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 
 public class MeasureDTO {
 
-    private final Long courseIndicatorId;
-    private final Long semesterId;
+    private final Long scheduleEntryId;
 
     @NotBlank(message = "Description of Measure is required")
     private String description;
@@ -13,40 +12,25 @@ public class MeasureDTO {
     private Boolean active;
 
     //Constructor
-    public MeasureDTO(Long courseIndicatorId, Long semesterId, String description, String recAction,
+    public MeasureDTO(Long scheduleEntryId, String description, String recAction,
     Boolean active){
 
-        this.courseIndicatorId = courseIndicatorId;
-        this.semesterId = semesterId;
+        this.scheduleEntryId = scheduleEntryId;
         this.description = description;
         this.recAction = recAction;
         this.active = active;
     }
 
     //Getters/setters
-
-    public Long getCourseIndicatorId() { return courseIndicatorId; }
-    public Long getSemesterId() { return semesterId; }
+    public Long getScheduleEntryId() { return scheduleEntryId; }
  
-    public void setDescription(String description){
-        this.description = description;
-    }
-    public String getDescription(){
-        return description;
-    }
+    public void setDescription(String description){ this.description = description; }
+    public String getDescription(){ return description; }
 
-    public String getRecommendedAction(){
-        return recAction;
-    }
-    public void setRecommendedAction(String recAction){
-        this.recAction = recAction;
-    }
+    public String getRecommendedAction(){ return recAction; }
+    public void setRecommendedAction(String recAction){ this.recAction = recAction; }
  
-    public Boolean getActive(){
-        return active;
-    }
-    public void setActive(Boolean active){
-        this.active = active;
-    }
+    public Boolean getActive() { return active; }
+    public void setActive(Boolean active){ this.active = active; }
 
 }

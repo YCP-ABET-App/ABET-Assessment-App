@@ -82,7 +82,7 @@ async function complete_form_submit() {
     emits('refresh')
 
   } catch (error) {
-    console.error('Error editing measure:', error);
+    console.error('Error editing measure result:', error);
   }
 }
 

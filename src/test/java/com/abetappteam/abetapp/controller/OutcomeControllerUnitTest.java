@@ -52,11 +52,12 @@ public class OutcomeControllerUnitTest {
         testOutcome.setId(1l);
         testOutcome.setNumber(1);
         testOutcome.setSemesterId(1l);
+        testOutcome.setProgramId(1l);
         testOutcome.setDescription("Test Description");
         testOutcome.setEvaluation("Test Evaluation");
         testOutcome.setActive(true);
 
-        testDTO = new OutcomeDTO(1, "New description", "New Evaluation", 1L, true);
+        testDTO = new OutcomeDTO(1, "New description", "New Evaluation", 1L, 1L,true);
         testDTO.setNumber(1);
         //testDTO.setSemesterId(1l);
         testDTO.setDescription("New Description");

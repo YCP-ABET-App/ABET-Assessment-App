@@ -39,26 +39,24 @@ public class Section extends BaseEntity {
     public String getSectionNumber() {
         return sectionNumber;
     }
+    public void setSectionNumber(String sectionNumber) {
+        this.sectionNumber = sectionNumber;
+    }
 
     public int getCourseId() {
         return courseId;
+    }
+    public void setCourseId(int courseId) {
+        this.courseId = courseId;
     }
 
     public int getSemesterId() {
         return semesterId;
     }
-
-    public void setSectionNumber(String sectionNumber) {
-        this.sectionNumber = sectionNumber;
-    }
-
-    public void setCourseId(int courseId) {
-        this.courseId = courseId;
-    }
-
     public void setSemesterId(int semesterId) {
         this.semesterId = semesterId;
     }
+
 
     @Override
     public String toString() {

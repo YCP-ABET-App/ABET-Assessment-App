@@ -21,7 +21,7 @@ class MeasureResultRepositoryTest extends BaseRepositoryTest {
 
     @BeforeEach
     void setUp() {
-        testMeasureResult = new MeasureResult(1L, 1L, 1L, 10, 5, 3, "Test Observation", null, "InProgress");
+        testMeasureResult = new MeasureResult(1L, 1L, 10, 5, 3, "Test Observation", null, "InProgress");
     }
 
     @Test
@@ -68,59 +68,34 @@ class MeasureResultRepositoryTest extends BaseRepositoryTest {
     }
 
     @Test
-    void shouldFindByMeasureIdAndSectionId() {
+    void shouldFindByMeasureIdAndSectionProgramId() {
         // Given
         measureResultRepository.save(testMeasureResult);
         flushAndClear();
 
         // When
-        Optional<MeasureResult> found = measureResultRepository.findByMeasureIdAndSectionId(1L, 1L);
+        Optional<MeasureResult> found = measureResultRepository.findByMeasureIdAndSectionProgramId(1L, 1L);
 
         // Then
         assertThat(found).isPresent();
-        assertThat(found.get().getSectionId()).isEqualTo(1L);
+        assertThat(found.get().getSectionProgramId()).isEqualTo(1L);
     }
 
     @Test
-    void shouldFindByMeasureIdAndProgramId() {
-        // Given
-        measureResultRepository.save(testMeasureResult);
-        flushAndClear();
-
-        // When
-        Optional<MeasureResult> found = measureResultRepository.findByMeasureIdAndProgramId(1L, 1L);
-
-        // Then
-        assertThat(found).isPresent();
-        assertThat(found.get().getProgramId()).isEqualTo(1L);
-    }
-
-    @Test
-    void shouldCheckExistsByMeasureIdAndSectionId() {
+    void shouldCheckExistsByMeasureIdAndSectionProgramId() {
         // Given
         measureResultRepository.save(testMeasureResult);
         flushAndClear();
 
         // When/Then
-        assertThat(measureResultRepository.existsByMeasureIdAndSectionId(1L, 1L)).isTrue();
-        assertThat(measureResultRepository.existsByMeasureIdAndSectionId(1L, 999L)).isFalse();
-    }
-
-    @Test
-    void shouldCheckExistsByMeasureIdAndProgramId() {
-        // Given
-        measureResultRepository.save(testMeasureResult);
-        flushAndClear();
-
-        // When/Then
-        assertThat(measureResultRepository.existsByMeasureIdAndProgramId(1L, 1L)).isTrue();
-        assertThat(measureResultRepository.existsByMeasureIdAndProgramId(1L, 999L)).isFalse();
+        assertThat(measureResultRepository.existsByMeasureIdAndSectionProgramId(1L, 1L)).isTrue();
+        assertThat(measureResultRepository.existsByMeasureIdAndSectionProgramId(1L, 999L)).isFalse();
     }
 
     @Test
     void shouldCountByMeasureId() {
         // Given
-        MeasureResult second = new MeasureResult(1L, 2L, 1L, 8, 2, 1, "Another", null, "Submitted");
+        MeasureResult second = new MeasureResult(1L, 2L, 8, 2, 1, "Another", null, "Submitted");
         measureResultRepository.save(testMeasureResult);
         measureResultRepository.save(second);
         flushAndClear();
@@ -139,7 +114,7 @@ class MeasureResultRepositoryTest extends BaseRepositoryTest {
         flushAndClear();
 
         // When
-        List<MeasureResult> found = measureResultRepository.searchMeasureResults(saved.getId().intValue(), 1, 1, 1);
+        List<MeasureResult> found = measureResultRepository.searchMeasureResults(saved.getId().intValue(), 1,  1);
 
         // Then
         assertThat(found).hasSize(1);
@@ -153,13 +128,13 @@ class MeasureResultRepositoryTest extends BaseRepositoryTest {
         flushAndClear();
 
         // When/Then
-        assertThat(measureResultRepository.hasActiveSections(1L)).isTrue();
+        assertThat(measureResultRepository.hasActiveSectionPrograms(1L)).isTrue();
 
-        MeasureResult rejected = new MeasureResult(1L, 2L, 1L, 0, 0, 0, null, "Not valid", "Rejected");
+        MeasureResult rejected = new MeasureResult(1L, 2L, 0, 0, 0, null, "Not valid", "Rejected");
         measureResultRepository.save(rejected);
         flushAndClear();
 
-        assertThat(measureResultRepository.hasActiveSections(2L)).isFalse();
+        assertThat(measureResultRepository.hasActiveSectionPrograms(2L)).isFalse();
     }
 
     @Test
@@ -169,7 +144,7 @@ class MeasureResultRepositoryTest extends BaseRepositoryTest {
         flushAndClear();
 
         // When/Then
-        assertThat(measureResultRepository.hasActivePrograms(1L)).isTrue();
+        assertThat(measureResultRepository.hasActiveSectionPrograms(1L)).isTrue();
     }
 
     @Test
