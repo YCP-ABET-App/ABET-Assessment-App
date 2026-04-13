@@ -36,7 +36,7 @@ public class CourseController extends BaseController {
             @RequestParam(required = false) String courseDescription,
             @RequestParam(required = false) Integer student_count,
             @RequestParam(required = false) Integer mirrorId,
-            @RequestParam(required = false) boolean isActive) {
+            @RequestParam(required = false) Boolean isActive) {
         CourseSearchRequest request = new CourseSearchRequest(id, courseCode, courseName, courseDescription,
                 student_count, mirrorId, isActive);
 
@@ -140,6 +140,56 @@ public class CourseController extends BaseController {
         courseService.activateCourse(id);
         Course course = courseService.findById(id);
         return success(course, "Course activated successfully");
+    }
+
+    /**
+     * Get active courses, optionally filtered by program.
+     */
+    @GetMapping("/active")
+    public ResponseEntity<ApiResponse<List<Course>>> getActiveCourses(
+            @RequestParam(required = false) Long programId) {
+
+        List<Course> courses;
+        if (programId != null) {
+            logger.info("Fetching active courses for programId: {}", programId);
+            courses = courseService.getActiveCoursesByProgramId(programId);
+        } else {
+            logger.info("Fetching all active courses");
+            courses = courseService.getAllActiveCourses();
+        }
+        return success(courses, "Active courses retrieved successfully");
+    }
+
+    /**
+     * Get indicator IDs assigned to a course.
+     */
+    @GetMapping("/{courseId}/indicators")
+    public ResponseEntity<List<Long>> getIndicatorIds(@PathVariable Long courseId) {
+        logger.info("Fetching indicator IDs for courseId: {}", courseId);
+        validateId(courseId);
+        List<Long> ids = courseService.getIndicatorIds(courseId);
+        return ResponseEntity.ok(ids);
+    }
+
+    /**
+     * Get all soft-deleted courses
+     */
+    @GetMapping("/deleted")
+    public ResponseEntity<ApiResponse<List<Course>>> getDeletedCourses() {
+        logger.info("Fetching all soft-deleted courses");
+        List<Course> deleted = courseService.findDeletedCourses();
+        return success(deleted, "Deleted courses retrieved successfully");
+    }
+
+    /**
+     * Permanently delete a soft-deleted course
+     */
+    @DeleteMapping("/{id}/permanent")
+    public ResponseEntity<ApiResponse<Void>> permanentDeleteCourse(@PathVariable Long id) {
+        logger.info("Permanently deleting course with ID: {}", id);
+        validateId(id);
+        courseService.permanentDeleteCourse(id);
+        return success(null, "Course permanently deleted");
     }
 
     /**
