@@ -124,6 +124,32 @@ router.beforeEach((to, from, next) => {
   const requiresAuth = to.meta.requiresAuth
   const requiresAdmin = to.meta.requiresAdmin
 
+  // Allow institution login page for all users
+  if (to.name === 'Institution Log In') {
+    next()
+    return
+  }
+
+  // If user is logged in but trying to access login/signup pages, redirect to dashboard
+  if (userStore.isLoggedIn && (to.name === 'Log In' || to.name === 'Sign Up')) {
+    next({ name: 'Home' })
+    return
+  }
+
+  // If user is not logged in and trying to access login/signup, ensure institution is selected
+  if (!userStore.isLoggedIn && (to.name === 'Log In' || to.name === 'Sign Up')) {
+    if (!institutionId) {
+      next({
+        name: 'Institution Log In',
+        query: { redirect: to.fullPath }
+      })
+      return
+    }
+    // Institution is selected, allow access to login/signup
+    next()
+    return
+  }
+
   // If user is not logged in and trying to access a protected route
   if (requiresAuth && !userStore.isLoggedIn) {
     // If institution not selected, go to institution login
@@ -142,15 +168,9 @@ router.beforeEach((to, from, next) => {
     return
   }
 
-  // If user is logged in but trying to access institution or auth pages, redirect to dashboard
-  if (userStore.isLoggedIn && (to.name === 'Log In' || to.name === 'Sign Up' || to.name === 'Institution Log In')) {
+  // If user is logged in but trying to access institution login, redirect to dashboard
+  if (userStore.isLoggedIn && to.name === 'Institution Log In') {
     next({ name: 'Home' })
-    return
-  }
-
-  // If not logged in and trying to access login/signup, ensure institution is selected
-  if (!userStore.isLoggedIn && (to.name === 'Log In' || to.name === 'Sign Up') && !institutionId) {
-    next({ name: 'Institution Log In' })
     return
   }
 

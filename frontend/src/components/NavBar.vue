@@ -4,6 +4,7 @@ const props = defineProps({
   username: String,
   isInstructor: Boolean,
   isAdmin: Boolean,
+  isInstitutionLoginPage: Boolean,
 })
 
 const emit = defineEmits(["logout"])
@@ -56,13 +57,21 @@ const emit = defineEmits(["logout"])
 
         <!-- When logged out -->
         <router-link
-          v-else
+          v-if="!isInstitutionLoginPage"
           to="/login"
           class="nav_button auth-button"
           id="login"
         >
           Log In
         </router-link>
+        <span
+          v-else
+          class="nav_button auth-button disabled-login"
+          id="login"
+          title="Complete institution verification first"
+        >
+          Log In
+        </span>
       </div>
     </div>
   </nav>
@@ -164,6 +173,12 @@ const emit = defineEmits(["logout"])
 
 .logout-btn:hover {
   background-color: var(--navbar-hover-bg);
+}
+
+.disabled-login {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 /* Responsive Design */
