@@ -85,7 +85,7 @@ export function useMultiYearReportData(props: Ref<MultiYearReportProps>) {
       reportData.value = responseData;
 
     } catch (err: any) {
-      error.value = err.message ?? 'Failed to load multi-year report data';
+      error.value = err.response?.data?.message ?? err.message ?? 'Failed to load multi-year report data';
     } finally {
       loading.value = false;
     }
