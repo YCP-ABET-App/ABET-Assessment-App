@@ -16,7 +16,12 @@ const emit = defineEmits(["logout"])
       <div id="logo">ABET Assessment App</div>
 
 <div class="navbar-links">
-        <router-link to="/" class="nav_button">Home</router-link>
+        <router-link
+          :to="loggedIn ? '/dashboard' : '/institution-login'"
+          class="nav_button"
+        >
+          Home
+        </router-link>
 
         <template v-if="loggedIn">
 
