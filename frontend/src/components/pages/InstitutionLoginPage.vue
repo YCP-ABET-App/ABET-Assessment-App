@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { BaseButton, BaseCard, BaseInput } from "@/components/ui"
 import { useRouter } from 'vue-router'
 import { useToast } from "@/composables/use-toast.ts"
+import api from "@/api"
 
 const router = useRouter()
 const institutionId = ref('')
@@ -17,20 +18,33 @@ async function handleInstitutionSubmit() {
 
   isLoading.value = true
 
+  console.log('Submitting institution ID:', institutionId.value.trim());
+
   try {
-    // Store the institution ID in localStorage for use during login/signup
-    //localStorage.setItem('selectedInstitutionId', institutionId.value.trim())
+    // Call the institution login endpoint
+    const response = await api.post('/institution/login', null, {
+      params: {
+        institutionId: institutionId.value.trim()
+      }
+    })
 
-    if(institutionId.value !== 'ycpAbetCapstoneSpring2026!') {
-      throw new Error('Invalid institution ID');
+    console.log(response)
+
+    if (response.data && response.data.data) {
+      console.log(response.data)
+      // Store the institution ID in localStorage for use during login/signup
+      localStorage.setItem('selectedInstitutionId', institutionId.value.trim())
+
+      success('Institution verified successfully', 'Welcome')
+
+      // Redirect to login page
+      await router.push('/login')
+    } else {
+      showError('Invalid institution ID', 'Verification Failed')
     }
-
-    success('Institution selected successfully', 'Welcome')
-
-    // Redirect to login page
-    await router.push('/login')
-  } catch (err) {
-    showError('Failed to select institution', 'Error')
+  } catch (err: any) {
+    const errorMessage = err?.response?.data?.message || 'Failed to validate institution ID'
+    showError(errorMessage, 'Error')
   } finally {
     isLoading.value = false
   }
