@@ -5,6 +5,7 @@ import com.abetappteam.abetapp.entity.Course;
 import com.abetappteam.abetapp.entity.CourseIndicator;
 import com.abetappteam.abetapp.entity.CourseInstructor;
 import com.abetappteam.abetapp.entity.Measure;
+import com.abetappteam.abetapp.entity.MeasureResult;
 import com.abetappteam.abetapp.entity.Requests.Course.CourseSearchRequest;
 import com.abetappteam.abetapp.exception.BusinessException;
 import com.abetappteam.abetapp.exception.ConflictException;
@@ -162,21 +163,56 @@ public class CourseService extends BaseService<Course, Long, CourseRepository> {
     public void removeCourse(Long courseId) {
         Course course = findById(courseId);
 
-        if (repository.countMeasuresInReviewByCourseId(courseId) > 0) {
+        if (hasMeasuresInReview(courseId)) {
             throw new BusinessException("Cannot delete course with measures submitted for review");
         }
 
         List<CourseIndicator> indicators = courseIndicatorRepository.findByCourseId(courseId);
-        for (CourseIndicator indicator : indicators) {
-            measureResultRepository.deleteByCourseIndicatorId(indicator.getId());
-            measureRepository.deleteByCourseIndicatorId(indicator.getId());
+        List<CourseInstructor> instructors = courseInstructorRepository.findByCourseId(courseId);
+        boolean hasRelatedRecords = !indicators.isEmpty() || !instructors.isEmpty();
+
+        if (!hasRelatedRecords) {
+            logger.info("No related records found, flat deleting course: {}", courseId);
+            repository.delete(course);
+            return;
         }
 
-        courseIndicatorRepository.deleteByCourseId(courseId);
-        courseInstructorRepository.deleteByCourseId(courseId);
+        logger.info("Related records found, cascade soft-deleting course: {}", courseId);
 
-        logger.info("Removing course with cascade: {} - {}", course.getCourseCode(), course.getCourseName());
-        repository.delete(course);
+        // Soft-delete MeasureResults via each CourseIndicator's Measures
+        for (CourseIndicator ci : indicators) {
+            List<MeasureResult> results = measureResultRepository.findByCourseIndicatorId(ci.getId());
+            for (MeasureResult mr : results) {
+                mr.markAsDeleted();
+            }
+            measureResultRepository.saveAll(results);
+        }
+
+        // Soft-delete Measures
+        for (CourseIndicator ci : indicators) {
+            List<Measure> measures = measureRepository.searchMeasures(null, Math.toIntExact(ci.getId()), null, null);
+            for (Measure m : measures) {
+                m.markAsDeleted();
+            }
+            measureRepository.saveAll(measures);
+        }
+
+        // Soft-delete CourseIndicators
+        for (CourseIndicator ci : indicators) {
+            ci.setIsActive(false);
+            ;
+        }
+        courseIndicatorRepository.saveAll(indicators);
+
+        // Soft-delete CourseInstructors
+        for (CourseInstructor ci : instructors) {
+            ci.setIsActive(false);
+        }
+        courseInstructorRepository.saveAll(instructors);
+
+        // 5. Soft-delete Course
+        course.markAsDeleted();
+        repository.save(course);
     }
 
     @Transactional
@@ -196,9 +232,33 @@ public class CourseService extends BaseService<Course, Long, CourseRepository> {
     }
 
     @Transactional(readOnly = true)
+    public List<Course> findDeletedCourses() {
+        logger.debug("Fetching all soft-deleted courses");
+        return repository.findByDeletedTrue();
+    }
+
+    @Transactional
+    public void permanentDeleteCourse(Long courseId) {
+        Course course = findById(courseId);
+
+        if (!Boolean.TRUE.equals(course.getDeleted())) {
+            throw new BusinessException("Course must be soft-deleted before it can be permanently deleted");
+        }
+
+        logger.warn("Permanently deleting course: {} - {}", course.getCourseCode(), course.getCourseName());
+        repository.delete(course);
+    }
+
+    @Transactional(readOnly = true)
     public List<Course> getActiveCoursesByProgramUserId(Long programUserId) {
         logger.debug("Fetching active courses for program user ID: {}", programUserId);
         return repository.findActiveCoursesByProgramUserId(programUserId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Course> getActiveCoursesByProgramId(Long programId) {
+        logger.debug("Fetching active courses for program ID: {}", programId);
+        return repository.findActiveCoursesByProgramId(programId);
     }
 
     @Transactional(readOnly = true)
