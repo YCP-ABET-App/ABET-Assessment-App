@@ -223,7 +223,7 @@ CREATE TABLE schedule_entry (
 -- Measure table
 CREATE TABLE measure (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    course_indicator_id BIGINT NOT NULL,
+    schedule_entry_id BIGINT NOT NULL,
     measure_description TEXT NOT NULL,
     recommended_action TEXT NULL,
     -- From BaseEntity
@@ -234,7 +234,7 @@ CREATE TABLE measure (
     deleted_at TIMESTAMP NULL,
     -- Measure-specific
     is_active BOOLEAN DEFAULT TRUE NOT NULL,
-    FOREIGN KEY (course_indicator_id) REFERENCES course_indicator(id)
+    FOREIGN KEY (schedule_entry_id) REFERENCES schedule_entry(id)
 );
 
 -- Measure Results Table
