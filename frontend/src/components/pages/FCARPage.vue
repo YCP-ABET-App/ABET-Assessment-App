@@ -40,11 +40,22 @@ const suggestedEvaluation = computed(() => {
 
 async function fetch_fcar_data() {
   try {
+
+
     const { data: mRes } = await api.get(`/measure/${measure_id.value}`);
     const measure = mRes.data;
+    if (!measure || !measure.courseIndicatorId) {
+      console.error("Critical Error: measure.courseIndicatorId is undefined.");
+      return;
+    }
 
     const { data: idRes } = await api.get(`/courses/courseIndicator/getIds/${measure.courseIndicatorId}`);
+    if (!idRes.data || idRes.data.length < 2) {
+      console.error("Critical Error: getIds returned incomplete data.");
+      return;
+    }
     const [course_id, ind_id] = idRes.data;
+
 
     const iRes = await api.get(`/performance-indicators/${ind_id}`);
     const pi = iRes.data.data;
