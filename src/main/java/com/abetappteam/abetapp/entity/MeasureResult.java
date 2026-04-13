@@ -11,11 +11,8 @@ public class MeasureResult extends BaseEntity {
     @Column(name = "measure_id", nullable = false)
     private Long measureId;
 
-    @Column(name = "section_id", nullable = false)
-    private Long sectionId;
-
-    @Column(name = "program_id", nullable = false)
-    private Long programId;
+    @Column(name = "section_program_id", nullable = false)
+    private Long sectionProgramId;
 
     @Column(name = "met")
     private Integer studentsMet;
@@ -41,8 +38,7 @@ public class MeasureResult extends BaseEntity {
 
     public MeasureResult(
             Long measureId,
-            Long sectionId,
-            Long programId,
+            Long sectionProgramId,
             Integer studentsMet,
             Integer studentsExceeded,
             Integer studentsBelow,
@@ -50,8 +46,7 @@ public class MeasureResult extends BaseEntity {
             String rejectionNote,
             String status) {
         this.measureId = measureId;
-        this.sectionId = sectionId;
-        this.programId = programId;
+        this.sectionProgramId = sectionProgramId;
         this.studentsMet = studentsMet;
         this.studentsExceeded = studentsExceeded;
         this.studentsBelow = studentsBelow;
@@ -64,31 +59,20 @@ public class MeasureResult extends BaseEntity {
     public Long getMeasureId() {
         return measureId;
     }
-
     public void setMeasureId(Long measureId) {
         this.measureId = measureId;
     }
 
-    public Long getSectionId() {
-        return sectionId;
+    public Long getSectionProgramId() {
+        return sectionProgramId;
     }
-
-    public void setSectionId(Long sectionId) {
-        this.sectionId = sectionId;
-    }
-
-    public Long getProgramId() {
-        return programId;
-    }
-
-    public void setProgramId(Long programId) {
-        this.programId = programId;
+    public void setSectionProgramId(Long sectionProgramId) {
+        this.sectionProgramId = sectionProgramId;
     }
 
     public Integer getStudentsMet() {
         return studentsMet;
     }
-
     public void setStudentsMet(Integer studentsMet) {
         this.studentsMet = studentsMet;
     }
@@ -96,7 +80,6 @@ public class MeasureResult extends BaseEntity {
     public Integer getStudentsExceeded() {
         return studentsExceeded;
     }
-
     public void setStudentsExceeded(Integer studentsExceeded) {
         this.studentsExceeded = studentsExceeded;
     }
@@ -104,7 +87,6 @@ public class MeasureResult extends BaseEntity {
     public Integer getStudentsBelow() {
         return studentsBelow;
     }
-
     public void setStudentsBelow(Integer studentsBelow) {
         this.studentsBelow = studentsBelow;
     }
@@ -112,7 +94,6 @@ public class MeasureResult extends BaseEntity {
     public String getObservation() {
         return observation;
     }
-
     public void setObservation(String observation) {
         this.observation = observation;
     }
@@ -120,7 +101,6 @@ public class MeasureResult extends BaseEntity {
     public String getRejectionNote() {
         return rejectionNote;
     }
-
     public void setRejectionNote(String rejectionNote) {
         this.rejectionNote = rejectionNote;
     }
@@ -128,7 +108,6 @@ public class MeasureResult extends BaseEntity {
     public String getStatus() {
         return status;
     }
-
     public void setStatus(String status) {
         this.status = status;
     }
@@ -138,8 +117,7 @@ public class MeasureResult extends BaseEntity {
         return "MeasureResult{" +
                 "id=" + getId() +
                 ", measureId=" + measureId +
-                ", sectionId=" + sectionId +
-                ", programId=" + programId +
+                ", sectionProgramId=" + sectionProgramId +
                 ", studentsMet=" + studentsMet +
                 ", studentsExceeded=" + studentsExceeded +
                 ", studentsBelow=" + studentsBelow +

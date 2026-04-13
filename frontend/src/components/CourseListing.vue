@@ -70,7 +70,6 @@ async function loadCourses() {
 watch(() => [props.programId, props.semesterId], loadCourses);
 onMounted(loadCourses);
 
-// 3. UPDATE this function to set the ref instead of navigating
 function selectCourse(course: Course) {
   selectedCourse.value = course;
 }
@@ -111,10 +110,10 @@ function selectCourse(course: Course) {
           <button
             class="simple-edit-btn"
             @click.stop="startEdit(course)"
+            title="Edit course"
           >
-            Edit
+            <img src="@/assets/icons/edit-pencil.svg" alt="Edit" class="edit-icon" />
           </button>
-
         </div>
       </BaseCard>
 
@@ -167,7 +166,6 @@ function selectCourse(course: Course) {
   gap: 1.25rem;
 }
 
-/* Make BaseCard fill the available height */
 .course-card :deep(.base-card) {
   height: 100%;
   display: flex;
@@ -175,7 +173,6 @@ function selectCourse(course: Course) {
   background: var(--color-bg-secondary);
 }
 
-/* Make card-body expand to fill available space */
 .course-card :deep(.card-body) {
   flex: 1;
   display: flex;
@@ -244,21 +241,25 @@ function selectCourse(course: Course) {
 }
 
 .simple-edit-btn {
-  background: var(--color-bg-tertiary, #f0f0f0);
-  border: 1px solid var(--color-border-dark, #ccc);
-  color: var(--color-text-secondary, #666);
-  padding: 4px 10px;
-  border-radius: 4px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
+  background: var(--color-primary);
+  border: none;
+  padding: 6px 8px;
+  border-radius: 6px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+  flex-shrink: 0;
 }
 
 .simple-edit-btn:hover {
-  background: var(--color-primary);
-  color: white;
-  border-color: var(--color-primary);
+  opacity: 0.25;
+}
+
+.edit-icon {
+  width: 18px;
+  height: 18px;
+  display: block;
 }
 </style>

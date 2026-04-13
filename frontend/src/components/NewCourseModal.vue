@@ -3,19 +3,21 @@
     <template #header>
       <h3 class="modal-title">Add New Course</h3>
     </template>
+
+    <div class="form-container">
       <div class="form-group">
-        <label class="label">Course Name</label>
+        <label class="label">Course Name <span class="required">*</span></label>
         <input
           v-model="formData.courseName"
           type="text"
           class="input"
           placeholder="Introduction to Computer Science"
+          required
         />
       </div>
 
-    <div class="form-container">
       <div class="form-group">
-        <label class="label">Course Code</label>
+        <label class="label">Course Code <span class="required">*</span></label>
         <div class="course-code-row">
           <select v-model="codePrefix" class="input prefix-select">
             <option v-for="code in prefixes" :key="code" :value="code">
@@ -27,13 +29,13 @@
             type="text"
             placeholder="101"
             class="input"
+            required
           />
         </div>
       </div>
 
-
       <div class="form-group">
-        <label class="label">Description</label>
+        <label class="label">Description<span class="required">*</span></label>
         <textarea
           v-model="formData.courseDescription"
           class="input"
@@ -42,14 +44,17 @@
         ></textarea>
       </div>
 
-      </div>
+      <p v-if="errorMessage" class="error-text">{{ errorMessage }}</p>
+    </div>
 
     <template #footer>
       <div class="form-actions-footer">
-        <button class="btn-secondary" @click="handleClose">
-          Cancel
-        </button>
-        <button class="btn-primary" @click="submitForm">
+        <button class="btn-secondary" @click="handleClose">Cancel</button>
+        <button
+          class="btn-primary"
+          :disabled="!isFormValid"
+          @click="submitForm"
+        >
           Save Course
         </button>
       </div>
@@ -58,7 +63,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import BaseModal from "@/components/ui/BaseModal.vue";
 
 const props = defineProps<{
@@ -67,25 +72,46 @@ const props = defineProps<{
 
 const emit = defineEmits(["close", "submitted"]);
 
-const prefixes = ["ECE", "ME", "CS", "CVE", "EGR"];
-const codePrefix = ref("ECE");
+
+const prefixes = ["N/A", "ECE", "ME", "CS", "CVE", "EGR"];
+const codePrefix = ref("N/A");
 const codeSuffix = ref("");
+const errorMessage = ref("");
 
 const formData = ref({
   courseName: "",
   courseDescription: ""
 });
 
+
+const isFormValid = computed(() => {
+  return (
+    formData.value.courseName.trim().length > 0 &&
+    codeSuffix.value.trim().length > 0 &&
+    codePrefix.value !== "N/A"
+  );
+});
+
 function handleClose() {
   formData.value = { courseName: "", courseDescription: "" };
-  codePrefix.value = "ECE";
+  codePrefix.value = "N/A"; // Reset to N/A
   codeSuffix.value = "";
+  errorMessage.value = "";
   emit("close");
 }
 
 function submitForm() {
+  if (!isFormValid.value) {
+    errorMessage.value = "Please select a valid Course Prefix and fill in all fields.";
+    return;
+  }
+
   const fullCourseCode = `${codePrefix.value} ${codeSuffix.value.trim()}`;
-  emit("submitted", { ...formData.value, courseCode: fullCourseCode });
+  emit("submitted", {
+    ...formData.value,
+    courseCode: fullCourseCode
+  });
+
   handleClose();
 }
 </script>
@@ -104,14 +130,6 @@ function submitForm() {
   gap: 0.5rem;
 }
 
-/* Horizontal alignment for numeric inputs */
-.form-row-double {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-}
-
-/* Dropdown + Input group */
 .course-code-row {
   display: grid;
   grid-template-columns: 100px 1fr;
@@ -126,11 +144,23 @@ function submitForm() {
   letter-spacing: 0.03em;
 }
 
+.required {
+  color: #ff4d4d;
+  margin-left: 2px;
+}
+
+.error-text {
+  color: #ff4d4d;
+  font-size: 0.85rem;
+  margin-top: -0.5rem;
+  font-weight: 500;
+}
+
 .input {
   padding: 0.6rem 0.75rem;
   border-radius: 6px;
   border: 1px solid var(--color-border-dark);
-  background: var(--color-bg-secondary); /* This provides that black/dark background */
+  background: var(--color-bg-secondary);
   color: var(--color-text-primary);
   width: 100%;
   font-size: 0.95rem;
@@ -161,11 +191,17 @@ function submitForm() {
   border-radius: 4px;
   font-weight: 600;
   cursor: pointer;
-  transition: opacity 0.2s;
+  transition: opacity 0.2s, filter 0.2s;
 }
 
-.btn-primary:hover {
+.btn-primary:hover:not(:disabled) {
   opacity: 0.9;
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: grayscale(0.5);
 }
 
 .btn-secondary {

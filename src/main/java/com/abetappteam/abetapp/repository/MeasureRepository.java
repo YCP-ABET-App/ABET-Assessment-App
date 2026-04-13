@@ -1,5 +1,6 @@
 package com.abetappteam.abetapp.repository;
 
+import com.abetappteam.abetapp.entity.CourseInstructor;
 import com.abetappteam.abetapp.entity.Measure;
 
 import jakarta.transaction.Transactional;
@@ -14,17 +15,17 @@ import java.util.List;
 public interface MeasureRepository extends JpaRepository<Measure, Long> {
         @Modifying
         @Transactional
-        void deleteByCourseIndicatorId(Long courseIndicatorId);
+        void deleteByScheduleEntryId(Long scheduleEntryId);
+        List<Measure> findByScheduleEntryId(Long scheduleEntryId);
+
 
         @Query("SELECT m FROM Measure m WHERE " +
                         "(:id IS NULL OR m.id = :id) AND " +
-                        "(:courseIndicatorId IS NULL OR m.courseIndicatorId = :courseIndicatorId) AND " +
-                        "(:semesterId IS NULL OR m.semesterId = :semesterId) AND " +
+                        "(:scheduleEntryId IS NULL OR m.scheduleEntryId = :scheduleEntryId) AND " +
                         "(:active IS NULL OR m.active = :active)")
         List<Measure> searchMeasures(
                         @Param("id") Integer id,
-                        @Param("courseIndicatorId") Integer courseIndicatorId,
-                        @Param("semesterId") Integer semesterId,
+                        @Param("scheduleEntryId") Integer scheduleEntryId,
                         @Param("active") Boolean active);
 
 }

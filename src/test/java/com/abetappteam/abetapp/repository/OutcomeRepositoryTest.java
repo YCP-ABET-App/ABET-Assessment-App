@@ -78,13 +78,13 @@ public class OutcomeRepositoryTest extends BaseRepositoryTest{
 
     @Test
     void shouldFindAllActiveOutcomes() {
-        Outcome active1 = TestDataBuilder.createOutcome(1, "Active1", 1l, 
+        Outcome active1 = TestDataBuilder.createOutcome(1, "Active1", 1l, 1l,
             null, null, true);
 
-        Outcome active2 = TestDataBuilder.createOutcome(2, "Active2", 1l, 
+        Outcome active2 = TestDataBuilder.createOutcome(2, "Active2", 1l, 1l,
             null, null, true);
 
-        Outcome inactive = TestDataBuilder.createOutcome(3, "inactive", 1l, 
+        Outcome inactive = TestDataBuilder.createOutcome(3, "inactive", 1l, 1l,
             null, null, false);
 
         outcomeRepository.save(active1);

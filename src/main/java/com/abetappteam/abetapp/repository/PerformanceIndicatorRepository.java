@@ -20,31 +20,27 @@ public interface PerformanceIndicatorRepository extends JpaRepository<Performanc
 
     // Student Outcome queries
     Page<PerformanceIndicator> findByStudentOutcomeId(Long studentOutcomeId, Pageable pageable);
-
     List<PerformanceIndicator> findByStudentOutcomeId(Long studentOutcomeId);
-
     long countByStudentOutcomeId(Long studentOutcomeId);
 
+    // Program Queries
+    Page<PerformanceIndicator> findByProgramId(Long programId, Pageable pageable);
+    List<PerformanceIndicator> findByProgramId(Long programId);
+
     // Active status queries
-    Page<PerformanceIndicator> findByStudentOutcomeIdAndIsActive(Long studentOutcomeId, Boolean isActive,
-                                                                 Pageable pageable);
-
+    Page<PerformanceIndicator> findByStudentOutcomeIdAndIsActive(Long studentOutcomeId, Boolean isActive, Pageable pageable);
     List<PerformanceIndicator> findByStudentOutcomeIdAndIsActive(Long studentOutcomeId, Boolean isActive);
-
+    long countByStudentOutcomeIdAndIsActive(Long studentOutcomeId, Boolean isActive);
     List<PerformanceIndicator> findByIsActive(Boolean isActive);
 
-    long countByStudentOutcomeIdAndIsActive(Long studentOutcomeId, Boolean isActive);
-
     // Indicator number queries
-    Optional<PerformanceIndicator> findByIndicatorNumberAndStudentOutcomeId(Integer indicatorNumber,
-                                                                            Long studentOutcomeId);
-
+    Optional<PerformanceIndicator> findByIndicatorNumberAndStudentOutcomeId(Integer indicatorNumber, Long studentOutcomeId);
     boolean existsByIndicatorNumberAndStudentOutcomeId(Integer indicatorNumber, Long studentOutcomeId);
-
     List<PerformanceIndicator> findByIndicatorNumber(Integer indicatorNumber);
 
     // Description queries
     List<PerformanceIndicator> findByDescriptionContainingIgnoreCase(String descriptionFragment);
+
 
     // Search queries
     @Query("SELECT pi FROM PerformanceIndicator pi WHERE LOWER(pi.description) LIKE LOWER(CONCAT('%', :searchTerm, '%'))")
@@ -97,12 +93,10 @@ public interface PerformanceIndicatorRepository extends JpaRepository<Performanc
 
     // Threshold percentage queries
     List<PerformanceIndicator> findByThresholdPercentageGreaterThanEqual(Double threshold);
-
     List<PerformanceIndicator> findByThresholdPercentageLessThan(Double threshold);
 
     // Evaluation status queries
     List<PerformanceIndicator> findByEvaluationIsNotNull();
-
     List<PerformanceIndicator> findByEvaluationIsNull();
 
     @Query("SELECT pi FROM PerformanceIndicator pi WHERE pi.studentOutcomeId = :studentOutcomeId AND pi.evaluation IS NOT NULL")

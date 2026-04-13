@@ -3,11 +3,13 @@ package com.abetappteam.abetapp.repository;
 import com.abetappteam.abetapp.entity.Requests.Section.SectionSearchRequest;
 import com.abetappteam.abetapp.entity.Section;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -17,6 +19,10 @@ import java.util.List;
 @Repository
 public interface SectionRepository extends JpaRepository<Section, Long> {
     // ========== Course ID queries ==========
+
+    @Modifying
+    @Transactional
+    void deleteByCourseId(int courseId);
     Page<Section> findByCourseId(int courseId, Pageable pageable);
 
     List<Section> findByCourseId(int courseId);
@@ -40,6 +46,17 @@ public interface SectionRepository extends JpaRepository<Section, Long> {
             "AND (:#{#request.programId()} IS NULL OR sp.programId = :#{#request.programId()}) " +
             "AND (:#{#request.userId()} IS NULL OR su.userId = :#{#request.userId()})")
     List<Section> searchSections(@Param("request") SectionSearchRequest request);
+
+
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM SectionProgram sp WHERE sp.sectionId IN (SELECT s.id FROM Section s WHERE s.courseId = :courseId)")
+    void deleteSectionProgramsByCourseId(@Param("courseId") int courseId);
+
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM SectionUser su WHERE su.sectionId IN (SELECT s.id FROM Section s WHERE s.courseId = :courseId)")
+    void deleteSectionUsersByCourseId(@Param("courseId") int courseId);
 
     Boolean existsBySectionNumberAndSemesterIdAndCourseId(@Param("sectionNumber") String sectionNumber,
             @Param("semesterId") int semesterId, @Param("courseId") int courseId);

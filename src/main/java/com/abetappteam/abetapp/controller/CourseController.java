@@ -47,6 +47,21 @@ public class CourseController extends BaseController {
         return success(courses, "Courses retrieved successfully");
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<Course>> getCourseById(@PathVariable Long id) {
+        logger.info("Fetching course with ID: {}", id);
+        validateId(id);
+        Course course = courseService.findById(id);
+        return success(course, "Course retrieved successfully");
+    }
+
+    @GetMapping("/courseIndicator/getIds/{courseIndicatorId}")
+    public ResponseEntity<ApiResponse<List<Long>>> getIdsByCourseIndicator(@PathVariable Long courseIndicatorId) {
+        logger.info("Fetching course and indicator IDs for courseIndicatorId: {}", courseIndicatorId);
+        List<Long> ids = courseService.getIdsByCourseIndicator(courseIndicatorId);
+        return success(ids, "IDs retrieved successfully");
+    }
+
     /**
      * Create a new course
      */

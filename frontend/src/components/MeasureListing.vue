@@ -64,7 +64,7 @@ async function complete_form_submit() {
     studentsMet: met,
     studentsExceeded: exceeded,
     studentsBelow: below,
-    status: "Complete"
+    status: "InProgress"
   }
 
   try {
@@ -76,20 +76,13 @@ async function complete_form_submit() {
     measure_obj.value.below = below
     measure_obj.value.status = "Complete"
 
-    complete_form_data.value = {
-      met: 0,
-      exceeded: 0,
-      below: 0,
-      observation: ''
-    }
-
     close_forms()
     set_status()
     calculate_chart_data()
     emits('refresh')
 
   } catch (error) {
-    console.error('Error editing measure:', error);
+    console.error('Error editing measure result:', error);
   }
 }
 
@@ -128,11 +121,6 @@ async function edit_form_submit(){
     measure_obj.value.measure_description = edit_form_data.value.description
   } catch (error) {
     console.error('Error editing measure:', error);
-  }
-
-  //Reset form data
-  edit_form_data.value = {
-    description: ''
   }
 
   //Close forms
@@ -267,6 +255,30 @@ async function mark_complete(){
   }
 }
 
+async function mark_inprogress(){
+  const new_measure_result = {
+    id: measure_obj.value.id,
+    measureId: measure_obj.value.measure_id,
+    sectionId: measure_obj.value.section_id,
+    programId: measure_obj.value.program_id,
+    observation: measure_obj.value.observation,
+    studentsMet: measure_obj.value.met,
+    studentsExceeded: measure_obj.value.exceeded,
+    studentsBelow: measure_obj.value.below,
+    status: "InProgress"
+  }
+
+  try {
+    const { data } = await api.put(`/measure-result/${measure_obj.value.id}`, new_measure_result);
+    measure_obj.value.status = "InProgress"
+    set_status()
+    calculate_chart_data()
+    emits('refresh')
+  } catch (error) {
+    console.error('Error marking measure as in progress:', error);
+  }
+}
+
 function set_status(){
   if(measure_obj.value.status==="InProgress"){
     status.value = 0
@@ -364,6 +376,13 @@ async function initialize(){
     rejection_note: props.measure_prop.rejection_note
   }
 
+  complete_form_data.value.met = measure_obj.value.met as number
+  complete_form_data.value.exceeded = measure_obj.value.exceeded as number
+  complete_form_data.value.below = measure_obj.value.below as number
+  complete_form_data.value.observation = measure_obj.value.observation as string
+
+  edit_form_data.value.description = measure_obj.value.measure_description
+
   set_status()
 
   //Check if the logged in user is the instructor for the section
@@ -384,11 +403,11 @@ calculate_chart_data()
     <div id="measure-box">
       <div id="description-and-status" @click="open_view">
         <div id="description">{{ measure_obj.measure_description }}</div>
-        <div v-if="status==0" class="complete-status status-in-progress">In Progress</div>
-        <div v-else-if="status==1" class="complete-status status-completed">Complete</div>
-        <div v-else class="complete-status status-error">Error</div>
+        <div v-if="status==0" class="complete-status">In Progress</div>
+        <div v-else-if="status==1" class="complete-status">Complete</div>
+        <div v-else class="complete-status">Error</div>
 
-        <div v-if="status==1 && has_chart_data" id="chart"></div>
+        <div v-if="has_chart_data" id="chart"></div>
         <div v-else id="blank-chart"></div>
       </div>
       <div id="buttons">
@@ -396,29 +415,36 @@ calculate_chart_data()
           v-if="status==0 && isInstructor"
           variant="primary"
           size="sm"
-          @click="open_complete_form">
-          Complete
+          @click="open_edit_form">
+          <img src="@/assets/icons/edit-pencil.svg">
         </BaseButton>
         <BaseButton
-          v-if="status==0 && isInstructor"
+          v-if="status==0 && !has_chart_data && isInstructor"
           variant="primary"
           size="sm"
-          @click="open_edit_form">
-          Edit
+          @click="open_complete_form">
+          Enter Data
         </BaseButton>
         <BaseButton
-          v-if="status==1 && isAdmin"
-          variant="danger"
+          v-if="status==0 && has_chart_data && isInstructor"
+          variant="primary"
           size="sm"
-          @click="open_ra_form">
-          Reject Measure
+          @click="open_complete_form">
+          Edit Data
         </BaseButton>
         <BaseButton
-          v-if="isAdmin && status == 0"
-          variant="success"
+          v-if="(isAdmin || isInstructor) && status == 0"
+          variant="primary"
           size="sm"
           @click="mark_complete">
-          Mark Complete
+          Submit
+        </BaseButton>
+        <BaseButton
+          v-if="(isAdmin || isInstructor) && status == 1"
+          variant="primary"
+          size="sm"
+          @click="mark_inprogress">
+          Unsubmit
         </BaseButton>
         <BaseButton
           v-if="isAdmin || isInstructor"
@@ -460,18 +486,6 @@ calculate_chart_data()
     <BaseModal v-model:isOpen="deleting" title="Delete Measure" size="md" class="form" id="complete-form">
       <div>Are you sure you want to delete measure?</div>
       <BaseButton variant="danger" class="submit-button" @click="delete_measure">Delete</BaseButton>
-    </BaseModal>
-
-    <BaseModal v-model:isOpen="rec_action" title="Add Recommended Action" class="form" id="delete-form">
-      <div class="input-grid">
-        <BaseInput
-          v-model="ra_form_data.recommended_action"
-          label="Recommended Action: "
-          placeholder=""
-          required
-        />
-      </div>
-      <BaseButton variant="primary" class="submit-button" @click="ra_form_submit">Submit</BaseButton>
     </BaseModal>
 
     <BaseModal v-model:isOpen="viewing" title="View Measure Details" size="lg" class="form" id="view-form">
@@ -629,6 +643,7 @@ calculate_chart_data()
   font-size: 0.65rem;
   font-weight: 500;
   white-space: nowrap;
+  color: var(--color-text-primary);
 }
 
 .form{

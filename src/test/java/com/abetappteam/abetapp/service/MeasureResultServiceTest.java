@@ -32,10 +32,10 @@ public class MeasureResultServiceTest extends BaseServiceTest {
 
     @BeforeEach
     void setUp() {
-        testMeasureResult = new MeasureResult(1L, 1L, 1L, 10, 5, 3, "Test Observation", null, "InProgress");
+        testMeasureResult = new MeasureResult(1L, 1L, 10, 5, 3, "Test Observation", null, "InProgress");
         testMeasureResult.setId(1L);
 
-        testDTO = new MeasureResultDTO(1L, 1L, 1L, 10, 5,3, "Test Observation", "InProgress", null);
+        testDTO = new MeasureResultDTO(1L, 1L, 10, 5,3, "Test Observation", "InProgress", null);
     }
 
     @Test
@@ -110,9 +110,9 @@ public class MeasureResultServiceTest extends BaseServiceTest {
     @Test
     void shouldSearchMeasureResults() {
         // Given
-        MeasureResultsSearchRequest request = new MeasureResultsSearchRequest(0, 1, 0, 0);
+        MeasureResultsSearchRequest request = new MeasureResultsSearchRequest(0, 1, 0);
         List<MeasureResult> results = List.of(testMeasureResult);
-        when(measureResultRepository.searchMeasureResults(anyInt(), anyInt(), anyInt(), anyInt())).thenReturn(results);
+        when(measureResultRepository.searchMeasureResults(anyInt(), anyInt(), anyInt())).thenReturn(results);
 
         // When
         List<MeasureResult> found = measureResultService.searchMeasureResults(request);
@@ -120,7 +120,7 @@ public class MeasureResultServiceTest extends BaseServiceTest {
         // Then
         assertThat(found).hasSize(1);
         assertThat(found.get(0).getMeasureId()).isEqualTo(1L);
-        verify(measureResultRepository).searchMeasureResults(anyInt(), anyInt(), anyInt(), anyInt());
+        verify(measureResultRepository).searchMeasureResults(anyInt(), anyInt(), anyInt());
     }
 
     @Test

@@ -10,16 +10,18 @@ public class OutcomeDTO {
     private String description;
     private String evaluation;
     private final Long semesterId;
+    private final Long programId;
     private Boolean active;
 
     //Constructor
-    public OutcomeDTO(Integer number, String description, String evaluation, Long semesterId, Boolean active){
+    public OutcomeDTO(Integer number, String description, String evaluation, Long semesterId, Long programId, Boolean active){
 
         this.number = number;
         //this.value = value;
         this.description = description;
         this.evaluation = evaluation;
         this.semesterId = semesterId;
+        this.programId = programId;
         this.active = active;
     }
 
@@ -55,6 +57,10 @@ public class OutcomeDTO {
 
     public Long getSemesterId(){
         return semesterId;
+    }
+
+    public Long getProgramId(){
+        return programId;
     }
 
     public Boolean getActive(){

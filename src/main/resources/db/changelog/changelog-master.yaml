@@ -28,7 +28,25 @@ databaseChangeLog:
       file: db/changelog/02192026AddMirrorIDtoCourse.yaml
   - include:
       file: db/changelog/02162026RemoveInstructorFromSection.yaml
-  - include:
-      file: db/changelog/03232026AddSemesterToMeasure.yaml
+#  - include:
+#      file: db/changelog/03232026AddSemesterToMeasure.yaml
+#  - include:
+#      file: db/changelog/03232026AddSemesterToMeasure.yaml
   - include:
       file: db/changelog/03282026AddCascadeDeleteToCourse.yaml
+  - include:
+      file: db/changelog/040526AddSectionIndicatorToMeasure.yaml
+  - include:
+      file: db/changelog/040526AddScheduleEntryTable.yaml
+  - include:
+      file: db/changelog/04052026AddProgramToPI.yaml
+  - include:
+      file: db/changelog/04052026AddProgramToSO.yaml
+  - include:
+      file: db/changelog/03252026RemoveMeasureResultsTable.yaml
+  - include:
+      file: db/changelog/04122026AddScheduleEntryToMeasure.yaml
+  - include:
+      file: db/changelog/04122026AddSectionProgramToMeasureResult.yaml
+  - include:
+      file: db/changelog/04122026RemoveSectionAndProgramFromMeasureResult.yaml

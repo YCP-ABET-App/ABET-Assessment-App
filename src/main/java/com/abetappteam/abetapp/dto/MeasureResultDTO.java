@@ -3,8 +3,7 @@ package com.abetappteam.abetapp.dto;
 public class MeasureResultDTO {
 
     private final Long measureId;
-    private final Long sectionId;
-    private final Long programId;
+    private final Long sectionProgramId;
     private Integer met;
     private Integer exceeded;
     private Integer below;
@@ -14,12 +13,11 @@ public class MeasureResultDTO {
 
     // Constructors
 
-    public MeasureResultDTO(Long measureId, Long sectionId, Long programId, Integer met, Integer exceeded,
+    public MeasureResultDTO(Long measureId, Long sectionProgramId, Integer met, Integer exceeded,
             Integer below, String observation, String status, String rejectionNote) {
 
         this.measureId = measureId;
-        this.sectionId = sectionId;
-        this.programId = programId;
+        this.sectionProgramId = sectionProgramId;
         this.met = met;
         this.exceeded = exceeded;
         this.below = below;
@@ -34,12 +32,8 @@ public class MeasureResultDTO {
         return measureId;
     }
 
-    public Long getSectionId() {
-        return sectionId;
-    }
-
-    public Long getProgramId() {
-        return programId;
+    public Long getSectionProgramId() {
+        return sectionProgramId;
     }
 
     public Integer getStudentsMet() {

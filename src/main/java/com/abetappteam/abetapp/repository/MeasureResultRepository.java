@@ -16,64 +16,47 @@ import java.util.Optional;
 
 public interface MeasureResultRepository extends JpaRepository<MeasureResult, Long> {
 
-        // Measure queries
-        List<MeasureResult> findByMeasureId(Long measureId);
+    // Measure queries
+    List<MeasureResult> findByMeasureId(Long measureId);
+    Page<MeasureResult> findByMeasureId(Long measureId, Pageable pageable);
+    long countByMeasureId(Long measureId);
 
-        Page<MeasureResult> findByMeasureId(Long measureId, Pageable pageable);
+    // Status queries
+    List<MeasureResult> findByMeasureIdAndStatus(Long measureId, String status);
+    List<MeasureResult> findByStatus(String status);
+    Page<MeasureResult> findByMeasureIdAndStatus(Long measureId, String status, Pageable pageable);
+    long countByMeasureIdAndStatus(Long measureId, String status);
 
-        long countByMeasureId(Long measureId);
+    // Find specific relationship
+    Optional<MeasureResult> findByMeasureIdAndSectionProgramId(Long measureId, Long sectionProgramId);
 
-        // Status queries
-        List<MeasureResult> findByMeasureIdAndStatus(Long measureId, String status);
+    // Check existence
+    boolean existsByMeasureIdAndSectionProgramId(Long measureId, Long sectionProgramId);
 
-        List<MeasureResult> findByStatus(String status);
+    // Delete operations
+    void deleteByMeasureId(Long measureId);
+    void deleteBySectionProgramId(Long sectionProgramId);
+    void deleteByMeasureIdAndSectionProgramId(Long measureId, Long sectionProgramId);
 
-        Page<MeasureResult> findByMeasureIdAndStatus(Long measureId, String status, Pageable pageable);
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM MeasureResult mr WHERE mr.measureId IN " +
+            "(SELECT m.id FROM Measure m WHERE m.scheduleEntryId = :scheduleEntryId)")
+    void deleteByScheduleEntryId(@Param("scheduleEntryId") Long scheduleEntryId);
 
-        long countByMeasureIdAndStatus(Long measureId, String status);
+    @Query("SELECT mr FROM MeasureResult mr " +
+            "WHERE (:id IS NULL OR mr.id = :id) " +
+            "AND (:measureId IS NULL OR mr.measureId = :measureId) " +
+            "AND (:sectionProgramId IS NULL OR mr.sectionProgramId = :sectionProgramId) ")
+    List<MeasureResult> searchMeasureResults(@Param("id") Integer id,
+            @Param("measureId") Integer measureId,
+            @Param("sectionProgramId") Integer sectionProgramId);
 
-        // Find specific relationship
-        Optional<MeasureResult> findByMeasureIdAndSectionId(Long measureId, Long sectionId);
+    // Check if measure results has active section & program
+    @Query("SELECT COUNT(mr) > 0 FROM MeasureResult mr WHERE mr.sectionProgramId = :sectionProgramId AND mr.status NOT IN ('Rejected')")
+    boolean hasActiveSectionPrograms(@Param("sectionProgramId") Long sectionProgramId);
 
-        Optional<MeasureResult> findByMeasureIdAndProgramId(Long measureId, Long programId);
-
-        // Check existence
-        boolean existsByMeasureIdAndSectionId(Long measureId, Long sectionId);
-
-        boolean existsByMeasureIdAndProgramId(Long measureId, Long programId);
-
-        // Delete operations
-        void deleteByMeasureId(Long measureId);
-
-        void deleteByProgramId(Long programId);
-
-        void deleteByMeasureIdAndProgramId(Long measureId, Long programId);
-
-        @Modifying
-        @Transactional
-        @Query("DELETE FROM MeasureResult mr WHERE mr.measureId IN " +
-                        "(SELECT m.id FROM Measure m WHERE m.courseIndicatorId = :courseIndicatorId)")
-        void deleteByCourseIndicatorId(@Param("courseIndicatorId") Long courseIndicatorId);
-
-        @Query("SELECT mr FROM MeasureResult mr WHERE mr.measureId IN " +
-                        "(SELECT m.id FROM Measure m WHERE m.courseIndicatorId = :courseIndicatorId)")
-        List<MeasureResult> findByCourseIndicatorId(@Param("courseIndicatorId") Long courseIndicatorId);
-
-        @Query("SELECT mr FROM MeasureResult mr " +
-                        "WHERE (:id IS NULL OR mr.id = :id) " +
-                        "AND (:measureId IS NULL OR mr.measureId = :measureId) " +
-                        "AND (:sectionId IS NULL OR mr.sectionId = :sectionId) " +
-                        "AND (:programId IS NULL OR mr.programId = :programId)")
-        List<MeasureResult> searchMeasureResults(@Param("id") Integer id,
-                        @Param("measureId") Integer measureId,
-                        @Param("sectionId") Integer sectionId,
-                        @Param("programId") Integer programId);
-
-        // Check if measure results has active sections
-        @Query("SELECT COUNT(mr) > 0 FROM MeasureResult mr WHERE mr.sectionId = :sectionId AND mr.status NOT IN ('Rejected')")
-        boolean hasActiveSections(@Param("sectionId") Long sectionId);
-
-        // Check if measure results has active programs
-        @Query("SELECT COUNT(mr) > 0 FROM MeasureResult mr WHERE mr.programId = :programId AND mr.status NOT IN ('Rejected')")
-        boolean hasActivePrograms(@Param("programId") Long programId);
+//    // Check if measure results has active programs
+//    @Query("SELECT COUNT(mr) > 0 FROM MeasureResult mr WHERE mr.programId = :programId AND mr.status NOT IN ('Rejected')")
+//    boolean hasActivePrograms(@Param("programId") Long programId);
 }

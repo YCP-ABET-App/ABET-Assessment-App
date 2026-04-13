@@ -24,14 +24,20 @@ public class MeasureController extends BaseController{
     @GetMapping
     public ResponseEntity<ApiResponse<List<Measure>>> searchMeasures(
         @RequestParam(required = false) Integer id,
-        @RequestParam(required = false) Integer courseIndicatorId,
-        @RequestParam(required = false) Integer semesterId,
+        @RequestParam(required = false) Integer scheduleEntryId,
         @RequestParam(required = false) Boolean active
     ) {
-        MeasureSearchRequest request = new MeasureSearchRequest(id, courseIndicatorId, semesterId, active);
+        MeasureSearchRequest request = new MeasureSearchRequest(id, scheduleEntryId, active);
         logger.info("Fetching measures for request: {}", request);
         List<Measure> measures = service.searchMeasures(request);
         return success(measures, "Measures retrieved successfully");
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<Measure>> getMeasureById(@PathVariable Long id) {
+        logger.info("Fetching measure with id: {}", id);
+        Measure measure = service.findById(id);
+        return success(measure, "Measure retrieved successfully");
     }
 
     //Create a new measure

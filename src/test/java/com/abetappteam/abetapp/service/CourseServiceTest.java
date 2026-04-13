@@ -5,17 +5,12 @@ import com.abetappteam.abetapp.dto.CourseDTO;
 import com.abetappteam.abetapp.entity.Course;
 import com.abetappteam.abetapp.entity.CourseIndicator;
 import com.abetappteam.abetapp.entity.CourseInstructor;
-import com.abetappteam.abetapp.entity.Measure;
-import com.abetappteam.abetapp.entity.MeasureResult;
+import com.abetappteam.abetapp.repository.CourseIndicatorRepository;
 import com.abetappteam.abetapp.entity.Requests.Course.CourseSearchRequest;
 import com.abetappteam.abetapp.exception.BusinessException;
 import com.abetappteam.abetapp.exception.ConflictException;
 import com.abetappteam.abetapp.exception.ResourceNotFoundException;
-import com.abetappteam.abetapp.repository.CourseRepository;
-import com.abetappteam.abetapp.repository.CourseIndicatorRepository;
-import com.abetappteam.abetapp.repository.CourseInstructorRepository;
-import com.abetappteam.abetapp.repository.MeasureRepository;
-import com.abetappteam.abetapp.repository.MeasureResultRepository;
+import com.abetappteam.abetapp.repository.*;
 import com.abetappteam.abetapp.util.TestDataBuilder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,6 +23,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -38,18 +34,19 @@ class CourseServiceTest extends BaseServiceTest {
 
     @Mock
     private CourseRepository courseRepository;
-
     @Mock
     private CourseIndicatorRepository courseIndicatorRepository;
-
     @Mock
     private CourseInstructorRepository courseInstructorRepository;
-
     @Mock
     private MeasureResultRepository measureResultRepository;
-
     @Mock
     private MeasureRepository measureRepository;
+    @Mock
+    private SectionRepository sectionRepository;
+    @Mock
+    private ScheduleEntryRepository scheduleEntryRepository;
+
 
     @InjectMocks
     private CourseService courseService;
@@ -59,15 +56,20 @@ class CourseServiceTest extends BaseServiceTest {
 
     @BeforeEach
     void setUp() {
-        courseService = new CourseService(courseRepository);
+
+        // Only do this if @InjectMocks isn't working
+        courseService = new CourseService(
+                courseRepository,
+                courseIndicatorRepository
+        );
+
 
         ReflectionTestUtils.setField(courseService, "courseInstructorRepository", courseInstructorRepository);
-
         ReflectionTestUtils.setField(courseService, "courseIndicatorRepository", courseIndicatorRepository);
-
         ReflectionTestUtils.setField(courseService, "measureResultRepository", measureResultRepository);
-
         ReflectionTestUtils.setField(courseService, "measureRepository", measureRepository);
+        ReflectionTestUtils.setField(courseService, "sectionRepository", sectionRepository);
+        ReflectionTestUtils.setField(courseService, "scheduleEntryRepository", scheduleEntryRepository);
 
         testCourse = TestDataBuilder.createCourseWithId(1L, "CS101", "Introduction to Computer Science",
                 "Basic computer science principles", 1L);
@@ -234,18 +236,25 @@ class CourseServiceTest extends BaseServiceTest {
 
     @Test
     void shouldDeleteCourse() {
-        // Given
-        when(courseRepository.findById(1L)).thenReturn(Optional.of(testCourse));
-        when(courseRepository.countMeasuresInReviewByCourseId(1L)).thenReturn(0);
-        when(courseIndicatorRepository.findByCourseId(1L)).thenReturn(List.of());
-        when(courseInstructorRepository.findByCourseId(1L)).thenReturn(List.of());
+        Long courseId = 1L;
+        int cIdInt = courseId.intValue();
 
-        // When
-        courseService.removeCourse(1L);
+        assertNotNull(testCourse, "testCourse must be initialized in @BeforeEach");
 
-        // Then
-        verify(courseIndicatorRepository).findByCourseId(1L);
-        verify(courseInstructorRepository).findByCourseId(1L);
+        when(courseRepository.findById(courseId)).thenReturn(Optional.of(testCourse));
+        when(courseRepository.countMeasuresInReviewByCourseId(courseId)).thenReturn(0);
+
+        //when(courseIndicatorRepository.findByCourseId(courseId)).thenReturn(List.of());
+
+        courseService.removeCourse(courseId);
+
+        verify(courseRepository).countMeasuresInReviewByCourseId(courseId);
+        verify(sectionRepository).deleteSectionProgramsByCourseId(cIdInt);
+        verify(sectionRepository).deleteSectionUsersByCourseId(cIdInt);
+        verify(sectionRepository).deleteByCourseId(cIdInt);
+        verify(scheduleEntryRepository).deleteByCourseId(cIdInt);
+        verify(courseIndicatorRepository).deleteByCourseId(courseId);
+        verify(courseInstructorRepository).deleteByCourseId(courseId);
         verify(courseRepository).delete(testCourse);
     }
 
@@ -532,98 +541,5 @@ class CourseServiceTest extends BaseServiceTest {
                 .isInstanceOf(ConflictException.class)
                 .hasMessageContaining("already exists in this semester");
         verify(courseRepository, never()).save(any());
-    }
-
-    @Test
-    void shouldFindDeletedCourses() {
-        // Given
-        Course deletedCourse = TestDataBuilder.createCourseWithId(2L, "CS200", "Old Course", "Description", 1L);
-        deletedCourse.markAsDeleted();
-        when(courseRepository.findByDeletedTrue()).thenReturn(List.of(deletedCourse));
-
-        // When
-        List<Course> result = courseService.findDeletedCourses();
-
-        // Then
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0).getDeleted()).isTrue();
-        verify(courseRepository).findByDeletedTrue();
-    }
-
-    @Test
-    void shouldPermanentDeleteCourse() {
-        // Given
-        testCourse.markAsDeleted();
-        when(courseRepository.findById(1L)).thenReturn(Optional.of(testCourse));
-        doNothing().when(courseRepository).delete(testCourse);
-
-        // When
-        courseService.permanentDeleteCourse(1L);
-
-        // Then
-        verify(courseRepository).findById(1L);
-        verify(courseRepository).delete(testCourse);
-    }
-
-    @Test
-    void shouldThrowWhenPermanentDeletingNonSoftDeletedCourse() {
-        // Given — testCourse.deleted is false by default
-        when(courseRepository.findById(1L)).thenReturn(Optional.of(testCourse));
-
-        // When/Then
-        assertThatThrownBy(() -> courseService.permanentDeleteCourse(1L))
-                .isInstanceOf(BusinessException.class)
-                .hasMessageContaining("Course must be soft-deleted before it can be permanently deleted");
-        verify(courseRepository, never()).delete(any());
-    }
-
-    @Test
-    void shouldFlatDeleteCourseWhenNoRelatedRecords() {
-        // Given
-        when(courseRepository.findById(1L)).thenReturn(Optional.of(testCourse));
-        when(courseRepository.countMeasuresInReviewByCourseId(1L)).thenReturn(0);
-        when(courseIndicatorRepository.findByCourseId(1L)).thenReturn(List.of());
-        when(courseInstructorRepository.findByCourseId(1L)).thenReturn(List.of());
-        doNothing().when(courseRepository).delete(testCourse);
-
-        // When
-        courseService.removeCourse(1L);
-
-        // Then
-        verify(courseRepository).delete(testCourse);
-        verify(courseRepository, never()).save(any());
-    }
-
-    @Test
-    void shouldCascadeSoftDeleteWhenRelatedRecordsExist() {
-        // Given
-        CourseIndicator indicator = new CourseIndicator(1L, 1L);
-        indicator.setId(10L);
-        CourseInstructor instructor = new CourseInstructor(2L, 1L);
-        instructor.setId(20L);
-        Measure measure = TestDataBuilder.createMeasure();
-        measure.setId(100L);
-        MeasureResult measureResult = new MeasureResult();
-        measureResult.setId(200L);
-
-        when(courseRepository.findById(1L)).thenReturn(Optional.of(testCourse));
-        when(courseRepository.countMeasuresInReviewByCourseId(1L)).thenReturn(0);
-        when(courseIndicatorRepository.findByCourseId(1L)).thenReturn(List.of(indicator));
-        when(courseInstructorRepository.findByCourseId(1L)).thenReturn(List.of(instructor));
-        when(measureResultRepository.findByCourseIndicatorId(10L)).thenReturn(List.of(measureResult));
-        when(measureRepository.searchMeasures(null, Math.toIntExact(indicator.getId()), null, null))
-                .thenReturn(List.of(measure));
-
-        // When
-        courseService.removeCourse(1L);
-
-        // Then — soft deletes, no hard delete
-        verify(courseRepository, never()).delete(any(Course.class));
-        verify(courseRepository).save(testCourse);
-        assertThat(testCourse.getDeleted()).isTrue();
-        assertThat(measure.getDeleted()).isTrue();
-        assertThat(measureResult.getDeleted()).isTrue();
-        assertThat(indicator.getIsActive()).isFalse();
-        assertThat(instructor.getIsActive()).isFalse();
     }
 }

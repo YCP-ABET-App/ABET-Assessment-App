@@ -17,21 +17,25 @@ public class SectionIndicator extends BaseEntity {
     @Column(name = "indicator_id", nullable = false)
     private int indicatorId;
 
+    @Column(name = "complete")
+    private boolean complete;
+
     public SectionIndicator() {
         super();
     }
 
     public SectionIndicator(
             int sectionId,
-            int indicatorId) {
+            int indicatorId,
+            boolean complete) {
         this.sectionId = sectionId;
         this.indicatorId = indicatorId;
+        this.complete = complete;
     }
 
     public int getSectionId() {
         return sectionId;
     }
-
     public void setSectionId(int sectionId) {
         this.sectionId = sectionId;
     }
@@ -39,10 +43,12 @@ public class SectionIndicator extends BaseEntity {
     public int getIndicatorId() {
         return indicatorId;
     }
-
     public void setIndicatorId(int indicatorId) {
         this.indicatorId = indicatorId;
     }
+
+    public boolean getComplete() { return complete; }
+    public void setComplete(boolean complete) {}
 
     @Override
     public String toString() {
@@ -50,6 +56,7 @@ public class SectionIndicator extends BaseEntity {
                 "id=" + getId() +
                 ", sectionId=" + sectionId +
                 ", indicatorId=" + indicatorId +
+                ", complete=" + complete +
                 '}';
     }
 

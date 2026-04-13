@@ -38,7 +38,7 @@ public class OutcomeServiceTest extends BaseServiceTest {
     @BeforeEach
     void setUp() {
         testOutcome = TestDataBuilder.createOutcomeWithId(1l, 1,
-                "Test Description", 1l, 80, "Test Evaluation", true);
+                "Test Description", 1l, 1l, 80, "Test Evaluation", true);
         testDTO = TestDataBuilder.createOutcomeDTO();
     }
 
@@ -226,8 +226,8 @@ public class OutcomeServiceTest extends BaseServiceTest {
     void shouldFindAllActive() {
         // Given
         List<Outcome> activeOutcomes = List.of(
-                TestDataBuilder.createOutcomeWithId(1L, 1, "Active 1", 1L, 80, "Evaluation", true),
-                TestDataBuilder.createOutcomeWithId(2L, 2, "Active 2", 1L, 85, "Evaluation", true));
+                TestDataBuilder.createOutcomeWithId(1L, 1, "Active 1", 1L, 1L, 80, "Evaluation", true),
+                TestDataBuilder.createOutcomeWithId(2L, 2, "Active 2", 1L, 1L, 85, "Evaluation", true));
         when(repository.findByActiveTrue()).thenReturn(activeOutcomes);
 
         // When
@@ -242,8 +242,8 @@ public class OutcomeServiceTest extends BaseServiceTest {
     void shouldFindAllInactive() {
         // Given
         List<Outcome> inactiveOutcomes = List.of(
-                TestDataBuilder.createOutcomeWithId(1L, 1, "Inactive 1", 1L, 80, "Evaluation", false),
-                TestDataBuilder.createOutcomeWithId(2L, 2, "Inactive 2", 1L, 85, "Evaluation", false));
+                TestDataBuilder.createOutcomeWithId(1L, 1, "Inactive 1", 1L, 1L, 80, "Evaluation", false),
+                TestDataBuilder.createOutcomeWithId(2L, 2, "Inactive 2", 1L, 1L, 85, "Evaluation", false));
         when(repository.findByActiveFalse()).thenReturn(inactiveOutcomes);
 
         // When

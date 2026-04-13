@@ -24,10 +24,9 @@ public class MeasureResultController extends BaseController {
     public ResponseEntity<ApiResponse<List<MeasureResult>>> getAllMeasureResults(
         @RequestParam(required = false) Integer id,
         @RequestParam(required = false) Integer measureId,
-        @RequestParam(required = false) Integer sectionId,
-        @RequestParam(required = false) Integer programId
+        @RequestParam(required = false) Integer sectionProgramId
     ) {
-        MeasureResultsSearchRequest request = new MeasureResultsSearchRequest(id, measureId, sectionId, programId);
+        MeasureResultsSearchRequest request = new MeasureResultsSearchRequest(id, measureId, sectionProgramId);
         logger.info("Fetching measure results for request: {}", request);
         List<MeasureResult> measureResults = service.searchMeasureResults(request);
         return success(measureResults, "Measure results retrieved successfully");
