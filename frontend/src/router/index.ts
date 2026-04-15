@@ -12,6 +12,7 @@ import LogInPage from '@/components/pages/LogIn.vue'
 import SignUpPage from '@/components/pages/SignUp.vue'
 import ExamplePage from "@/components/pages/ExamplePage.vue";
 import ManagementPage from "@/components/ManagementPage.vue";
+import MultiYearReportPage from "@/components/pages/MultiYearReportPage.vue";
 
 const routes = [
   {
@@ -97,6 +98,12 @@ const routes = [
     path: '/import-tool',
     name: 'Import Tool',
     component: () => import('@/components/pages/ImportToolPage.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/:program_id/multi-year-summary',
+    name: 'Multi-Year Summary',
+    component: MultiYearReportPage,
     meta: { requiresAuth: true }
   }
 ]

@@ -56,7 +56,8 @@ class CourseControllerUnitTest extends BaseControllerTest {
         testCourse.setStudentCount(28);
         testCourse.setIsActive(true);
 
-        testCourseDTO = new CourseDTO("CS401", "Software Engineering", "An introduction to software engineering principles", 28, .5);
+        testCourseDTO = new CourseDTO("CS401", "Software Engineering",
+                "An introduction to software engineering principles", 28, .5);
 
     }
 
@@ -109,9 +110,9 @@ class CourseControllerUnitTest extends BaseControllerTest {
     @Test
     void shouldReturnBadRequestForInvalidCourse() throws Exception {
         // Given - DTO with missing required fields
-        CourseDTO invalidDTO = new CourseDTO(null, null , null , null , null);
-//        invalidDTO.setCourseName(null); // Invalid - courseName is required
-//        invalidDTO.setCourseCode(null); // Invalid - courseCode is required
+        CourseDTO invalidDTO = new CourseDTO(null, null, null, null, null);
+        // invalidDTO.setCourseName(null); // Invalid - courseName is required
+        // invalidDTO.setCourseCode(null); // Invalid - courseCode is required
 
         // When/Then
         mockMvc.perform(post("/api/courses")
@@ -310,5 +311,32 @@ class CourseControllerUnitTest extends BaseControllerTest {
                 .andExpect(jsonPath("$.data.courseCode").value("CS401-V2"));
 
         verify(courseService).versionCourse(eq(1L), any(CourseDTO.class));
+    }
+
+    @Test
+    void shouldGetDeletedCourses() throws Exception {
+        // Given
+        testCourse.markAsDeleted();
+        when(courseService.findDeletedCourses()).thenReturn(List.of(testCourse));
+
+        // When/Then
+        mockMvc.perform(get("/api/courses/deleted"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data").isArray())
+                .andExpect(jsonPath("$.data.length()").value(1));
+
+        verify(courseService).findDeletedCourses();
+    }
+
+    @Test
+    void shouldPermanentDeleteCourse() throws Exception {
+        // When/Then
+        mockMvc.perform(delete("/api/courses/1/permanent"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("Course permanently deleted"));
+
+        verify(courseService).permanentDeleteCourse(1L);
     }
 }

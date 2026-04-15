@@ -18,6 +18,9 @@ public interface MeasureRepository extends JpaRepository<Measure, Long> {
         void deleteByScheduleEntryId(Long scheduleEntryId);
         List<Measure> findByScheduleEntryId(Long scheduleEntryId);
 
+        @Query(value = "SELECT * FROM measure WHERE course_indicator_id = :courseIndicatorId AND is_active = TRUE", nativeQuery = true)
+        List<Measure> findByCourseIndicatorId(@Param("courseIndicatorId") Long courseIndicatorId);
+
 
         @Query("SELECT m FROM Measure m WHERE " +
                         "(:id IS NULL OR m.id = :id) AND " +
@@ -26,6 +29,28 @@ public interface MeasureRepository extends JpaRepository<Measure, Long> {
         List<Measure> searchMeasures(
                         @Param("id") Integer id,
                         @Param("scheduleEntryId") Integer scheduleEntryId,
+                        @Param("active") Boolean active);
+
+        @Query("SELECT m FROM Measure m " +
+                        "INNER JOIN ScheduleEntry se ON m.scheduleEntryId = se.id " +
+                        "WHERE se.programId = :programId " +
+                        "AND se.semesterId = :semesterId " +
+                        "AND se.indicatorId = :indicatorId " +
+                        "AND (:active IS NULL OR m.active = :active)")
+        List<Measure> findMeasuresByProgramSemesterIndicator(
+                        @Param("programId") Integer programId,
+                        @Param("semesterId") Integer semesterId,
+                        @Param("indicatorId") Integer indicatorId,
+                        @Param("active") Boolean active);
+
+        @Query("SELECT m FROM Measure m " +
+                        "INNER JOIN ScheduleEntry se ON m.scheduleEntryId = se.id " +
+                        "WHERE se.programId = :programId " +
+                        "AND se.semesterId IN :semesterIds " +
+                        "AND (:active IS NULL OR m.active = :active)")
+        List<Measure> findMeasuresByProgramAndSemesters(
+                        @Param("programId") Integer programId,
+                        @Param("semesterIds") List<Integer> semesterIds,
                         @Param("active") Boolean active);
 
 }
