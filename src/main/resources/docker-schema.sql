@@ -694,18 +694,18 @@ VALUES
 
 INSERT INTO measure_result (id, measure_id, section_program_id, met, exceeded, below, observation, rejection_note, m_status, is_active)
 VALUES
-    (35, 32, 8, 18, 4, 5, NULL, NULL, 'Completed', TRUE),
-    (36, 33, 8, 13, 3, 11, NULL, NULL, 'Completed', TRUE),
-    (37, 34, 8, 13, 3, 11, NULL, NULL, 'Completed', TRUE),
-    (38, 35, 8, 22, 4, 1, NULL, NULL, 'Completed', TRUE),
-    (39, 36, 8, 18, 4, 5, NULL, NULL, 'Completed', TRUE),
-    (40, 37, 8, 13, 3, 11, NULL, NULL, 'Completed', TRUE),
-    (41, 38, 8, 22, 4, 1, NULL, NULL, 'Completed', TRUE),
-    (42, 39, 8, 21, 4, 2, NULL, NULL, 'Completed', TRUE),
-    (43, 40, 8, 18, 4, 5, NULL, NULL, 'Completed', TRUE),
-    (44, 41, 8, 19, 4, 4, NULL, NULL, 'Completed', TRUE),
-    (45, 42, 8, 19, 4, 4, NULL, NULL, 'Completed', TRUE),
-    (46, 43, 8, 20, 4, 3, NULL, NULL, 'Completed', TRUE);
+    (35, 32, 8, 18, 4, 5, NULL, NULL, 'Complete', TRUE),
+    (36, 33, 8, 13, 3, 11, NULL, NULL, 'Complete', TRUE),
+    (37, 34, 8, 13, 3, 11, NULL, NULL, 'Complete', TRUE),
+    (38, 35, 8, 22, 4, 1, NULL, NULL, 'Complete', TRUE),
+    (39, 36, 8, 18, 4, 5, NULL, NULL, 'Complete', TRUE),
+    (40, 37, 8, 13, 3, 11, NULL, NULL, 'Complete', TRUE),
+    (41, 38, 8, 22, 4, 1, NULL, NULL, 'Complete', TRUE),
+    (42, 39, 8, 21, 4, 2, NULL, NULL, 'Complete', TRUE),
+    (43, 40, 8, 18, 4, 5, NULL, NULL, 'Complete', TRUE),
+    (44, 41, 8, 19, 4, 4, NULL, NULL, 'Complete', TRUE),
+    (45, 42, 8, 19, 4, 4, NULL, NULL, 'Complete', TRUE),
+    (46, 43, 8, 20, 4, 3, NULL, NULL, 'Complete', TRUE);
 
 -- CS 420 Measures
 INSERT INTO measure (id, schedule_entry_id, measure_description, recommended_action, is_active)

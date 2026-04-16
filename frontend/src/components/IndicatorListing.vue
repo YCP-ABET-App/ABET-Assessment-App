@@ -16,7 +16,9 @@ const { isAdmin } = storeToRefs(userStore);
 // Toast notifications
 const toast = useToast();
 
-const props = defineProps({piid: Number, section_id: Number, section_program_id: Number, schedule_entry_id: Number, instructor_id:Number, course_indicator_id:Number, semester_id:Number})
+const props = defineProps({piid: Number, section_id: Number, schedule_entry_id: Number, instructor_id:Number, program_id:Number, course_indicator_id:Number, semester_id:Number})
+
+const section_program_id = ref(NaN)
 
 interface Measure {
   id: number
@@ -98,13 +100,24 @@ async function edit_form_submit() {
   }
 }
 
+async function fetch_section_program_id(){
+  try {
+    const { data } = await api.get(`/section-program`, {params: {"sectionId": props.section_id, "programId": props.program_id}});
+    section_program_id.value = data.data[0].id
+  } catch (error) {
+    console.error('Error fetching section program id:', error);
+  }
+}
+
 async function fetch_measures(){
+  //console.log('Fetching measures for scheduleEntryId:', props.schedule_entry_id, 'and sectionProgramId:', section_program_id.value);
+
   try {
     measures.value = [];
     const { data: m_data } = await api.get(`/measure`, {params:{"scheduleEntryId": props.schedule_entry_id, "active": true}});
     for (const m_entry of m_data.data){
       const measure_id = m_entry.id;
-      const {data: mr_data} = await api.get(`measure-result`, {params: {"measureId": measure_id, "sectionProgramId": props.section_program_id}})
+      const {data: mr_data} = await api.get(`measure-result`, {params: {"measureId": measure_id, "sectionProgramId": section_program_id.value}})
       for (const mr_entry of mr_data.data){
         measures.value.push({
           id: mr_entry.id,
@@ -184,6 +197,13 @@ async function initialize(){
     }
   } catch (error) {
     console.error('Error fetching or parsing indicator data:', error);
+  }
+
+  try{
+    await fetch_section_program_id()
+  } catch (error) {
+    console.error('Error fetching section program id:', error);
+    return;
   }
 
   //Fetch measures
