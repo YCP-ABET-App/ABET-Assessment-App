@@ -44,8 +44,8 @@ databaseChangeLog:
       file: db/changelog/04052026AddProgramToSO.yaml
   - include:
       file: db/changelog/03252026RemoveMeasureResultsTable.yaml
-  - include:
-      file: db/changelog/04122026AddScheduleEntryToMeasure.yaml
+#  - include:
+#      file: db/changelog/04122026AddScheduleEntryToMeasure.yaml
   - include:
       file: db/changelog/04122026AddSectionProgramToMeasureResult.yaml
   - include:

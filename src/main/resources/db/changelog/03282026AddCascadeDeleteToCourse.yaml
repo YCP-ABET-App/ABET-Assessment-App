@@ -14,16 +14,16 @@ databaseChangeLog:
             constraintName: course_indicator_ibfk_1
             onDelete: CASCADE
 
-        - dropForeignKeyConstraint:
-            baseTableName: measure
-            constraintName: measure_ibfk_1
-        - addForeignKeyConstraint:
-            baseTableName: measure
-            baseColumnNames: course_indicator_id
-            referencedTableName: course_indicator
-            referencedColumnNames: id
-            constraintName: measure_ibfk_1
-            onDelete: CASCADE
+#        - dropForeignKeyConstraint:
+#            baseTableName: measure
+#            constraintName: measure_ibfk_1
+#        - addForeignKeyConstraint:
+#            baseTableName: measure
+#            baseColumnNames: course_indicator_id
+#            referencedTableName: course_indicator
+#            referencedColumnNames: id
+#            constraintName: measure_ibfk_1
+#            onDelete: CASCADE
 
         - dropForeignKeyConstraint:
             baseTableName: measure_result
