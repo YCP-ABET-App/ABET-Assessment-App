@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Repository
@@ -42,6 +43,17 @@ public interface ScheduleEntryRepository extends JpaRepository<ScheduleEntry, Lo
             "AND (:#{#request.programId()} IS NULL OR se.programId = :#{#request.programId()}) " +
             "AND (:#{#request.indicatorId()} IS NULL OR se.indicatorId = :#{#request.indicatorId()})")
     List<ScheduleEntry> searchScheduleEntry(@Param("request") ScheduleEntrySearchRequest request);
+
+    // Find schedule entries for a program whose semester falls within the given date range
+    @Query("SELECT se FROM ScheduleEntry se, Semester s " +
+            "WHERE se.semesterId = s.id " +
+            "AND se.programId = :programId " +
+            "AND s.startDate >= :startDate " +
+            "AND s.endDate <= :endDate")
+    List<ScheduleEntry> findByProgramIdAndSemesterDateRange(
+            @Param("programId") int programId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate);
 
     // Exists by semester and program
     @Query("SELECT COUNT(se) > 0 FROM ScheduleEntry se " +

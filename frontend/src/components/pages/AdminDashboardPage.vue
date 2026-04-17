@@ -33,6 +33,12 @@ function navigateToSummary() {
     router.push(`/${currentProgramId.value}/${currentSemesterId.value}/summary`);
   }
 }
+
+function navigateToMultiYearReport() {
+  if (currentProgramId.value) {
+    router.push(`/${currentProgramId.value}/multi-year-summary`);
+  }
+}
 </script>
 
 <template>
@@ -65,6 +71,9 @@ function navigateToSummary() {
         <div class="actions">
           <BaseButton @click="navigateToSummary">
             View 1-Year Summary Report
+          </BaseButton>
+          <BaseButton @click="navigateToMultiYearReport">
+            View Multi-Year Summary Report
           </BaseButton>
         </div>
       </section>
@@ -117,6 +126,10 @@ header h1 {
 }
 
 .actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
   margin: 2rem 0 5rem;
 }
 
