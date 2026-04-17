@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * Controller for date-range summary report generation.
@@ -23,12 +24,10 @@ public class MultiYearReportController extends BaseController {
     private MultiYearReportService multiYearReportService;
 
     /**
-     * Returns a multi-year report with outcomes, indicators, and measures
-     * across every semester that overlaps the requested date range for the given
-     * program.
+     * Returns a list of per-academic-year reports for every semester that overlaps
      */
     @GetMapping("/multi-year")
-    public ResponseEntity<ApiResponse<MultiYearReportData>> getMultiYearReport(
+    public ResponseEntity<ApiResponse<List<MultiYearReportData>>> getMultiYearReport(
             @RequestParam Long programId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
@@ -36,8 +35,9 @@ public class MultiYearReportController extends BaseController {
         logger.info("Generating multi-year report for program {} from {} to {}", programId, startDate, endDate);
         validateId(programId);
 
-        MultiYearReportData report = multiYearReportService.buildHierarchicalReport(programId, startDate, endDate);
+        List<MultiYearReportData> reports = multiYearReportService.buildReportByAcademicYear(programId, startDate,
+                endDate);
 
-        return success(report, "Multi-year report generated successfully");
+        return success(reports, "Multi-year report generated successfully");
     }
 }

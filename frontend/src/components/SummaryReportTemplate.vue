@@ -7,9 +7,9 @@ import autoTable from 'jspdf-autotable';
 import ReportOutcome from "@/components/report/ReportOutcome.vue";
 import { BaseButton, BaseCard } from "@/components/ui";
 
-const props = defineProps<{ report: any }>();
+const props = defineProps<{ report: any; hideExport?: boolean; hideEdit?: boolean }>();
 
-const emit = defineEmits(["update:report", "import", "save", "regenerate", "reload"]);
+const emit = defineEmits(["update:report", "import", "save", "reload"]);
 
 const localReport = reactive(JSON.parse(JSON.stringify(props.report)));
 
@@ -51,9 +51,9 @@ async function exportToPDF() {
     const margin = 14;
 
     // ===== TITLE PAGE =====
-    let yPosition = pageHeight / 3; // Start 1/3 down the page
+    let yPosition = pageHeight / 3; 
 
-    // Main title - centered and large
+    // Main title 
     pdf.setFontSize(24);
     pdf.setFont('helvetica', 'bold');
     const title = `Assessment Summary Report`;
@@ -61,7 +61,7 @@ async function exportToPDF() {
     pdf.text(title, (pageWidth - titleWidth) / 2, yPosition);
     yPosition += 15;
 
-    // Academic year - centered
+    // Academic year
     pdf.setFontSize(18);
     pdf.setFont('helvetica', 'normal');
     const academicYear = localReport.academicYear;
@@ -69,7 +69,7 @@ async function exportToPDF() {
     pdf.text(academicYear, (pageWidth - yearWidth) / 2, yPosition);
     yPosition += 20;
 
-    // Metadata - centered
+    // Metadata
     pdf.setFontSize(11);
     pdf.setTextColor(100, 100, 100);
     const dateText = `Generated: ${localReport.generatedDate}`;
@@ -135,6 +135,14 @@ async function exportToPDF() {
       // Start each outcome on a new page
       pdf.addPage();
       yPosition = margin;
+
+      // Academic year header 
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(120, 120, 120);
+      pdf.text(`Academic Year: ${localReport.academicYear}`, pageWidth / 2, yPosition, { align: 'center' });
+      pdf.setTextColor(0, 0, 0);
+      yPosition += 8;
 
       // Outcome header with status
       pdf.setFontSize(14);
@@ -272,9 +280,7 @@ function updateOutcome(outcomeNumber: number, updated: any) {
   );
 }
 
-function handleRegenerate() {
-  emit("regenerate");
-}
+
 </script>
 
 <template>
@@ -283,17 +289,17 @@ function handleRegenerate() {
     <!-- Toolbar -->
     <div class="toolbar">
       <div class="toolbar-left">
-        <BaseButton v-if="!editMode" variant="primary" @click="startEdit">Edit</BaseButton>
-        <div v-if="!editMode" class="toolbar-divider"></div>
-        <BaseButton v-if="editMode" variant="success" @click="saveEdit">Save</BaseButton>
-        <div v-if="editMode" class="toolbar-divider"></div>
-        <BaseButton v-if="editMode" variant="secondary" @click="cancelEdit">Cancel</BaseButton>
-        <div v-if="editMode" class="toolbar-divider"></div>
-        <BaseButton variant="danger" @click="handleRegenerate">Regenerate Report</BaseButton>
+        <BaseButton v-if="!editMode && !hideEdit" variant="primary" @click="startEdit">Edit</BaseButton>
+        <div v-if="!editMode && !hideEdit" class="toolbar-divider"></div>
+        <BaseButton v-if="editMode && !hideEdit" variant="success" @click="saveEdit">Save</BaseButton>
+        <div v-if="editMode && !hideEdit" class="toolbar-divider"></div>
+        <BaseButton v-if="editMode && !hideEdit" variant="secondary" @click="cancelEdit">Cancel</BaseButton>
+        <div v-if="editMode && !hideEdit" class="toolbar-divider"></div>
       </div>
 
       <div class="toolbar-right">
         <BaseButton
+          v-if="!hideExport"
           variant="primary"
           @click="exportToPDF"
           :disabled="exporting"
