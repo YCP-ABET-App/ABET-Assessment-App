@@ -58,8 +58,9 @@ async function complete_form_submit() {
   const new_measure_results_payload = {
     id: measure_obj.value.id,
     measureId: measure_obj.value.measure_id,
-    sectionId: measure_obj.value.section_id,
-    programId: measure_obj.value.program_id,
+    sectionProgramId: measure_obj.value.section_program_id,
+    // sectionId: measure_obj.value.section_id,
+    // programId: measure_obj.value.program_id,
     observation: complete_form_data.value.observation,
     studentsMet: met,
     studentsExceeded: exceeded,
@@ -99,15 +100,16 @@ const edit_form_data = ref({
   description: ''
 })
 
-async function edit_form_submit(){
+async function edit_form_submit() {
   //Check that met, exceeded, below are all ints
   let newDescVal = edit_form_data.value.description
 
   //Define new measure object
   const new_measure = ref({
     id: measure_obj.value.measure_id,
-    courseIndicatorId: measure_obj.value.course_indicator_id,
-    semesterId: measure_obj.value.semester_id,
+    scheduleEntryId: measure_obj.value.schedule_entry_id,
+    // courseIndicatorId: measure_obj.value.course_indicator_id,
+    // semesterId: measure_obj.value.semester_id,
     description: newDescVal,
     recommendedAction: measure_obj.value.recommended_action,
     active: measure_obj.value.is_active
@@ -175,7 +177,8 @@ async function ra_form_submit(){
   //Define new measure object
   const new_measure = ref({
     id: measure_obj.value.id,
-    courseIndicatorId: measure_obj.value.course_indicator_id,
+    scheduleEntryId: measure_obj.value.schedule_entry_id,
+    // courseIndicatorId: measure_obj.value.course_indicator_id,
     description: measure_obj.value.measure_description,
     observation: measure_obj.value.observation,
     recommendedAction: newRAVal,
@@ -235,8 +238,8 @@ async function mark_complete(){
   const new_measure_result = {
     id: measure_obj.value.id,
     measureId: measure_obj.value.measure_id,
-    sectionId: measure_obj.value.section_id,
-    programId: measure_obj.value.program_id,
+    sectionProgramId: measure_obj.value.section_program_id,
+    //programId: measure_obj.value.program_id,
     observation: measure_obj.value.observation,
     studentsMet: measure_obj.value.met,
     studentsExceeded: measure_obj.value.exceeded,
@@ -259,8 +262,8 @@ async function mark_inprogress(){
   const new_measure_result = {
     id: measure_obj.value.id,
     measureId: measure_obj.value.measure_id,
-    sectionId: measure_obj.value.section_id,
-    programId: measure_obj.value.program_id,
+    sectionProgramId: measure_obj.value.section_program_id,
+    // programId: measure_obj.value.program_id,
     observation: measure_obj.value.observation,
     studentsMet: measure_obj.value.met,
     studentsExceeded: measure_obj.value.exceeded,
@@ -293,11 +296,12 @@ function set_status(){
 
 const measure_obj = ref<{
   id: number
+  schedule_entry_id: number
   measure_id: number
-  section_id: number
-  program_id: number
-  course_indicator_id: number
-  semester_id: number
+  section_program_id: number
+  //program_id: number
+  //course_indicator_id: number
+  //semester_id: number
   measure_description: string
   observation: string | null
   recommended_action: string | null
@@ -315,11 +319,12 @@ const measure_obj = ref<{
   rejection_note: string | null
 }>({
   id: NaN,
+  schedule_entry_id: NaN,
   measure_id: NaN,
-  section_id: NaN,
-  program_id: NaN,
-  course_indicator_id: NaN,
-  semester_id: NaN,
+  section_program_id: NaN,
+  //program_id: NaN,
+  //course_indicator_id: NaN,
+  //semester_id: NaN,
   measure_description: '',
   observation: null,
   recommended_action: null,
@@ -354,11 +359,12 @@ function calculate_chart_data(){
 async function initialize(){
   measure_obj.value = {
     id: props.measure_prop.id,
+    schedule_entry_id: props.measure_prop.schedule_entry_id,
     measure_id: props.measure_prop.measure_id,
-    section_id: props.measure_prop.section_id,
-    program_id: props.measure_prop.program_id,
-    course_indicator_id: props.measure_prop.course_indicator_id,
-    semester_id: props.measure_prop.semester_id,
+    section_program_id: props.measure_prop.section_program_id,
+    //program_id: props.measure_prop.program_id,
+    //course_indicator_id: props.measure_prop.course_indicator_id,
+    //semester_id: props.measure_prop.semester_id,
     measure_description: props.measure_prop.measure_description,
     observation: props.measure_prop.observation,
     recommended_action: props.measure_prop.recommended_ction,
@@ -545,8 +551,8 @@ calculate_chart_data()
         <div class="view-section">
           <h4>Additional Details</h4>
           <div class="view-field">
-            <span class="field-label">Course Indicator ID:</span>
-            <span class="field-value">{{ measure_obj.course_indicator_id }}</span>
+            <span class="field-label">Schedule Entry ID:</span>
+            <span class="field-value">{{ measure_obj.schedule_entry_id }}</span>
           </div>
           <div class="view-field">
             <span class="field-label">Created At:</span>
