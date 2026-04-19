@@ -16,11 +16,13 @@ const { isAdmin } = storeToRefs(userStore);
 // Toast notifications
 const toast = useToast();
 
-const props = defineProps({piid: Number, section_id: Number, instructor_id:Number, course_indicator_id:Number, semester_id:Number})
+const props = defineProps({piid: Number, section_id: Number, schedule_entry_id: Number, instructor_id:Number, program_id:Number, course_indicator_id:Number, semester_id:Number})
+
+const section_program_id = ref(NaN)
 
 interface Measure {
   id: number
-  courseIndicatorId: number
+  scheduleEntryId: number
   description: string
   observation: string | null
   recommendedAction: string | null
@@ -98,20 +100,30 @@ async function edit_form_submit() {
   }
 }
 
+async function fetch_section_program_id(){
+  try {
+    const { data } = await api.get(`/section-program`, {params: {"sectionId": props.section_id, "programId": props.program_id}});
+    section_program_id.value = data.data[0].id
+  } catch (error) {
+    console.error('Error fetching section program id:', error);
+  }
+}
+
 async function fetch_measures(){
+  //console.log('Fetching measures for scheduleEntryId:', props.schedule_entry_id, 'and sectionProgramId:', section_program_id.value);
+
   try {
     measures.value = [];
-    const { data: m_data } = await api.get(`/measure`, {params:{"courseIndicatorId": props.course_indicator_id, "active": true}});
+    const { data: m_data } = await api.get(`/measure`, {params:{"scheduleEntryId": props.schedule_entry_id, "active": true}});
     for (const m_entry of m_data.data){
       const measure_id = m_entry.id;
-      const {data: mr_data} = await api.get(`measure-result`, {params: {"measureId": measure_id, "sectionId": props.section_id}})
+      const {data: mr_data} = await api.get(`measure-result`, {params: {"measureId": measure_id, "sectionProgramId": section_program_id.value}})
       for (const mr_entry of mr_data.data){
         measures.value.push({
           id: mr_entry.id,
           measure_id: m_entry.id,
-          section_id: mr_entry.sectionId,
-          program_id: mr_entry.programId,
-          course_indicator_id: m_entry.courseIndicatorId,
+          section_program_id: mr_entry.sectionProgramId,
+          schedule_entry_id: m_entry.scheduleEntryId,
           semester_id: m_entry.semesterId,
           measure_description: m_entry.description,
           observation: mr_entry.observation,
@@ -148,12 +160,11 @@ async function add_measure_submit(){
   //Define new measure object with description from form
   const new_measure = ref({
     id: null,
-    courseIndicatorId: props.course_indicator_id,
-    semesterId: props.semester_id,
+    scheduleEntryId: props.schedule_entry_id,
     description: new_measure_form_data.value.description,
     recommendedAction: null,
     active: true
-  }) 
+  })
 
   //POST request to server
   try {
@@ -186,6 +197,13 @@ async function initialize(){
     }
   } catch (error) {
     console.error('Error fetching or parsing indicator data:', error);
+  }
+
+  try{
+    await fetch_section_program_id()
+  } catch (error) {
+    console.error('Error fetching section program id:', error);
+    return;
   }
 
   //Fetch measures

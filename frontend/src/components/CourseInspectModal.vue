@@ -5,12 +5,22 @@ import BaseModal from "@/components/ui/BaseModal.vue";
 import BaseCard from "@/components/ui/BaseCard.vue";
 import BaseSpinner from "@/components/ui/BaseSpinner.vue";
 import {BaseButton} from "@/components/ui";
+import {storeToRefs} from "pinia";
+import {useUserStore} from "@/stores/user-store.ts";
 
 interface Course {
   id: number;
   courseCode: string;
   courseName: string;
   courseDescription?: string;
+  studentCount?: number;
+  threshold?: number;
+}
+
+interface Section {
+  id: number;
+  formattedName: string;
+  instructor: string;
 }
 
 interface PerformanceIndicator {
@@ -38,14 +48,22 @@ interface IndicatorWithMeasures {
 }
 
 const props = defineProps<{
-  course: Course | null;
+  course: Course;
 }>();
 
 const emit = defineEmits(["close"]);
+const userStore = useUserStore();
 
+const showNewSectionForm = ref(false);
+const newSectionNumber = ref("");
+const newInstructorId = ref<number | null>(null);
+const submittingSection = ref(false);
 const loading = ref(false);
 const error = ref<string | null>(null);
 const indicatorsWithMeasures = ref<IndicatorWithMeasures[]>([]);
+const { currentProgramId, currentSemesterId } = storeToRefs(userStore);
+const currentCourseSemesterSections = ref<Section[]>([]);
+const availableInstructors = ref<Array<{id: number; fullName: string}>>([]);
 
 /* -----------------------------------------------
  * Load course indicators and measures
@@ -56,19 +74,57 @@ async function loadCourseData() {
   loading.value = true;
   error.value = null;
   indicatorsWithMeasures.value = [];
+  currentCourseSemesterSections.value = [];
 
   try {
+
+    const sectionRes = await api.get(`/section`, {
+      params: {
+        courseId: props.course.id,
+        semesterId: currentSemesterId.value
+      }
+    });
+
+    const sectionsData = sectionRes.data?.data ?? [];
+
+    for (const section of sectionsData.sections) {
+
+      const sectionUserRes = await api.get(`/section-user`, {
+        params: {
+          sectionId: section.id
+        }
+      });
+
+      const userId = sectionUserRes.data?.data?.[0]?.userId;
+
+      var userName = "Unassigned";
+
+      if(userId > 0) {
+        const userRes = await api.get(`/users/${userId}`);
+        userName = userRes.data?.data?.fullName;
+      }
+
+      currentCourseSemesterSections.value.push({
+        id: section.id,
+        formattedName: `${props.course.courseCode} ${props.course.courseName} ${section.sectionNumber}`,
+        instructor: userName
+      });
+    }
+
+
     const indicatorIdsRes = await api.get(`/courses/searchCourse`, {
       params: {
         courseId: props.course.id
       }
     });
 
-    const res = await api.get(`/courses/searchCourse`, {
+    const res = await api.get(`/courses/searchCourse`, { // Added "const res ="
       params: { courseId: props.course.id }
     });
     const rawData = res.data?.data ?? res.data ?? [];
 
+    // 3. Ensure we are working with an array of numbers
+    // This helps TypeScript understand exactly what 'indicatorId' is
     const indicatorIds: number[] = Array.isArray(rawData)
       ? rawData.map((item: any) => typeof item === 'object' ? item.id : item)
       : [];
@@ -116,6 +172,7 @@ watch(
     if (newCourse) {
       loadCourseData();
     } else {
+      console.log("No course provided, clearing data");
       indicatorsWithMeasures.value = [];
       error.value = null;
     }
@@ -163,6 +220,21 @@ async function deleteCourse() {
   }
 }
 
+async function deleteSection(sectionId: number) {
+  const confirmed = window.confirm(
+    `Are you sure you want to delete this section? This action cannot be undone.`
+  );
+  if (!confirmed) return;
+
+  try {
+    await api.delete(`/section/${sectionId}`);
+    loadCourseData();
+  } catch (err: any) {
+    console.error("Failed to delete section:", err);
+    alert(err?.response?.data?.message || "Failed to delete section. Please try again.");
+  }
+}
+
 /* -----------------------------------------------
  * Helper functions
  * ----------------------------------------------- */
@@ -200,6 +272,96 @@ function calculatePercentage(met: number, exceeded: number, total: number): numb
   if (total === 0) return 0;
   return Math.round(((met + exceeded) / total) * 100);
 }
+
+function openNewSectionForm() {
+  showNewSectionForm.value = true;
+  newSectionNumber.value = "";
+  newInstructorId.value = null;
+  loadInstructors();
+}
+
+async function loadInstructors() {
+  try {
+    const res = await api.get(`/users`, {
+      params: {
+        role: "INSTRUCTOR",
+        semesterId: currentSemesterId.value
+      }
+    });
+    console.log(res)
+    availableInstructors.value = res.data?.content ?? [];
+  } catch (err: any) {
+    console.error("Failed to load instructors:", err);
+    availableInstructors.value = [];
+  }
+}
+
+function cancelNewSection() {
+  showNewSectionForm.value = false;
+  newSectionNumber.value = "";
+  newInstructorId.value = null;
+}
+
+async function submitNewSection() {
+  if (!newSectionNumber.value.trim()) {
+    error.value = "Please enter a section number.";
+    return;
+  }
+
+  submittingSection.value = true;
+  error.value = null;
+
+  try {
+    const sectionRes = await api.post(`/section`, {
+        courseId: props.course.id,
+        semesterId: currentSemesterId.value,
+        sectionNumber: newSectionNumber.value.trim().toString()
+    });
+
+    const newSection = sectionRes.data?.data;
+    if (newSection) {
+      // Assign instructor if one was selected
+      let instructorName = "Unassigned";
+
+      if (newInstructorId.value) {
+        try {
+          await api.post(`/section-user`, {
+            sectionId: newSection.id,
+            userId: newInstructorId.value
+          });
+
+          // Get instructor name
+          const selectedInstructor = availableInstructors.value.find(
+            i => i.id === newInstructorId.value
+          );
+          instructorName = selectedInstructor?.fullName || "Assigned";
+        } catch (err: any) {
+          console.error("Failed to assign instructor:", err);
+          // Continue even if instructor assignment fails
+        }
+      }
+
+      currentCourseSemesterSections.value.push({
+        id: newSection.id,
+        formattedName: `${props.course.courseCode} ${props.course.courseName} ${newSection.sectionNumber}`,
+        instructor: instructorName
+      });
+    }
+
+    showNewSectionForm.value = false;
+    newSectionNumber.value = "";
+    newInstructorId.value = null;
+  } catch (err: any) {
+    console.error("Failed to create section:", err);
+    error.value = err?.response?.data?.message || "Failed to create section. Please try again.";
+  } finally {
+    submittingSection.value = false;
+  }
+}
+
+function openSectionDetails(sectionId: number) {
+  window.open(`/section/${sectionId}`, "_blank");
+}
 </script>
 
 <template>
@@ -230,6 +392,96 @@ function calculatePercentage(met: number, exceeded: number, total: number): numb
         </p>
       </section>
 
+      <section class="detail-section">
+        <h3>Sections ({{ currentCourseSemesterSections.length }})</h3>
+
+        <div v-if="currentCourseSemesterSections.length > 0">
+          <table class="courses-table">
+            <thead>
+            <tr>
+              <th>Section Name</th>
+              <th>Primary Instructor</th>
+              <th style="width: 50px; text-align: center;">Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr
+              v-for="section in currentCourseSemesterSections"
+              :key="section.id"
+              class="course-row clickable"
+              @click="openSectionDetails(section.id)"
+            >
+              <td>{{ section.formattedName }}</td>
+              <td>{{ section.instructor }} </td>
+              <td style="text-align: center;" @click.stop>
+                <button
+                  @click="deleteSection(section.id)"
+                  class="btn-delete-icon"
+                  title="Delete section"
+                  style="background: rgb(220, 53, 69)"
+                >
+                  <img src="@/assets/trashcan.png" alt="Delete" class="icon-trash" />
+                </button>
+              </td>
+            </tr>
+            <tr v-if="showNewSectionForm" class="course-row form-row">
+              <td colspan="2">
+                <div class="new-section-form">
+                  <input
+                    v-model="newSectionNumber"
+                    type="text"
+                    placeholder="Enter section number"
+                    class="section-input"
+                    @keyup.enter="submitNewSection"
+                  />
+                  <select
+                    v-model.number="newInstructorId"
+                    class="instructor-select"
+                  >
+                    <option :value="null">Select Instructor (Optional)</option>
+                    <option
+                      v-for="instructor in availableInstructors"
+                      :key="instructor.id"
+                      :value="instructor.id"
+                    >
+                      {{ instructor.fullName }}
+                    </option>
+                  </select>
+                  <button
+                    @click="submitNewSection"
+                    :disabled="submittingSection"
+                    class="btn-submit"
+                  >
+                    <span v-if="submittingSection">Creating...</span>
+                    <span v-else>Create Section</span>
+                  </button>
+                  <button
+                    @click="cancelNewSection"
+                    :disabled="submittingSection"
+                    class="btn-cancel"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </td>
+            </tr>
+            <tr
+              v-if="!showNewSectionForm"
+              class="course-row clickable"
+              @click="openNewSectionForm()">
+                  <td :style="{ color: 'green' }">Add a new section +</td>
+                  <td></td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p class="no-courses">
+          No courses assigned to this instructor for the current semester.
+        </p>
+      </section>
+
+      <!-- Empty State -->
       <div v-if="indicatorsWithMeasures.length === 0" class="empty-state">
         <p>No performance indicators attached to this course.</p>
       </div>
@@ -338,6 +590,49 @@ function calculatePercentage(met: number, exceeded: number, total: number): numb
 </template>
 
 <style scoped>
+/* Courses Table */
+.courses-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.5rem;
+}
+
+.courses-table th,
+.courses-table td {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.courses-table th {
+  background: var(--color-bg-tertiary);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.courses-table tbody tr:hover {
+  background: var(--color-bg-secondary);
+}
+.detail-section h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1.125rem;
+  color: var(--color-text-primary);
+  border-bottom: 2px solid var(--color-border-light);
+  padding-bottom: 0.5rem;
+}
+/* Clickable course rows */
+.course-row.clickable {
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.course-row.clickable:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+/* Modal Header */
 .modal-header-content {
   text-align: left;
 }
@@ -635,6 +930,17 @@ function calculatePercentage(met: number, exceeded: number, total: number): numb
   cursor: not-allowed;
 }
 
+/* New Section Form Styles */
+.form-row {
+  background-color: var(--color-bg-secondary);
+}
+
+.new-section-form {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.75rem 0;
+}
 .error-banner {
   display: flex;
   align-items: center;
@@ -674,8 +980,121 @@ function calculatePercentage(met: number, exceeded: number, total: number): numb
 }
 
 
+.section-input {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--color-border-light);
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  transition: all 0.2s;
+}
+
+.section-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.1);
+}
+
+.instructor-select {
+  flex: 0 1 auto;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--color-border-light);
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  transition: all 0.2s;
+  cursor: pointer;
+  min-width: 180px;
+}
+
+.instructor-select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.1);
+}
+
+.instructor-select option {
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+}
+
+.btn-submit,
+.btn-cancel {
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  white-space: nowrap;
+}
+
+.btn-submit {
+  background: var(--color-primary);
+  color: white;
+}
+
+.btn-submit:hover:not(:disabled) {
+  background: var(--color-primary-dark);
+}
+
+.btn-cancel {
+  background: transparent;
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border-light);
+}
+
+.btn-cancel:hover:not(:disabled) {
+  background: var(--color-bg-secondary);
+  border-color: var(--color-text-secondary);
+}
+
+.btn-submit:disabled,
+.btn-cancel:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Delete Button for Sections */
+.btn-delete-icon {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  border-radius: 0.375rem;
+}
+
+
+.btn-delete-icon:hover {
+  background: rgba(220, 53, 69, 0.1);
+}
+
+.btn-delete-icon:active {
+  transform: scale(0.95);
+}
+
+.icon-trash {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.btn-delete-icon:hover .icon-trash {
+  opacity: 1;
+}
 
 /* Responsive */
+
 @media (max-width: 768px) {
   .indicator-header {
     flex-direction: column;

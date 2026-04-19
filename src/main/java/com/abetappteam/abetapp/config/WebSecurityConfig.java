@@ -1,5 +1,6 @@
 package com.abetappteam.abetapp.config;
 
+import com.abetappteam.abetapp.filter.RateLimitingFilter;
 import com.abetappteam.abetapp.security.JwtAuthenticationFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -19,6 +20,9 @@ public class WebSecurityConfig {
 
     @Autowired
     private JwtAuthenticationFilter jwtAuthFilter;
+
+    @Autowired
+    private RateLimitingFilter rateLimitingFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -43,7 +47,8 @@ public class WebSecurityConfig {
                         // Public API endpoints
                         .requestMatchers(
                                 "/api/users/login",
-                                "/api/users/signup"
+                                "/api/users/signup",
+                                "/api/institution/login"
                         ).permitAll()
                         // Protected API endpoints
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
@@ -56,6 +61,7 @@ public class WebSecurityConfig {
                 .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable))
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
+                .addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

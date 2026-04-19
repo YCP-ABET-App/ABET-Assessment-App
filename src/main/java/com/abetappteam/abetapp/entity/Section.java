@@ -2,6 +2,7 @@ package com.abetappteam.abetapp.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 @Entity
@@ -60,8 +61,7 @@ public class Section extends BaseEntity {
     @Override
     public String toString() {
         return "Section{" +
-                "id=" + getId() +
-                ", sectionNumber='" + sectionNumber + '\'' +
+                " sectionNumber='" + sectionNumber + '\'' +
                 ", courseId=" + courseId +
                 ", semesterId=" + semesterId +
                 '}';

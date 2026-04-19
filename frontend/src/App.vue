@@ -10,6 +10,7 @@ const userStore = useUserStore()
 const route = useRoute()
 
 const isHomePage = computed(() => route.path === '/dashboard' || route.name === 'Home')
+const isInstitutionLoginPage = computed(() => route.name === 'Institution Log In')
 
 onMounted(() => {
   userStore.loadFromStorage()
@@ -30,6 +31,7 @@ function handleLogout() {
         :username="userStore.userFullName"
         :is-admin="userStore.isAdmin"
         :is-instructor="userStore.isInstructor"
+        :is-institution-login-page="isInstitutionLoginPage"
         @logout="handleLogout"
       />
 
@@ -45,8 +47,9 @@ function handleLogout() {
     </main>
 
     <footer class="footer">
-      <p>Â© 2025 ABET Assessment App</p>
+      <p>© 2025 ABET Assessment App</p>
       <p>Definitions adapted from ABET documentation.</p>
+      <p><a href="https://ycp-abet-app.github.io/ABET-Assessment-App-Wiki/" target="_blank">Public Documentation</a> </p>
     </footer>
 
     <GlobalToast />
