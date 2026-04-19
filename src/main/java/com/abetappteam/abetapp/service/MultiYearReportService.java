@@ -34,13 +34,14 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Comparator;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 /**
@@ -119,12 +120,83 @@ public class MultiYearReportService {
     }
 
     /**
-     * Builds a multi-year report.
-     *
-     * Traversal order: program → sectionProgram → section
-     * → course → courseIndicator → measures
-     * ALSO: schedule_entry → measures (via schedule_entry_id)
-     * → indicator → outcome → measure_results (via measure_id)
+     * Builds a report for a single semester by ID.
+     */
+    @Transactional(readOnly = true)
+    public MultiYearReportData buildReportForSemester(Long programId, Long semesterId) {
+        Semester semester = semesterRepository.findById(semesterId)
+                .orElseThrow(() -> new BusinessException("Semester not found: " + semesterId));
+
+        Set<Integer> semesterIdSet = Set.of(semesterId.intValue());
+        List<Semester> semesters = List.of(semester);
+
+        String academicYear = semester.getAcademicYear() != null
+                ? String.format("%d\u2013%d", semester.getAcademicYear(), semester.getAcademicYear() + 1)
+                : String.valueOf(semester.getStartDate().getYear());
+        String generatedDate = LocalDate.now().format(DateTimeFormatter.ofPattern("M/d/yyyy"));
+
+        return buildReportForSemesters(programId, semesterIdSet, semesters, academicYear, semester.getName(), generatedDate);
+    }
+
+    /**
+     * Builds one report per academic year for the given date range.
+     * Years with no measure data are included with an empty outcomes list.
+     */
+    @Transactional(readOnly = true)
+    public List<MultiYearReportData> buildReportByAcademicYear(Long programId, LocalDate startDate, LocalDate endDate) {
+        List<Semester> allSemesters = getSemestersInDateRange(programId, startDate, endDate);
+        if (allSemesters.isEmpty()) {
+            throw new BusinessException("No semesters found in the selected date range");
+        }
+
+        // Group semesters by academic year (sorted ascending)
+        Map<Integer, List<Semester>> semestersByYear = allSemesters.stream()
+                .collect(Collectors.groupingBy(
+                        s -> s.getAcademicYear() != null ? s.getAcademicYear() : s.getStartDate().getYear(),
+                        TreeMap::new,
+                        Collectors.toList()));
+
+        String generatedDate = LocalDate.now().format(DateTimeFormatter.ofPattern("M/d/yyyy"));
+        List<MultiYearReportData> result = new ArrayList<>();
+
+        for (Map.Entry<Integer, List<Semester>> entry : semestersByYear.entrySet()) {
+            Integer year = entry.getKey();
+            List<Semester> yearSemesters = entry.getValue();
+
+            Set<Integer> semesterIdSet = yearSemesters.stream()
+                    .map(s -> s.getId().intValue())
+                    .collect(Collectors.toSet());
+
+            String academicYear = String.format("%d\u2013%d", year, year + 1);
+            LocalDate yearStart = yearSemesters.stream()
+                    .map(Semester::getStartDate)
+                    .min(Comparator.naturalOrder())
+                    .orElse(startDate);
+            LocalDate yearEnd = yearSemesters.stream()
+                    .map(Semester::getEndDate)
+                    .max(Comparator.naturalOrder())
+                    .orElse(endDate);
+            String semesterName = String.format("%s \u2013 %s", yearStart, yearEnd);
+
+            MultiYearReportData yearReport;
+            try {
+                yearReport = buildReportForSemesters(
+                        programId, semesterIdSet, yearSemesters, academicYear, semesterName, generatedDate);
+            } catch (BusinessException e) {
+                // No data for this year — include an empty placeholder
+                logger.info("No data for academic year {}: {}", academicYear, e.getMessage());
+                yearReport = new MultiYearReportData(
+                        yearSemesters.get(0).getId(), semesterName, academicYear, generatedDate);
+                yearReport.setOutcomes(new ArrayList<>());
+            }
+            result.add(yearReport);
+        }
+
+        return result;
+    }
+
+    /**
+     * Builds a multi-year report aggregated across the entire date range (no year grouping).
      */
     @Transactional(readOnly = true)
     public MultiYearReportData buildHierarchicalReport(Long programId, LocalDate startDate, LocalDate endDate) {
@@ -133,13 +205,36 @@ public class MultiYearReportService {
             throw new BusinessException("No semesters found in the selected date range");
         }
 
-        logger.info("Building hierarchical report for program {} from {} to {}", programId, startDate, endDate);
-
         Set<Integer> semesterIdSet = semesters.stream()
                 .map(s -> s.getId().intValue())
                 .collect(Collectors.toSet());
 
-        // program → section_programs → sections in the semester range → course IDs
+        String semesterName = String.format("%s \u2013 %s", startDate, endDate);
+        String academicYear = String.format("%s\u2013%s", startDate.getYear(), endDate.getYear());
+        String generatedDate = LocalDate.now().format(DateTimeFormatter.ofPattern("M/d/yyyy"));
+
+        return buildReportForSemesters(programId, semesterIdSet, semesters, academicYear, semesterName, generatedDate);
+    }
+
+    /**
+     * Core report building logic for a given set of semesters.
+     *
+     * Traversal order: program → sectionProgram → section
+     * → course → courseIndicator → measures
+     * ALSO: schedule_entry → measures (via schedule_entry_id)
+     * → indicator → outcome → measure_results (via measure_id)
+     */
+    private MultiYearReportData buildReportForSemesters(
+            Long programId,
+            Set<Integer> semesterIdSet,
+            List<Semester> semesters,
+            String academicYear,
+            String semesterName,
+            String generatedDate) {
+
+        logger.info("Building report for academic year {} ({} semesters)", academicYear, semesters.size());
+
+        // program → section_programs → sections in semester set → course IDs
         List<SectionProgram> sectionPrograms = sectionProgramRepository.findByProgramId(programId.intValue());
         Set<Long> courseIdsInRange = new HashSet<>();
         for (SectionProgram sp : sectionPrograms) {
@@ -152,25 +247,22 @@ public class MultiYearReportService {
             throw new BusinessException("No courses found for this program in the selected date range");
         }
 
-        logger.info("Found {} courses for program {} in date range via section path", courseIdsInRange.size(),
-                programId);
+        logger.info("Found {} courses for academic year {} via section path", courseIdsInRange.size(), academicYear);
 
         // Maps for building the hierarchical output
         Map<Long, OutcomeReportData> outcomeMap = new LinkedHashMap<>();
         Map<String, IndicatorReportData> indicatorMap = new LinkedHashMap<>();
         Map<Long, Set<String>> recommendedActionsMap = new HashMap<>();
+        Map<Long, String> outcomeEvaluationMap = new HashMap<>();
         Set<Long> processedMeasureIds = new HashSet<>();
 
-        // For each course, navigate course_indicator → measure → indicator → outcome
         for (Long courseId : courseIdsInRange) {
             Course course = courseRepository.findById(courseId)
                     .filter(Course::getIsActive)
                     .orElse(null);
-            if (course == null)
-                continue;
+            if (course == null) continue;
 
-            List<CourseIndicator> courseIndicators = courseIndicatorRepository.findByCourseIdAndIsActive(courseId,
-                    true);
+            List<CourseIndicator> courseIndicators = courseIndicatorRepository.findByCourseIdAndIsActive(courseId, true);
 
             for (CourseIndicator ci : courseIndicators) {
                 // Get measures via course_indicator_id (old data path)
@@ -192,23 +284,18 @@ public class MultiYearReportService {
                     }
                 }
 
-                if (measures.isEmpty())
-                    continue;
+                if (measures.isEmpty()) continue;
 
-                // Get the indicator and outcome for grouping
                 PerformanceIndicator indicator = performanceIndicatorRepository.findById(ci.getIndicatorId())
                         .filter(pi -> Boolean.TRUE.equals(pi.getIsActive()))
                         .orElse(null);
-                if (indicator == null)
-                    continue;
+                if (indicator == null) continue;
 
                 Outcome outcome = outcomeRepository.findById(indicator.getStudentOutcomeId())
                         .filter(o -> Boolean.TRUE.equals(o.getActive()))
                         .orElse(null);
-                if (outcome == null)
-                    continue;
+                if (outcome == null) continue;
 
-                // Get or create the indicator report entry
                 String indicatorKey = outcome.getId() + "_" + indicator.getId() + "_" + courseId;
                 String indicatorNumber = String.format("%d.%d", outcome.getNumber(), indicator.getIndicatorNumber());
                 IndicatorReportData reportIndicator = indicatorMap.computeIfAbsent(indicatorKey,
@@ -216,13 +303,12 @@ public class MultiYearReportService {
                                 course.getStudentCount()));
 
                 outcomeMap.computeIfAbsent(outcome.getId(),
-                        k -> new OutcomeReportData(outcome.getNumber(), outcome.getDescription(), ""));
+                        k -> new OutcomeReportData(outcome.getId(), outcome.getNumber(), outcome.getDescription(), ""));
                 recommendedActionsMap.computeIfAbsent(outcome.getId(), k -> new HashSet<>());
+                outcomeEvaluationMap.putIfAbsent(outcome.getId(), outcome.getEvaluation());
 
-                // For each measure, get measure_results
                 for (Measure measure : measures) {
-                    if (!processedMeasureIds.add(measure.getId()))
-                        continue;
+                    if (!processedMeasureIds.add(measure.getId())) continue;
 
                     List<MeasureResult> results = measureResultRepository.findByMeasureId(measure.getId());
                     MeasureResult result = results.isEmpty() ? null : results.get(0);
@@ -258,7 +344,7 @@ public class MultiYearReportService {
         }
 
         if (outcomeMap.isEmpty()) {
-            throw new BusinessException("No measures found for the selected date range");
+            throw new BusinessException("No measures found for academic year " + academicYear);
         }
 
         // Assemble final outcome list with their indicators, sorted by outcome number
@@ -266,6 +352,7 @@ public class MultiYearReportService {
         List<Map.Entry<Long, OutcomeReportData>> sortedEntries = outcomeMap.entrySet().stream()
                 .sorted(Comparator.comparingInt(e -> e.getValue().getOutcomeNumber()))
                 .collect(Collectors.toList());
+
         for (Map.Entry<Long, OutcomeReportData> entry : sortedEntries) {
             Long outcomeId = entry.getKey();
             OutcomeReportData reportOutcome = entry.getValue();
@@ -277,7 +364,9 @@ public class MultiYearReportService {
                     .collect(Collectors.toList());
 
             if (!indicators.isEmpty()) {
-                reportOutcome.setOverallStatus(determineOutcomeStatus(indicators));
+                String evaluation = outcomeEvaluationMap.get(outcomeId);
+                String computedStatus = determineOutcomeStatus(indicators);
+                reportOutcome.setOverallStatus(evaluation != null && !evaluation.isBlank() ? evaluation : computedStatus);
                 reportOutcome.setIndicators(indicators);
                 reportOutcome.setRecommendedActions(
                         new ArrayList<>(recommendedActionsMap.getOrDefault(outcomeId, new HashSet<>())));
@@ -286,18 +375,14 @@ public class MultiYearReportService {
         }
 
         if (reportOutcomes.isEmpty()) {
-            throw new BusinessException("No measures found for the selected date range");
+            throw new BusinessException("No measures found for academic year " + academicYear);
         }
-
-        String semesterName = String.format("%s – %s", startDate, endDate);
-        String academicYear = String.format("%s–%s", startDate.getYear(), endDate.getYear());
-        String generatedDate = LocalDate.now().format(DateTimeFormatter.ofPattern("M/d/yyyy"));
 
         MultiYearReportData response = new MultiYearReportData(
                 semesters.get(0).getId(), semesterName, academicYear, generatedDate);
         response.setOutcomes(reportOutcomes);
 
-        logger.info("Built hierarchical report with {} outcomes", reportOutcomes.size());
+        logger.info("Built report for academic year {} with {} outcomes", academicYear, reportOutcomes.size());
         return response;
     }
 

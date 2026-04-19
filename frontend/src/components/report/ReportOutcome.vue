@@ -9,9 +9,21 @@
     >
       <h2 class="outcome-title">
         Outcome {{ outcome.outcomeNumber }} –
-        <span class="outcome-status" :class="statusClass">
+        <span v-if="!isEditing" class="outcome-status" :class="statusClass">
           {{ outcome.overallStatus }}
         </span>
+        <select
+          v-else
+          class="status-select"
+          :class="statusClass"
+          :value="outcome.overallStatus"
+          @change.stop="updateStatus(($event.target as HTMLSelectElement).value)"
+          @click.stop
+        >
+          <option value="MET">MET</option>
+          <option value="Partially Met">Partially Met</option>
+          <option value="Not Met">Not Met</option>
+        </select>
       </h2>
 
       <span
@@ -34,8 +46,9 @@
             :key="`${outcome.outcomeNumber}-${idx}`"
             :indicator="ind"
             :editable="editable"
-            :collapse-id="outcome.outcomeNumber * 1000 + idx"
-            @update:indicator="updateIndicator(idx, $event)"
+            :is-editing="isEditing"
+            :collapse-id="Number(outcome.outcomeNumber) * 1000 + Number(idx)"
+            @update:indicator="updateIndicator(Number(idx), $event)"
           />
         </div>
 
@@ -55,6 +68,7 @@ import { useReportCollapse } from "@/composables/use-report-collapse";
 const props = defineProps<{
   outcome: any;
   editable: boolean;
+  isEditing: boolean;
 }>();
 
 const emit = defineEmits(["update:outcome"]);
@@ -68,6 +82,10 @@ const statusClass = computed(() => {
     default: return "";
   }
 });
+
+function updateStatus(value: string) {
+  emit("update:outcome", { ...props.outcome, overallStatus: value });
+}
 
 function updateIndicator(idx: number, updated: any) {
   const indicators = [...props.outcome.indicators];
@@ -98,6 +116,17 @@ function updateIndicator(idx: number, updated: any) {
 .outcome-status {
   font-weight: 700;
   margin-left: .25rem;
+}
+
+.status-select {
+  font-weight: 700;
+  font-size: 1.5rem;
+  margin-left: .25rem;
+  background: transparent;
+  border: 1px solid var(--color-border-light);
+  border-radius: .25rem;
+  padding: .1rem .25rem;
+  cursor: pointer;
 }
 
 .status-met { color: var(--color-success); }
