@@ -120,6 +120,25 @@ public class MultiYearReportService {
     }
 
     /**
+     * Builds a report for a single semester by ID.
+     */
+    @Transactional(readOnly = true)
+    public MultiYearReportData buildReportForSemester(Long programId, Long semesterId) {
+        Semester semester = semesterRepository.findById(semesterId)
+                .orElseThrow(() -> new BusinessException("Semester not found: " + semesterId));
+
+        Set<Integer> semesterIdSet = Set.of(semesterId.intValue());
+        List<Semester> semesters = List.of(semester);
+
+        String academicYear = semester.getAcademicYear() != null
+                ? String.format("%d\u2013%d", semester.getAcademicYear(), semester.getAcademicYear() + 1)
+                : String.valueOf(semester.getStartDate().getYear());
+        String generatedDate = LocalDate.now().format(DateTimeFormatter.ofPattern("M/d/yyyy"));
+
+        return buildReportForSemesters(programId, semesterIdSet, semesters, academicYear, semester.getName(), generatedDate);
+    }
+
+    /**
      * Builds one report per academic year for the given date range.
      * Years with no measure data are included with an empty outcomes list.
      */
@@ -234,6 +253,7 @@ public class MultiYearReportService {
         Map<Long, OutcomeReportData> outcomeMap = new LinkedHashMap<>();
         Map<String, IndicatorReportData> indicatorMap = new LinkedHashMap<>();
         Map<Long, Set<String>> recommendedActionsMap = new HashMap<>();
+        Map<Long, String> outcomeEvaluationMap = new HashMap<>();
         Set<Long> processedMeasureIds = new HashSet<>();
 
         for (Long courseId : courseIdsInRange) {
@@ -283,8 +303,9 @@ public class MultiYearReportService {
                                 course.getStudentCount()));
 
                 outcomeMap.computeIfAbsent(outcome.getId(),
-                        k -> new OutcomeReportData(outcome.getNumber(), outcome.getDescription(), ""));
+                        k -> new OutcomeReportData(outcome.getId(), outcome.getNumber(), outcome.getDescription(), ""));
                 recommendedActionsMap.computeIfAbsent(outcome.getId(), k -> new HashSet<>());
+                outcomeEvaluationMap.putIfAbsent(outcome.getId(), outcome.getEvaluation());
 
                 for (Measure measure : measures) {
                     if (!processedMeasureIds.add(measure.getId())) continue;
@@ -343,7 +364,9 @@ public class MultiYearReportService {
                     .collect(Collectors.toList());
 
             if (!indicators.isEmpty()) {
-                reportOutcome.setOverallStatus(determineOutcomeStatus(indicators));
+                String evaluation = outcomeEvaluationMap.get(outcomeId);
+                String computedStatus = determineOutcomeStatus(indicators);
+                reportOutcome.setOverallStatus(evaluation != null && !evaluation.isBlank() ? evaluation : computedStatus);
                 reportOutcome.setIndicators(indicators);
                 reportOutcome.setRecommendedActions(
                         new ArrayList<>(recommendedActionsMap.getOrDefault(outcomeId, new HashSet<>())));

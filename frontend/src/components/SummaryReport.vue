@@ -59,6 +59,8 @@ const semesterOptions = computed(() =>
 
 // Local copy of report data for editing
 const reportDataInternal = ref<SummaryReportData | null>(null);
+const isEditing = ref(false);
+const saving = ref(false);
 
 watch(
   () => reportData.value,
@@ -112,36 +114,60 @@ async function loadSemesters() {
 
 // Save report changes back to database
 async function saveReportToBackend(updatedReport: SummaryReportData) {
-  try {
-    // Update all measures in the report
-    for (const outcome of updatedReport.outcomes) {
-      for (const indicator of outcome.indicators) {
-        for (const measure of indicator.measures) {
-          await api.put(`/measure/${measure.measureId}`, {
-            id: measure.measureId,
-            courseIndicatorId: measure.courseIndicatorId,
-            description: measure.description,
-            observation: measure.note ?? null,
-            recAction: measure.recommendedAction ?? null,
-            met: measure.studentsMet ?? 0,
-            exceeded: measure.studentsExceeded ?? 0,
-            below: measure.studentsBelow ?? 0,
-            metPercentage: measure.metPercentage ?? 0,
-            status: "Complete",
-            active: true
-          });
-        }
+  // Save all measure recommended actions
+  for (const outcome of updatedReport.outcomes) {
+    for (const indicator of outcome.indicators) {
+      for (const measure of indicator.measures) {
+        await api.put(`/measure/${measure.measureId}`, {
+          id: measure.measureId,
+          courseIndicatorId: measure.courseIndicatorId,
+          description: measure.description,
+          observation: measure.note ?? null,
+          recommendedAction: measure.recommendedAction ?? null,
+          met: measure.studentsMet ?? 0,
+          exceeded: measure.studentsExceeded ?? 0,
+          below: measure.studentsBelow ?? 0,
+          metPercentage: measure.metPercentage ?? 0,
+          status: "Complete",
+          active: true
+        });
       }
     }
 
-    // Reload the report data to reflect saved changes
-    await loadReportData();
+    // Save outcome evaluation
+    if (outcome.outcomeId) {
+      await api.put(`/outcome/${outcome.outcomeId}`, {
+        number: outcome.outcomeNumber,
+        description: outcome.outcomeDescription,
+        evaluation: outcome.overallStatus,
+        semesterId: activeSemesterId.value,
+        programId: props.programId,
+        active: true
+      });
+    }
+  }
 
-    console.log('Report saved successfully');
+  await loadReportData();
+}
+
+async function handleSave(updatedReport: SummaryReportData) {
+  saving.value = true;
+  try {
+    await saveReportToBackend(updatedReport);
+    isEditing.value = false;
   } catch (err) {
     console.error('Failed to save report:', err);
-    throw err;
+  } finally {
+    saving.value = false;
   }
+}
+
+function handleCancel() {
+  // Revert to last-loaded data
+  reportDataInternal.value = reportData.value
+    ? JSON.parse(JSON.stringify(reportData.value))
+    : null;
+  isEditing.value = false;
 }
 
 // Lifecycle
@@ -215,10 +241,13 @@ onMounted(() => {
     <div v-else-if="reportDataInternal">
       <SummaryReportTemplate
         v-model:report="reportDataInternal"
-        @save="saveReportToBackend"
+        :is-editing="isEditing"
+        :saving="saving"
         @import="() => console.log('import!')"
-        @regenerate="loadReportData"
         @reload="loadReportData"
+        @start-editing="isEditing = true"
+        @save="handleSave"
+        @cancel="handleCancel"
       />
     </div>
 

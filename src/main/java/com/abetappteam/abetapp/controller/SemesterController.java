@@ -38,6 +38,14 @@ public class SemesterController extends BaseController {
         return success(semesters, "Semesters retrieved successfully");
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<Semester>> getSemesterById(@PathVariable Long id) {
+        logger.info("Fetching semester with ID: {}", id);
+        validateId(id);
+        Semester semester = semesterService.findById(id);
+        return success(semester, "Semester retrieved successfully");
+    }
+
     /**
      * Create a new semester
      */

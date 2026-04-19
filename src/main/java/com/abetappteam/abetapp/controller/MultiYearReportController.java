@@ -23,6 +23,19 @@ public class MultiYearReportController extends BaseController {
     @Autowired
     private MultiYearReportService multiYearReportService;
 
+    @GetMapping("/summary")
+    public ResponseEntity<ApiResponse<MultiYearReportData>> getSummaryReport(
+            @RequestParam Long programId,
+            @RequestParam Long semesterId) {
+
+        logger.info("Generating summary report for program {} semester {}", programId, semesterId);
+        validateId(programId);
+        validateId(semesterId);
+
+        MultiYearReportData report = multiYearReportService.buildReportForSemester(programId, semesterId);
+        return success(report, "Summary report generated successfully");
+    }
+
     /**
      * Returns a list of per-academic-year reports for every semester that overlaps
      */

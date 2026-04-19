@@ -7,14 +7,9 @@ import autoTable from 'jspdf-autotable';
 import ReportOutcome from "@/components/report/ReportOutcome.vue";
 import { BaseButton, BaseCard } from "@/components/ui";
 
-const props = defineProps<{
-  report: any;
-  hideExport?: boolean;
-  isEditing?: boolean;
-  saving?: boolean;
-}>();
+const props = defineProps<{ report: any; hideExport?: boolean }>();
 
-const emit = defineEmits(["update:report", "import", "reload", "start-editing", "save", "cancel"]);
+const emit = defineEmits(["update:report", "reload"]);
 
 const localReport = reactive(JSON.parse(JSON.stringify(props.report)));
 
@@ -26,9 +21,6 @@ watch(
 
 const exporting = ref(false);
 
-function handleImport() { emit("import"); }
-
-// Export functionality
 async function exportToPDF() {
   exporting.value = true;
 
@@ -38,10 +30,8 @@ async function exportToPDF() {
     const pageHeight = pdf.internal.pageSize.getHeight();
     const margin = 14;
 
-    // ===== TITLE PAGE =====
-    let yPosition = pageHeight / 3; 
+    let yPosition = pageHeight / 3;
 
-    // Main title 
     pdf.setFontSize(24);
     pdf.setFont('helvetica', 'bold');
     const title = `Assessment Summary Report`;
@@ -49,7 +39,6 @@ async function exportToPDF() {
     pdf.text(title, (pageWidth - titleWidth) / 2, yPosition);
     yPosition += 15;
 
-    // Academic year
     pdf.setFontSize(18);
     pdf.setFont('helvetica', 'normal');
     const academicYear = localReport.academicYear;
@@ -57,7 +46,6 @@ async function exportToPDF() {
     pdf.text(academicYear, (pageWidth - yearWidth) / 2, yPosition);
     yPosition += 20;
 
-    // Metadata
     pdf.setFontSize(11);
     pdf.setTextColor(100, 100, 100);
     const dateText = `Generated: ${localReport.generatedDate}`;
@@ -69,10 +57,8 @@ async function exportToPDF() {
     const byWidth = pdf.getTextWidth(byText);
     pdf.text(byText, (pageWidth - byWidth) / 2, yPosition);
 
-    // Reset text color
     pdf.setTextColor(0, 0, 0);
 
-    // ===== TABLE OF CONTENTS =====
     pdf.addPage();
     yPosition = margin;
 
@@ -81,32 +67,26 @@ async function exportToPDF() {
     pdf.text('Table of Contents', margin, yPosition);
     yPosition += 10;
 
-    // Draw a line under the heading
     pdf.setDrawColor(66, 139, 202);
     pdf.setLineWidth(0.5);
     pdf.line(margin, yPosition, pageWidth - margin, yPosition);
     yPosition += 8;
 
-    // List all outcomes
     pdf.setFontSize(11);
     pdf.setFont('helvetica', 'normal');
     for (const outcome of localReport.outcomes) {
       const outcomeStatus = outcome.overallStatus || 'Unknown';
       const statusColor = getStatusColor(outcomeStatus);
 
-      // Outcome number and status
       pdf.setFont('helvetica', 'bold');
       pdf.text(`Outcome ${outcome.outcomeNumber}`, margin + 5, yPosition);
 
-      // Status badge
       pdf.setFont('helvetica', 'normal');
       pdf.setTextColor(...statusColor);
       pdf.text(`[${outcomeStatus.toUpperCase()}]`, margin + 35, yPosition);
       pdf.setTextColor(0, 0, 0);
-
       yPosition += 7;
 
-      // Indicators count
       pdf.setFontSize(9);
       pdf.setTextColor(100, 100, 100);
       const indicatorCount = outcome.indicators.length;
@@ -114,17 +94,13 @@ async function exportToPDF() {
       pdf.text(`${indicatorCount} indicator(s), ${measureCount} measure(s)`, margin + 10, yPosition);
       pdf.setTextColor(0, 0, 0);
       pdf.setFontSize(11);
-
       yPosition += 8;
     }
 
-    // ===== OUTCOMES =====
     for (const outcome of localReport.outcomes) {
-      // Start each outcome on a new page
       pdf.addPage();
       yPosition = margin;
 
-      // Academic year header 
       pdf.setFontSize(10);
       pdf.setFont('helvetica', 'normal');
       pdf.setTextColor(120, 120, 120);
@@ -132,14 +108,12 @@ async function exportToPDF() {
       pdf.setTextColor(0, 0, 0);
       yPosition += 8;
 
-      // Outcome header with status
       pdf.setFontSize(14);
       pdf.setFont('helvetica', 'bold');
       const outcomeStatus = outcome.overallStatus || 'Unknown';
       pdf.text(`Outcome ${outcome.outcomeNumber}`, margin, yPosition);
       yPosition += 8;
 
-      // Status badge
       pdf.setFontSize(11);
       const statusColor = getStatusColor(outcomeStatus);
       pdf.setTextColor(...statusColor);
@@ -147,69 +121,37 @@ async function exportToPDF() {
       pdf.setTextColor(0, 0, 0);
       yPosition += 10;
 
-      // Collect all measures for this outcome grouped by indicator
       const tableData: any[] = [];
 
       for (const indicator of outcome.indicators) {
         for (const measure of indicator.measures) {
           const metPercentage = measure.metPercentage?.toFixed(1) || '0.0';
           const status = measure.status || 'Not assessed';
-
-          // Course and Indicator column: (1.1) - CS 101
           const courseIndicator = `(${indicator.indicatorNumber}) - ${measure.courseCode}`;
-
-          // Details column: 1.1-cs101: Description, Status (XX.X%)
           const measureId = `${indicator.indicatorNumber}-${measure.courseCode.toLowerCase()}`;
           const details = `${measureId}: ${measure.description}, ${status} (${metPercentage}%)`;
+          const actions = measure.recommendedAction?.trim() || '';
+          const notes = measure.note?.trim() || '';
 
-          // Recommended actions column
-          let actions = '';
-          if (measure.recommendedAction && measure.recommendedAction.trim()) {
-            actions = measure.recommendedAction;
-          }
-
-          // Notes column
-          let notes = '';
-          if (measure.note && measure.note.trim()) {
-            notes = measure.note;
-          }
-
-          tableData.push([
-            courseIndicator,
-            details,
-            actions,
-            notes
-          ]);
+          tableData.push([courseIndicator, details, actions, notes]);
         }
       }
 
-      // Create a table for this outcome
       autoTable(pdf, {
         startY: yPosition,
         head: [['Course/Indicator', 'Measure Details', 'Recommended Actions', 'Notes']],
         body: tableData,
         theme: 'grid',
-        headStyles: {
-          fillColor: [66, 139, 202],
-          textColor: 255,
-          fontStyle: 'bold',
-          fontSize: 9,
-          halign: 'left'
-        },
-        bodyStyles: {
-          fontSize: 8,
-          cellPadding: 3,
-          valign: 'top'
-        },
+        headStyles: { fillColor: [66, 139, 202], textColor: 255, fontStyle: 'bold', fontSize: 9, halign: 'left' },
+        bodyStyles: { fontSize: 8, cellPadding: 3, valign: 'top' },
         columnStyles: {
-          0: { cellWidth: 30 },   // Course/Indicator
-          1: { cellWidth: 70 },   // Measure Details
-          2: { cellWidth: 50 },   // Recommended Actions
-          3: { cellWidth: 32 }    // Notes
+          0: { cellWidth: 30 },
+          1: { cellWidth: 70 },
+          2: { cellWidth: 50 },
+          3: { cellWidth: 32 }
         },
         margin: { left: margin, right: margin },
         didDrawCell: (data) => {
-          // Add bullet points for recommended actions
           if (data.column.index === 2 && data.section === 'body' && data.cell.text.length > 0) {
             const text = data.cell.text;
             if (text.length > 0 && text[0] !== '●' && text[0] !== '•') {
@@ -220,7 +162,6 @@ async function exportToPDF() {
       });
     }
 
-    // Save the PDF
     const filename = `Summary_Report_${localReport.academicYear}_${new Date().toISOString().split('T')[0]}.pdf`;
     pdf.save(filename);
 
@@ -234,14 +175,10 @@ async function exportToPDF() {
 
 function getStatusColor(status: string): [number, number, number] {
   const statusLower = status.toLowerCase();
-  if (statusLower.includes('met') || statusLower.includes('exceeds')) {
-    return [34, 139, 34]; // Green
-  } else if (statusLower.includes('not met') || statusLower.includes('below')) {
-    return [220, 20, 60]; // Red
-  } else if (statusLower.includes('partially')) {
-    return [255, 140, 0]; // Orange
-  }
-  return [100, 100, 100]; // Gray for unknown
+  if (statusLower.includes('met') || statusLower.includes('exceeds')) return [34, 139, 34];
+  if (statusLower.includes('not met') || statusLower.includes('below')) return [220, 20, 60];
+  if (statusLower.includes('partially')) return [255, 140, 0];
+  return [100, 100, 100];
 }
 
 const { expandAll, collapseAll } = useReportCollapse();
@@ -267,39 +204,10 @@ function updateOutcome(outcomeNumber: number, updated: any) {
     o.outcomeNumber === outcomeNumber ? updated : o
   );
 }
-
-
 </script>
 
 <template>
   <div class="unified-summary-report">
-
-    <!-- Toolbar -->
-    <div class="toolbar">
-      <div class="toolbar-left">
-        <template v-if="!isEditing">
-          <BaseButton variant="primary" @click="emit('start-editing')">Complete One Year Report</BaseButton>
-        </template>
-        <template v-else>
-          <BaseButton variant="primary" :disabled="saving" @click="emit('save', localReport)">
-            {{ saving ? 'Saving...' : 'Save' }}
-          </BaseButton>
-          <BaseButton variant="secondary" :disabled="saving" @click="emit('cancel')">Cancel</BaseButton>
-        </template>
-      </div>
-
-      <div class="toolbar-right">
-        <BaseButton
-          v-if="!hideExport"
-          variant="primary"
-          @click="exportToPDF"
-          :disabled="exporting"
-        >
-          {{ exporting ? 'Exporting...' : 'Export PDF' }}
-        </BaseButton>
-        <BaseButton variant="primary" @click="handleImport">Import Summary</BaseButton>
-      </div>
-    </div>
 
     <!-- Collapse Controls -->
     <div class="collapse-controls">
@@ -323,7 +231,7 @@ function updateOutcome(outcomeNumber: number, updated: any) {
         :key="o.outcomeNumber"
         :outcome="o"
         :editable="false"
-        :is-editing="isEditing ?? false"
+        :is-editing="false"
         @update:outcome="updateOutcome(o.outcomeNumber, $event)"
       />
     </div>
@@ -346,21 +254,16 @@ function updateOutcome(outcomeNumber: number, updated: any) {
 
 .toolbar {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   background: var(--color-bg-tertiary);
   padding: .75rem 1rem;
   border: 1px solid var(--color-border-light);
   border-radius: .5rem;
 }
 
-.toolbar-left, .toolbar-right {
+.toolbar-right {
   display: flex;
   gap: 0.5rem;
-}
-
-.toolbar-divider {
-  width: 1px;
-  height: 1.5rem;
 }
 
 .collapse-controls {

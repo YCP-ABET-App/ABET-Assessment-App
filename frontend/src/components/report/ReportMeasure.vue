@@ -71,19 +71,80 @@
     </div>
 
     <!-- RECOMMENDED ACTION -->
-    <div v-if="measure.recommendedAction" class="measure-note recommended-block">
-      <strong>Recommended Action:</strong><br />
-      {{ measure.recommendedAction }}
+    <div class="recommended-row">
+      <div v-if="measure.recommendedAction" class="measure-note recommended-block">
+        <strong>Recommended Action:</strong><br />
+        {{ measure.recommendedAction }}
+      </div>
+
+      <button
+        v-if="isEditing && !measure.recommendedAction"
+        class="add-action-btn"
+        @click="openModal"
+      >
+        + Add Recommended Action
+      </button>
+
+      <button
+        v-if="isEditing && measure.recommendedAction"
+        class="pencil-btn"
+        title="Edit recommended action"
+        @click="openModal"
+      >
+        <img src="@/assets/icons/edit-pencil.svg" alt="Edit" class="pencil-icon" />
+      </button>
     </div>
+
+    <!-- RECOMMENDED ACTION MODAL -->
+    <BaseModal
+      :is-open="modalOpen"
+      title="Recommended Action"
+      size="md"
+      @close="closeModal"
+    >
+      <textarea
+        v-model="modalText"
+        class="action-textarea"
+        rows="5"
+        placeholder="Enter recommended action..."
+      />
+      <template #footer>
+        <div class="modal-actions">
+          <BaseButton variant="primary" @click="saveModal">Save</BaseButton>
+          <BaseButton variant="secondary" @click="closeModal">Cancel</BaseButton>
+        </div>
+      </template>
+    </BaseModal>
 
   </div>
 </template>
 
 <script setup lang="ts">
-import { reactive, watch, computed } from "vue";
+import { reactive, ref, watch, computed } from "vue";
+import { BaseModal, BaseButton } from "@/components/ui";
 
-const props = defineProps<{ measure: any; editable: boolean }>();
+const props = defineProps<{ measure: any; editable: boolean; isEditing: boolean }>();
 const emit = defineEmits(["update:measure"]);
+
+const modalOpen = ref(false);
+const modalText = ref('');
+
+function openModal() {
+  modalText.value = props.measure.recommendedAction ?? '';
+  modalOpen.value = true;
+}
+
+function closeModal() {
+  modalOpen.value = false;
+}
+
+function saveModal() {
+  emit("update:measure", {
+    ...props.measure,
+    recommendedAction: modalText.value.trim() || null
+  });
+  modalOpen.value = false;
+}
 
 const local = reactive({
   studentsExceeded: props.measure.studentsExceeded ?? 0,
@@ -202,4 +263,64 @@ function emitUpdate() {
 .status-met            { color: var(--color-info); }
 .status-barely-not-met { color: var(--color-warning); }
 .status-not-met        { color: var(--color-error); }
+
+.recommended-row {
+  display: flex;
+  align-items: flex-start;
+  gap: .5rem;
+  margin-top: .5rem;
+}
+
+.recommended-block {
+  flex: 1;
+  margin-top: 0;
+}
+
+.add-action-btn {
+  background: none;
+  border: 1px dashed var(--color-border-light);
+  border-radius: .25rem;
+  color: var(--color-primary);
+  cursor: pointer;
+  font-size: .85rem;
+  padding: .35rem .75rem;
+}
+
+.add-action-btn:hover {
+  background: var(--color-bg-tertiary);
+}
+
+.pencil-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: .25rem;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.pencil-icon {
+  width: 18px;
+  height: 18px;
+  filter: invert(1);
+}
+
+.action-textarea {
+  width: 100%;
+  padding: .5rem;
+  border: 1px solid var(--color-border-light);
+  border-radius: .25rem;
+  background: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+  font-size: .9rem;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.modal-actions {
+  display: flex;
+  gap: .5rem;
+  justify-content: flex-end;
+}
 </style>

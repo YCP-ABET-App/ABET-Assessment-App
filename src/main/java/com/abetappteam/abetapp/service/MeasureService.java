@@ -116,7 +116,9 @@ public class MeasureService extends BaseService<Measure, Long, MeasureRepository
     public Measure update(Long id, MeasureDTO dto) {
         Measure measure = findById(id);
 
-        measure.setScheduleEntryId(dto.getScheduleEntryId());
+        if (dto.getScheduleEntryId() != null) {
+            measure.setScheduleEntryId(dto.getScheduleEntryId());
+        }
         measure.setDescription(dto.getDescription());
         measure.setRecommendedAction(dto.getRecommendedAction());
 

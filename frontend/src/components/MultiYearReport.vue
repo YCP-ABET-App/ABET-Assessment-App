@@ -3,7 +3,7 @@ import { ref, computed, watch, onMounted } from 'vue';
 import { BaseCard, BaseSpinner, BaseButton } from '@/components/ui';
 import { useMultiYearReportData } from '@/composables/use-multi-year-report-data';
 import type { SummaryReportData } from '@/composables/use-summary-report-data';
-import SummaryReportTemplate from './SummaryReportTemplate.vue';
+import MultiYearReportTemplate from './MultiYearReportTemplate.vue';
 import api from '@/api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -118,7 +118,7 @@ function updateYearReport(index: number, updated: SummaryReportData) {
   reportDataInternal.value[index] = updated;
 }
 
-// ── Save ─────────────────────────────────────────────────────────────────────
+// ── Save ───────────────────────────────────────────────────────────────────
 async function saveReportToBackend(updatedReport: SummaryReportData) {
   for (const outcome of updatedReport.outcomes) {
     for (const indicator of outcome.indicators) {
@@ -402,6 +402,7 @@ async function exportAllYearsToPDF() {
         <BaseButton variant="primary" @click="exportAllYearsToPDF" :disabled="exporting">
           {{ exporting ? 'Exporting...' : 'Export PDF' }}
         </BaseButton>
+        <BaseButton variant="primary" @click="() => console.log('import!')">Import Summary</BaseButton>
       </div>
 
       <!-- Per-year report sections -->
@@ -415,15 +416,11 @@ async function exportAllYearsToPDF() {
         </div>
 
         <!-- Year has data -->
-        <SummaryReportTemplate
+        <MultiYearReportTemplate
           v-if="yearReport.outcomes && yearReport.outcomes.length > 0"
           :report="yearReport"
           :hide-export="true"
-          :hide-edit="true"
           @update:report="updateYearReport(idx, $event)"
-          @save="saveReportToBackend"
-          @import="() => console.log('import!')"
-          @regenerate="generate"
           @reload="generate"
         />
 
@@ -514,6 +511,7 @@ async function exportAllYearsToPDF() {
 .export-toolbar {
   display: flex;
   justify-content: flex-end;
+  gap: 0.5rem;
 }
 
 .year-section {
@@ -525,7 +523,6 @@ async function exportAllYearsToPDF() {
 .year-heading {
   padding: 0.75rem 1rem;
   background: var(--color-bg-secondary, var(--color-bg-tertiary));
-  border-left: 4px solid var(--color-primary, #4a90d9);
   border-radius: 0.25rem;
 }
 
