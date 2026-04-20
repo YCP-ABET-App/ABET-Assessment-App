@@ -60,4 +60,6 @@ public interface SectionRepository extends JpaRepository<Section, Long> {
 
     Boolean existsBySectionNumberAndSemesterIdAndCourseId(@Param("sectionNumber") String sectionNumber,
             @Param("semesterId") int semesterId, @Param("courseId") int courseId);
+    @Query("SELECT CASE WHEN COUNT(s) > 0 THEN true ELSE false END FROM Section s WHERE s.sectionNumber = :sectionNumber AND s.semesterId = :semesterId AND s.courseId = :courseId")
+    boolean existsByCourseNumberAndSemesterIdAndCourseId(@Param("sectionNumber") String sectionNumber, @Param("semesterId") int semesterId, @Param("courseId") int courseId);
 }

@@ -44,6 +44,7 @@ async function fetch_fcar_data() {
 
     const { data: mRes } = await api.get(`/measure/${measure_id.value}`);
     const measure = mRes.data;
+    console.log(measure);
     if (!measure || !measure.courseIndicatorId) {
       console.error("Critical Error: measure.courseIndicatorId is undefined.");
       return;
@@ -69,6 +70,7 @@ async function fetch_fcar_data() {
     const course = cRes.data.data;
     const raw = resultsRes.data.data;
     const outcome = outcomeRes.data.data;
+    console.log(course, raw, outcome);
     const result = Array.isArray(raw) ? raw[0] : raw;
 
     form.value = {

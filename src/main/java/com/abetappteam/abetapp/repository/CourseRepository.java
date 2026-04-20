@@ -51,7 +51,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             @Param("courseDescription") String courseDescription,
             @Param("studentCount") Integer studentCount,
             @Param("mirrorId") Integer mirrorId,
-            @Param("isActive") boolean isActive
+            @Param("isActive") Boolean isActive
         );
     
     @Query("SELECT c FROM Course c JOIN CourseInstructor ci ON c.id = ci.courseId WHERE ci.programUserId = :programUserId")

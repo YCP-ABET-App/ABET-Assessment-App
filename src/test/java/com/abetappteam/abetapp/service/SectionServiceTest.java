@@ -5,10 +5,12 @@ import com.abetappteam.abetapp.entity.Requests.Section.SectionSearchRequest;
 import com.abetappteam.abetapp.entity.Section;
 import com.abetappteam.abetapp.exception.ResourceNotFoundException;
 import com.abetappteam.abetapp.repository.SectionRepository;
+import com.abetappteam.abetapp.repository.SectionUserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
 import java.util.Optional;
@@ -26,10 +28,15 @@ class SectionServiceTest extends BaseServiceTest {
     @InjectMocks
     private SectionService sectionService;
 
+    @Mock
+    private SectionUserRepository sectionUserRepository;
+
     private Section testSection;
 
     @BeforeEach
     void setUp() {
+        ReflectionTestUtils.setField(sectionService, "sectionUserRepository", sectionUserRepository);
+
         testSection = new Section("001", 1, 1);
         testSection.setId(1L);
     }
