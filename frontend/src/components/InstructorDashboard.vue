@@ -315,7 +315,7 @@ watch([programId, semesterId], () => {
 }
 
 .section-card {
-  background-color: rgb(36, 36, 36);
+  background-color: var(--color-bg-secondary);
   border-radius: 0.75rem;
   overflow: hidden;
 }
