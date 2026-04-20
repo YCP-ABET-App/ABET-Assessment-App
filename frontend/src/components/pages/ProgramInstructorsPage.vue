@@ -497,6 +497,8 @@ async function loadProgramInstructors() {
               indicatorStatus: i.indicatorStatus
             }));
 
+            console.log(indicators)
+
             formattedSections.push({
               id: section.id,
               sectionNumber: section.sectionNumber,
@@ -544,15 +546,11 @@ async function loadInstructorIndicatorData(sectionId : number) : Promise<Section
 
   let sectionIndicatorData: SectionIndicatorInfo[] = [];
 
-  if(sectionId == 1) {
-    console.log(sectionIndicatorRes);
-  }
-
 
   (sectionIndicatorRes.data?.data || []).forEach((indicator: any) => {
     const info: SectionIndicatorInfo = {
       sectionId: Number(indicator.sectionId),
-      indicatorStatus: Boolean(indicator.isComplete)
+      indicatorStatus: Boolean(indicator.complete)
     };
 
     sectionIndicatorData.push(info);
