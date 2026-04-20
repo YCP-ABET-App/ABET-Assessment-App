@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, reactive, watch } from "vue";
+import { ref, reactive, watch } from 'vue';
 import { useReportCollapse } from "@/composables/use-report-collapse";
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -9,9 +9,14 @@ import { useGoogleDrive } from '@/composables/use-google-drive';
 import ReportOutcome from "@/components/report/ReportOutcome.vue";
 import { BaseButton, BaseCard } from "@/components/ui";
 
-const props = defineProps<{ report: any }>();
+const props = defineProps<{
+  report: any;
+  hideExport?: boolean;
+  isEditing?: boolean;
+  saving?: boolean;
+}>();
 
-const emit = defineEmits(["update:report", "import", "save", "regenerate", "reload"]);
+const emit = defineEmits(["update:report", "import", "reload", "start-editing", "save", "cancel"]);
 
 const localReport = reactive(JSON.parse(JSON.stringify(props.report)));
 
@@ -21,27 +26,10 @@ watch(
   { deep: true }
 );
 
-function emitLocalReport() {
-  emit("update:report", JSON.parse(JSON.stringify(localReport)));
-}
-
-const editMode = ref(false);
 const exporting = ref(false);
 
 const exportingDrive = ref(false);
 const { openDriveFolderPickerAndUpload } = useGoogleDrive();
-
-function startEdit() { editMode.value = true; }
-
-function cancelEdit() {
-  Object.assign(localReport, JSON.parse(JSON.stringify(props.report)));
-  editMode.value = false;
-}
-
-async function saveEdit() {
-  editMode.value = false;
-  emit("save", JSON.parse(JSON.stringify(localReport)));
-}
 
 function handleImport() { emit("import"); }
 
@@ -70,9 +58,9 @@ async function generateSummaryReportPDF(): Promise<{ pdf: jsPDF, filename: strin
   const margin = 14;
 
   // ===== TITLE PAGE =====
-  let yPosition = pageHeight / 3; // Start 1/3 down the page
+  let yPosition = pageHeight / 3; 
 
-  // Main title - centered and large
+  // Main title 
   pdf.setFontSize(24);
   pdf.setFont('helvetica', 'bold');
   const title = `Assessment Summary Report`;
@@ -80,7 +68,7 @@ async function generateSummaryReportPDF(): Promise<{ pdf: jsPDF, filename: strin
   pdf.text(title, (pageWidth - titleWidth) / 2, yPosition);
   yPosition += 15;
 
-  // Academic year - centered
+  // Academic year
   pdf.setFontSize(18);
   pdf.setFont('helvetica', 'normal');
   const academicYear = localReport.academicYear;
@@ -88,7 +76,7 @@ async function generateSummaryReportPDF(): Promise<{ pdf: jsPDF, filename: strin
   pdf.text(academicYear, (pageWidth - yearWidth) / 2, yPosition);
   yPosition += 20;
 
-  // Metadata - centered
+  // Metadata
   pdf.setFontSize(11);
   pdf.setTextColor(100, 100, 100);
   const dateText = `Generated: ${localReport.generatedDate}`;
@@ -154,6 +142,14 @@ async function generateSummaryReportPDF(): Promise<{ pdf: jsPDF, filename: strin
     // Start each outcome on a new page
     pdf.addPage();
     yPosition = margin;
+
+      // Academic year header 
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(120, 120, 120);
+      pdf.text(`Academic Year: ${localReport.academicYear}`, pageWidth / 2, yPosition, { align: 'center' });
+      pdf.setTextColor(0, 0, 0);
+      yPosition += 8;
 
     // Outcome header with status
     pdf.setFontSize(14);
@@ -300,9 +296,7 @@ function updateOutcome(outcomeNumber: number, updated: any) {
   );
 }
 
-function handleRegenerate() {
-  emit("regenerate");
-}
+
 </script>
 
 <template>
@@ -311,17 +305,20 @@ function handleRegenerate() {
     <!-- Toolbar -->
     <div class="toolbar">
       <div class="toolbar-left">
-        <BaseButton v-if="!editMode" variant="primary" @click="startEdit">Edit</BaseButton>
-        <div v-if="!editMode" class="toolbar-divider"></div>
-        <BaseButton v-if="editMode" variant="success" @click="saveEdit">Save</BaseButton>
-        <div v-if="editMode" class="toolbar-divider"></div>
-        <BaseButton v-if="editMode" variant="secondary" @click="cancelEdit">Cancel</BaseButton>
-        <div v-if="editMode" class="toolbar-divider"></div>
-        <BaseButton variant="danger" @click="handleRegenerate">Regenerate Report</BaseButton>
+        <template v-if="!isEditing">
+          <BaseButton variant="primary" @click="emit('start-editing')">Complete One Year Report</BaseButton>
+        </template>
+        <template v-else>
+          <BaseButton variant="primary" :disabled="saving" @click="emit('save', localReport)">
+            {{ saving ? 'Saving...' : 'Save' }}
+          </BaseButton>
+          <BaseButton variant="secondary" :disabled="saving" @click="emit('cancel')">Cancel</BaseButton>
+        </template>
       </div>
 
       <div class="toolbar-right">
         <BaseButton
+          v-if="!hideExport"
           variant="primary"
           @click="exportToPDF"
           :disabled="exporting"
@@ -363,7 +360,8 @@ function handleRegenerate() {
         v-for="o in localReport.outcomes"
         :key="o.outcomeNumber"
         :outcome="o"
-        :editable="editMode"
+        :editable="false"
+        :is-editing="isEditing ?? false"
         @update:outcome="updateOutcome(o.outcomeNumber, $event)"
       />
     </div>

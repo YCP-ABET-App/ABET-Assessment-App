@@ -8,6 +8,7 @@ import java.util.List;
  * Outcome with nested indicators and their measures
  */
 public class OutcomeReportData implements Serializable {
+    private Long outcomeId;
     private Integer outcomeNumber;
     private String description;
     private String overallStatus;
@@ -19,7 +20,8 @@ public class OutcomeReportData implements Serializable {
         this.recommendedActions = new ArrayList<>();
     }
 
-    public OutcomeReportData(Integer outcomeNumber, String description, String overallStatus) {
+    public OutcomeReportData(Long outcomeId, Integer outcomeNumber, String description, String overallStatus) {
+        this.outcomeId = outcomeId;
         this.outcomeNumber = outcomeNumber;
         this.description = description;
         this.overallStatus = overallStatus;
@@ -28,6 +30,14 @@ public class OutcomeReportData implements Serializable {
     }
 
     // Getters and Setters
+    public Long getOutcomeId() {
+        return outcomeId;
+    }
+
+    public void setOutcomeId(Long outcomeId) {
+        this.outcomeId = outcomeId;
+    }
+
     public Integer getOutcomeNumber() {
         return outcomeNumber;
     }

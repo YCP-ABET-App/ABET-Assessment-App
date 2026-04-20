@@ -46,6 +46,7 @@
             :key="m.measureId"
             :measure="{ ...m, studentCount: local.studentCount }"
             :editable="editable"
+            :is-editing="isEditing"
             @update:measure="updateMeasure(m.measureId, { ...m, ...$event })"
           />
         </div>
@@ -64,6 +65,7 @@ import type { IndicatorData, IndicatorMeasure } from "@/types/summary";
 const props = defineProps<{
   indicator: IndicatorData;
   editable: boolean;
+  isEditing: boolean;
   collapseId: number;
 }>();
 
