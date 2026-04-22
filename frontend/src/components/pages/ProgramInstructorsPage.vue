@@ -653,6 +653,12 @@ async function saveInstructorInfo() {
 }
 
 // Watch for program or semester changes and reload
+watch(() => selectedInstructor.value, () => {
+  if (selectedInstructor.value) {
+    loadProgramInstructors();
+  }
+});
+
 watch(() => props.programId, () => {
   loadProgramInstructors();
 });

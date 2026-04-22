@@ -9,7 +9,7 @@ import { useUserStore } from '@/stores/user-store.js'
 const userStore = useUserStore()
 const route = useRoute()
 
-const isHomePage = computed(() => route.path === '/dashboard' || route.name === 'Home')
+const isHomePage = computed(() => route.path === '/dashboard' || route.name === 'Home' || route.path === '/admin-dashboard')
 const isInstitutionLoginPage = computed(() => route.name === 'Institution Log In')
 
 onMounted(() => {
