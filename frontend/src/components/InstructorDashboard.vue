@@ -147,7 +147,7 @@ async function loadInstructorIndicatorData(sectionIds : any[] = []) : Promise<Se
   (sectionIndicatorRes.data?.data || []).forEach((indicator: any) => {
     const info: SectionIndicatorInfo = {
       sectionId: Number(indicator.sectionId),
-      indicatorStatus: Boolean(indicator.isComplete)
+      indicatorStatus: Boolean(indicator.complete)
     };
 
     sectionIndicatorData.push(info);
