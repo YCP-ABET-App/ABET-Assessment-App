@@ -172,11 +172,13 @@ const isInstructor = computed(() => {
   // -------------------------
   function loadFromStorage() {
     const token = localStorage.getItem("authToken");
+    const storedUser = localStorage.getItem("currentUser");
     const storedPrograms = localStorage.getItem("programs");
     const storedPid = localStorage.getItem("currentProgramId");
     const storedSemesterId = localStorage.getItem("currentSemesterId");
 
     if (token) authToken.value = token;
+    if (storedUser) user.value = JSON.parse(storedUser);
     if (storedPrograms) programs.value = JSON.parse(storedPrograms);
     if (storedPid) currentProgramId.value = Number(storedPid);
     if (storedSemesterId) currentSemesterId.value = Number(storedSemesterId);
@@ -190,6 +192,9 @@ const isInstructor = computed(() => {
       localStorage.setItem("authToken", authToken.value);
     }
 
+    if (user.value) {
+      localStorage.setItem("currentUser", JSON.stringify(user.value));
+    }
 
     if (programs.value) {
       localStorage.setItem("programs", JSON.stringify(programs.value));
