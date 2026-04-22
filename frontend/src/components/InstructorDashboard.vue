@@ -147,7 +147,7 @@ async function loadInstructorIndicatorData(sectionIds : any[] = []) : Promise<Se
   (sectionIndicatorRes.data?.data || []).forEach((indicator: any) => {
     const info: SectionIndicatorInfo = {
       sectionId: Number(indicator.sectionId),
-      indicatorStatus: Boolean(indicator.isComplete)
+      indicatorStatus: Boolean(indicator.complete)
     };
 
     sectionIndicatorData.push(info);
@@ -315,7 +315,7 @@ watch([programId, semesterId], () => {
 }
 
 .section-card {
-  background-color: rgb(36, 36, 36);
+  background-color: var(--color-bg-secondary);
   border-radius: 0.75rem;
   overflow: hidden;
 }
