@@ -32,8 +32,8 @@ databaseChangeLog:
 #      file: db/changelog/03232026AddSemesterToMeasure.yaml
 #  - include:
 #      file: db/changelog/03232026AddSemesterToMeasure.yaml
-  - include:
-      file: db/changelog/03282026AddCascadeDeleteToCourse.yaml
+#  - include:
+#      file: db/changelog/03282026AddCascadeDeleteToCourse.yaml
   - include:
       file: db/changelog/040526AddSectionIndicatorToMeasure.yaml
   - include:
@@ -46,7 +46,7 @@ databaseChangeLog:
       file: db/changelog/03252026RemoveMeasureResultsTable.yaml
 #  - include:
 #      file: db/changelog/04122026AddScheduleEntryToMeasure.yaml
-  - include:
-      file: db/changelog/04122026AddSectionProgramToMeasureResult.yaml
+#  - include:
+#      file: db/changelog/04122026AddSectionProgramToMeasureResult.yaml
 #  - include:
 #      file: db/changelog/04122026RemoveSectionAndProgramFromMeasureResult.yaml
