@@ -43,7 +43,7 @@ const emit = defineEmits(["logout"])
         <div class="nav-divider"></div>
 
         <!-- When logged in -->
-            <template v-if="loggedIn">
+        <template v-if="loggedIn">
           <div class="user-profile-chip">
             <div class="user-avatar">
               {{ username ? username[0].toUpperCase() : 'U' }}
@@ -62,7 +62,7 @@ const emit = defineEmits(["logout"])
 
         <!-- When logged out -->
         <router-link
-          v-if="!isInstitutionLoginPage"
+          v-if="!isInstitutionLoginPage && !loggedIn"
           to="/login"
           class="nav_button auth-button"
           id="login"

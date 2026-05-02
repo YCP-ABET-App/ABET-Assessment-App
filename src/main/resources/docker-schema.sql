@@ -421,15 +421,15 @@ VALUES
 ------------------------------------------------------------
 INSERT INTO section (id, section_number, course_id, semester_id, is_active)
 VALUES
-    (1, '1', 1, 2, TRUE), -- CS 101 section 1
-    (2, '2', 1, 2, TRUE), -- CS 101 section 2
-    (3, '1', 2, 2, TRUE), -- CS 201 section 1
-    (4, '1', 3, 2, TRUE), -- CS 330 section 1
-    (5, '1', 4, 2, TRUE), -- CS 335 section 1
-    (6, '1', 5, 2, TRUE), -- CS 340 section 1
-    (7, '1', 6, 2, TRUE), -- CS 360 section 1
-    (8, '1', 7, 2, TRUE), -- CS 400 section 1
-    (9, '1', 8, 2, TRUE); -- CS 420 section 1
+    (1, '101', 1, 2, TRUE), -- CS 101 section 1
+    (2, '201', 1, 2, TRUE), -- CS 101 section 2
+    (3, '101', 2, 2, TRUE), -- CS 201 section 1
+    (4, '101', 3, 2, TRUE), -- CS 330 section 1
+    (5, '101', 4, 2, TRUE), -- CS 335 section 1
+    (6, '101', 5, 2, TRUE), -- CS 340 section 1
+    (7, '101', 6, 2, TRUE), -- CS 360 section 1
+    (8, '101', 7, 2, TRUE), -- CS 400 section 1
+    (9, '101', 8, 2, TRUE); -- CS 420 section 1
 
 ------------------------------------------------------------
 -- SECTION_USER (Assign instructors to sections)
