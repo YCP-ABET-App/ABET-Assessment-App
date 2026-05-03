@@ -11,7 +11,6 @@ import com.abetappteam.abetapp.entity.MeasureResult;
 import com.abetappteam.abetapp.entity.Outcome;
 import com.abetappteam.abetapp.entity.PerformanceIndicator;
 import com.abetappteam.abetapp.entity.ScheduleEntry;
-import com.abetappteam.abetapp.entity.Section;
 import com.abetappteam.abetapp.entity.SectionProgram;
 import com.abetappteam.abetapp.entity.Semester;
 import com.abetappteam.abetapp.exception.BusinessException;
@@ -135,7 +134,8 @@ public class MultiYearReportService {
                 : String.valueOf(semester.getStartDate().getYear());
         String generatedDate = LocalDate.now().format(DateTimeFormatter.ofPattern("M/d/yyyy"));
 
-        return buildReportForSemesters(programId, semesterIdSet, semesters, academicYear, semester.getName(), generatedDate);
+        return buildReportForSemesters(programId, semesterIdSet, semesters, academicYear, semester.getName(),
+                generatedDate);
     }
 
     /**
@@ -196,7 +196,8 @@ public class MultiYearReportService {
     }
 
     /**
-     * Builds a multi-year report aggregated across the entire date range (no year grouping).
+     * Builds a multi-year report aggregated across the entire date range (no year
+     * grouping).
      */
     @Transactional(readOnly = true)
     public MultiYearReportData buildHierarchicalReport(Long programId, LocalDate startDate, LocalDate endDate) {
@@ -256,45 +257,61 @@ public class MultiYearReportService {
         Map<Long, String> outcomeEvaluationMap = new HashMap<>();
         Set<Long> processedMeasureIds = new HashSet<>();
 
+        // For each course, navigate schedule_entry → measure → indicator → outcome.
+        // Also pick up any legacy measures linked directly via course_indicator_id.
         for (Long courseId : courseIdsInRange) {
             Course course = courseRepository.findById(courseId)
                     .filter(Course::getIsActive)
                     .orElse(null);
-            if (course == null) continue;
+            if (course == null)
+                continue;
 
-            List<CourseIndicator> courseIndicators = courseIndicatorRepository.findByCourseIdAndIsActive(courseId, true);
+            // Primary path: schedule_entry → measures
+            List<ScheduleEntry> scheduleEntries = scheduleEntryRepository.findByCourseId(courseId.intValue())
+                    .stream()
+                    .filter(se -> semesterIdSet.contains(se.getSemesterId()))
+                    .toList();
+
+            // Secondary path: course_indicator → measures (legacy data)
+            List<CourseIndicator> courseIndicators = courseIndicatorRepository.findByCourseIdAndIsActive(courseId,
+                    true);
+
+            // Collect all (indicatorId → measures) from both paths
+            Map<Long, List<Measure>> measuresByIndicator = new HashMap<>();
+
+            for (ScheduleEntry se : scheduleEntries) {
+                List<Measure> seMeasures = measureRepository.findByScheduleEntryId(se.getId());
+                measuresByIndicator.computeIfAbsent((long) se.getIndicatorId(), k -> new ArrayList<>())
+                        .addAll(seMeasures);
+            }
 
             for (CourseIndicator ci : courseIndicators) {
-                // Get measures via course_indicator_id (old data path)
-                List<Measure> measures = measureRepository.findByCourseIndicatorId(ci.getId());
-
-                // Also check schedule_entry for newer measures linked via schedule_entry_id
-                List<ScheduleEntry> scheduleEntries = scheduleEntryRepository.findByCourseId(courseId.intValue())
-                        .stream()
-                        .filter(se -> semesterIdSet.contains(se.getSemesterId())
-                                && se.getIndicatorId() == ci.getIndicatorId().intValue())
-                        .toList();
-                for (ScheduleEntry se : scheduleEntries) {
-                    List<Measure> newMeasures = measureRepository.findByScheduleEntryId(se.getId());
-                    for (Measure m : newMeasures) {
-                        if (measures.stream().noneMatch(existing -> existing.getId().equals(m.getId()))) {
-                            measures = new ArrayList<>(measures);
-                            measures.add(m);
-                        }
+                List<Measure> ciMeasures = measureRepository.findByCourseIndicatorId(ci.getId());
+                List<Measure> bucket = measuresByIndicator.computeIfAbsent(ci.getIndicatorId(), k -> new ArrayList<>());
+                for (Measure m : ciMeasures) {
+                    if (bucket.stream().noneMatch(existing -> existing.getId().equals(m.getId()))) {
+                        bucket.add(m);
                     }
                 }
+            }
 
-                if (measures.isEmpty()) continue;
+            for (Map.Entry<Long, List<Measure>> entry : measuresByIndicator.entrySet()) {
+                Long indicatorId = entry.getKey();
+                List<Measure> measures = entry.getValue();
+                if (measures.isEmpty())
+                    continue;
 
-                PerformanceIndicator indicator = performanceIndicatorRepository.findById(ci.getIndicatorId())
+                PerformanceIndicator indicator = performanceIndicatorRepository.findById(indicatorId)
                         .filter(pi -> Boolean.TRUE.equals(pi.getIsActive()))
                         .orElse(null);
-                if (indicator == null) continue;
+                if (indicator == null)
+                    continue;
 
                 Outcome outcome = outcomeRepository.findById(indicator.getStudentOutcomeId())
                         .filter(o -> Boolean.TRUE.equals(o.getActive()))
                         .orElse(null);
-                if (outcome == null) continue;
+                if (outcome == null)
+                    continue;
 
                 String indicatorKey = outcome.getId() + "_" + indicator.getId() + "_" + courseId;
                 String indicatorNumber = String.format("%d.%d", outcome.getNumber(), indicator.getIndicatorNumber());
@@ -307,8 +324,16 @@ public class MultiYearReportService {
                 recommendedActionsMap.computeIfAbsent(outcome.getId(), k -> new HashSet<>());
                 outcomeEvaluationMap.putIfAbsent(outcome.getId(), outcome.getEvaluation());
 
+                // Find the matching course_indicator id for backward-compat (used when saving)
+                Long courseIndicatorId = courseIndicators.stream()
+                        .filter(ci -> ci.getIndicatorId().equals(indicatorId))
+                        .map(CourseIndicator::getId)
+                        .findFirst()
+                        .orElse(null);
+
                 for (Measure measure : measures) {
-                    if (!processedMeasureIds.add(measure.getId())) continue;
+                    if (!processedMeasureIds.add(measure.getId()))
+                        continue;
 
                     List<MeasureResult> results = measureResultRepository.findByMeasureId(measure.getId());
                     MeasureResult result = results.isEmpty() ? null : results.get(0);
@@ -330,7 +355,7 @@ public class MultiYearReportService {
                     }
 
                     ReportMeasureData reportMeasure = new ReportMeasureData(
-                            measure.getId(), ci.getId(), course.getCourseCode(),
+                            measure.getId(), courseIndicatorId, course.getCourseCode(),
                             measure.getDescription(), met, exceeded, below, metPercentage, status, note,
                             measure.getRecommendedAction());
 
@@ -366,7 +391,8 @@ public class MultiYearReportService {
             if (!indicators.isEmpty()) {
                 String evaluation = outcomeEvaluationMap.get(outcomeId);
                 String computedStatus = determineOutcomeStatus(indicators);
-                reportOutcome.setOverallStatus(evaluation != null && !evaluation.isBlank() ? evaluation : computedStatus);
+                reportOutcome
+                        .setOverallStatus(evaluation != null && !evaluation.isBlank() ? evaluation : computedStatus);
                 reportOutcome.setIndicators(indicators);
                 reportOutcome.setRecommendedActions(
                         new ArrayList<>(recommendedActionsMap.getOrDefault(outcomeId, new HashSet<>())));
