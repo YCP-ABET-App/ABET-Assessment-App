@@ -26,6 +26,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -51,27 +53,18 @@ public class MeasureControllerUnitTest {
     private Course testCourse;
 
     @BeforeEach
-    void setUp(){
+    void setUp() {
         testMeasure = new Measure();
+
         testMeasure.setId(1l);
+        testMeasure.setScheduleEntryId(1l);
         testMeasure.setDescription("Test Description");
-        testMeasure.setObservation("Test Observation");
         testMeasure.setRecommendedAction("Test Action");
-        testMeasure.setFcar("Test Fcar");
-        testMeasure.setStudentsMet(1);
-        testMeasure.setStudentsExceeded(2);
-        testMeasure.setStudentsBelow(3);
-        testMeasure.setCourseIndicatorId(1l);
-        testMeasure.setStatus("InProgress");
         testMeasure.setActive(true);
 
-        testDTO = new MeasureDTO();
-        testDTO.setId(1l);
-        testDTO.setDescription("New Description");
-        testDTO.setCourseIndicatorId(1l);
-        testDTO.setStatus("InReview");
-        testDTO.setActive(true);
+        testDTO = new MeasureDTO(1L, "New Description", null, true);
 
+        // TODO: refactor with ScheduleEntry
         testIndicator = new CourseIndicator();
         testIndicator.setId(1l);
         testIndicator.setCourseId(1l);
@@ -83,74 +76,111 @@ public class MeasureControllerUnitTest {
         testCourse.setCourseCode("CS400");
         testCourse.setCourseDescription("Test for Measures");
         testCourse.setIsActive(true);
-        testCourse.setSemesterId(1l);
     }
 
+    // TODO: Refactor these tests with updated search code
     @Test
     void shouldGetAllMeasures() throws Exception {
-        //Given
+        // Given
         List<Measure> measures = List.of(testMeasure);
-        Page<Measure> page = new PageImpl<>(measures, PageRequest.of(0, 20), 1);
 
-        when(service.findAll(any(PageRequest.class))).thenReturn(page);
+        // The controller expects a MeasureSearchRequest in the request body. Send a
+        // body with null filters.
+        Map<String, Object> body = new HashMap<>();
+        body.put("id", null);
+        body.put("courseIndicatorId", null);
+        body.put("semesterId", null);
+        body.put("active", null);
 
-        //When/Then
+        when(service.searchMeasures(any())).thenReturn(measures);
+
+        // When/Then
         mockMvc.perform(get("/api/measure")
-                        .param("page", "0")
-                        .param("size", "20"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(body)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content").isArray())
-                .andExpect(jsonPath("$.content.length()").value(1))
-                .andExpect(jsonPath("$.totalElements").value(1));
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data[0].id").value(1))
+                .andExpect(jsonPath("$.data[0].description").value("Test Description"));
 
-        verify(service, times(1)).findAll(any(PageRequest.class));
+        verify(service, times(1)).searchMeasures(any());
     }
 
     @Test
     void shouldCreateMeasure() throws Exception {
-        //Given
+        // Given
         when(service.create(any(MeasureDTO.class))).thenReturn(testMeasure);
 
-        //When/Then
+        // When/Then
         mockMvc.perform(post("/api/measure")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(testDTO)))
-                    .andExpect(status().isCreated())
-                    .andExpect(jsonPath("$.success").value(true))
-                    .andExpect(jsonPath("$.message").value("Resource created successfully"))
-                    .andExpect(jsonPath("$.data.id").value(1))
-                    .andExpect(jsonPath("$.data.description").value("Test Description"));
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(testDTO)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("Resource created successfully"))
+                .andExpect(jsonPath("$.data.id").value(1))
+                .andExpect(jsonPath("$.data.description").value("Test Description"));
         verify(service, times(1)).create(any(MeasureDTO.class));
     }
 
     @Test
     void shouldGetMeasurebyId() throws Exception {
-        //Given
-        when(service.findById(1L)).thenReturn(testMeasure);
-
-        //When/Then
-        mockMvc.perform(get("/api/measure/1"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.id").value(1))
-                .andExpect(jsonPath("$.data.description").value("Test Description"));
-
-        verify(service, times(1)).findById(1L);
-    }
-    
-    @Test
-    void shouldReturnNotFoundWhenMeasureDoesNotExist() throws Exception {
         // Given
-        when(service.findById(999L))
-                .thenThrow(new ResourceNotFoundException("Measure not found with id: 999"));
+        // The controller's GET /api/measure endpoint accepts a MeasureSearchRequest in
+        // the request body.
+        // Create a JSON body with only id = 1 and null for the other fields.
+        Map<String, Object> body = new HashMap<>();
+        body.put("id", 1);
+        body.put("courseIndicatorId", null);
+        body.put("active", null);
+
+        when(service.searchMeasures(any())).thenReturn(List.of(testMeasure));
 
         // When/Then
-        mockMvc.perform(get("/api/measure/999"))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.error").value("Measure not found with id: 999"));
+        mockMvc.perform(get("/api/measure")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(body)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                // controller returns a list of measures in the "data" field
+                .andExpect(jsonPath("$.data[0].id").value(1))
+                .andExpect(jsonPath("$.data[0].description").value("Test Description"));
 
-        verify(service, times(1)).findById(999L);
+        verify(service, times(1)).searchMeasures(any());
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenMeasureDoesNotExist() throws Exception {
+        // Given: searching for id=999 returns no results
+        Map<String, Object> body = new HashMap<>();
+        body.put("id", 999);
+        body.put("courseIndicatorId", null);
+        body.put("active", null);
+
+        when(service.searchMeasures(any())).thenReturn(List.of());
+
+        // When/Then - controller returns success with empty data for no matches
+        mockMvc.perform(get("/api/measure")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(body)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data").isArray())
+                .andExpect(jsonPath("$.data.length()").value(0));
+
+        verify(service, times(1)).searchMeasures(any());
+    }
+
+    @Test
+    void shouldReturnBadRequestWhenDescriptionIsMissing() throws Exception {
+        testDTO.setDescription(null); // Force a validation error
+
+        mockMvc.perform(post("/api/measure")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(testDTO)))
+                .andExpect(status().isBadRequest());
+
+        verify(service, never()).create(any());
     }
 
     @Test
@@ -160,8 +190,8 @@ public class MeasureControllerUnitTest {
 
         // When/Then
         mockMvc.perform(put("/api/measure/1")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(testDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(testDTO)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Measure updated successfully"))
@@ -180,105 +210,9 @@ public class MeasureControllerUnitTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Measure deleted successfully"));
 
-        verify(service, times(1)).delete(1L);
+        verify(service, times(1)).deactivate(1L);
     }
 
-    @Test
-    void shouldReturnAllActiveMeasuresByCourseId() throws Exception {
-        //Given
-        List<Measure> measures = List.of(testMeasure);
-        when(service.findAllActiveMeasuresByCourse(eq(1l))).thenReturn(measures);
+    // TODO: Come through and refactor these tests with updated search code
 
-        //When
-        mockMvc.perform(get("/api/measure/byCourse/1"))
-                .andExpect(status().isOk())
-                .andDo(MockMvcResultHandlers.print())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("Measures found"))
-                .andExpect(jsonPath("$.data.[0].id").value(1));
-        
-        verify(service, times(1)).findAllActiveMeasuresByCourse(1l);
-    }
-
-    @Test
-    void shouldReturnAllActiveMeasuresByIndicatorId() throws Exception {
-        //Given
-        List<Measure> measures = List.of(testMeasure);
-        when(service.findAllActiveMeasuresByIndicator(eq(1l))).thenReturn(measures);
-
-        //When
-        mockMvc.perform(get("/api/measure/byIndicator/1"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("Measures found"))
-                .andExpect(jsonPath("$.data.[0].id").value(1));
-        
-        verify(service, times(1)).findAllActiveMeasuresByIndicator(1l);
-    }
-
-    @Test
-    void shouldReturnAllActiveMeasuresByInProgressStatusAndSemesterId() throws Exception {
-        //Given 
-        List<Measure> measures = List.of(testMeasure);
-        when(service.findAllActiveMeasuresByStatusAndSemester(eq("InProgress"), eq(1l))).thenReturn(measures);
-
-        //When
-        mockMvc.perform(get("/api/measure/bySemester/InProgress/1"))
-                .andDo(MockMvcResultHandlers.print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("Measures found"))
-                .andExpect(jsonPath("$.data.[0].active").value(true));
-    }
-
-    @Test
-    void shouldReturnAllActiveMeasuresBySubmittedStatusAndSemesterId() throws Exception {
-        //Given 
-        testMeasure.setStatus("Submitted");
-
-        List<Measure> measures = List.of(testMeasure);
-        when(service.findAllActiveMeasuresByStatusAndSemester(eq("Submitted"), eq(1l))).thenReturn(measures);
-
-        //When
-        mockMvc.perform(get("/api/measure/bySemester/Submitted/1"))
-                .andDo(MockMvcResultHandlers.print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("Measures found"))
-                .andExpect(jsonPath("$.data.[0].active").value(true));
-    }
-
-    @Test
-    void shouldReturnAllActiveMeasuresByInReviewStatusAndSemesterId() throws Exception {
-        //Given 
-        testMeasure.setStatus("InReview");
-
-        List<Measure> measures = List.of(testMeasure);
-        when(service.findAllActiveMeasuresByStatusAndSemester(eq("InReview"), eq(1l))).thenReturn(measures);
-
-        //When
-        mockMvc.perform(get("/api/measure/bySemester/InReview/1"))
-                .andDo(MockMvcResultHandlers.print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("Measures found"))
-                .andExpect(jsonPath("$.data.[0].active").value(true));
-    }
-
-    @Test
-    void shouldReturnAllActiveMeasuresByCompleteStatusAndSemesterId() throws Exception {
-        //Given 
-        testMeasure.setStatus("Complete");
-
-        List<Measure> measures = List.of(testMeasure);
-        when(service.findAllActiveMeasuresByStatusAndSemester(eq("Complete"), eq(1l))).thenReturn(measures);
-
-        //When
-        mockMvc.perform(get("/api/measure/bySemester/Complete/1"))
-                .andDo(MockMvcResultHandlers.print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("Measures found"))
-                .andExpect(jsonPath("$.data.[0].active").value(true));
-    }
 }

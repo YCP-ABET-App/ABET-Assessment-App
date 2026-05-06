@@ -8,8 +8,9 @@ export interface User {
   email: string;
   firstName?: string;
   lastName?: string;
-  role: "ADMIN" | "INSTRUCTOR" | "STUDENT" | "USER";
+  role: "ADMIN" | "INSTRUCTOR";
   currentProgramId?: number;
+  hasCourses?: boolean;
 }
 
 export interface ProgramAccess {
@@ -18,7 +19,8 @@ export interface ProgramAccess {
   role: "ADMIN" | "INSTRUCTOR";
 }
 
-export const useUserStore = defineStore("user", () => {
+type Theme = 'light' | 'dark'
+export const useUserStore = defineStore('user', () => {
   // -------------------------
   // STATE
   // -------------------------
@@ -26,16 +28,38 @@ export const useUserStore = defineStore("user", () => {
   const authToken = ref<string | null>(null);
   const programs = ref<ProgramAccess[]>([]);
   const currentProgramId = ref<number | null>(null);
+  const currentSemesterId = ref<number | null>(null);
 
   const isLoading = ref(false);
   const error = ref<string | null>(null);
 
   // -------------------------
+  // THEME STATE
+  // -------------------------
+  const theme = ref<Theme>(
+    (localStorage.getItem('theme') as Theme) || 'dark'
+  )
+
+  function applyThemeToDocument(mode: Theme) {
+    document.documentElement.setAttribute('data-theme', mode)
+  }
+
+  function setTheme(newTheme: Theme) {
+    theme.value = newTheme
+    localStorage.setItem('theme', newTheme)
+    applyThemeToDocument(newTheme)
+  }
+
+
+  // -------------------------
   // GETTERS
   // -------------------------
   const isLoggedIn = computed(() => !!authToken.value && !!user.value);
-  const isAdmin = computed(() => user.value?.role === "ADMIN");
-  const isInstructor = computed(() => user.value?.role === "INSTRUCTOR");
+  const isAdmin = computed(() => user.value?.role?.toUpperCase() === "ADMIN");
+const isInstructor = computed(() => {
+    const role = user.value?.role?.toUpperCase();
+    return user.value?.hasCourses === true || role === "INSTRUCTOR" || role === "ADMIN";
+  });
 
   const userId = computed(() => user.value?.id ?? 0);
 
@@ -57,7 +81,10 @@ export const useUserStore = defineStore("user", () => {
     try {
       const { data } = await api.post("/users/login", { email, password });
 
-      user.value = data.user;
+      user.value = {
+        ...data.user,
+        hasCourses: data.hasCourses
+      };
       authToken.value = data.authToken;
       programs.value = data.programs;
       currentProgramId.value = data.user.currentProgramId;
@@ -120,14 +147,20 @@ export const useUserStore = defineStore("user", () => {
     try {
       const { data } = await api.post("/users/switch-program", { programId });
 
-      authToken.value = data.token;
-      currentProgramId.value = data.programId;
-      user.value!.role = data.role;
+      authToken.value = data.token
+      currentProgramId.value = data.programId
+      if (user.value) {
+        user.value.role = data.role
+      }
+      // Reset semester
+      localStorage.removeItem("currentSemesterId");
 
       // Persist changes
-      localStorage.setItem("authToken", data.token);
-      localStorage.setItem("currentProgramId", String(data.programId));
-      localStorage.setItem("currentUser", JSON.stringify(user.value));
+      localStorage.setItem('authToken', data.token)
+      localStorage.setItem('currentProgramId', String(data.programId))
+      if (user.value) {
+        localStorage.setItem('currentUser', JSON.stringify(user.value))
+      }
     } catch (err) {
       console.error("Error switching program:", err);
       throw err;
@@ -142,11 +175,13 @@ export const useUserStore = defineStore("user", () => {
     const storedUser = localStorage.getItem("currentUser");
     const storedPrograms = localStorage.getItem("programs");
     const storedPid = localStorage.getItem("currentProgramId");
+    const storedSemesterId = localStorage.getItem("currentSemesterId");
 
     if (token) authToken.value = token;
     if (storedUser) user.value = JSON.parse(storedUser);
     if (storedPrograms) programs.value = JSON.parse(storedPrograms);
     if (storedPid) currentProgramId.value = Number(storedPid);
+    if (storedSemesterId) currentSemesterId.value = Number(storedSemesterId);
   }
 
   // -------------------------
@@ -168,6 +203,15 @@ export const useUserStore = defineStore("user", () => {
     if (currentProgramId.value !== null) {
       localStorage.setItem("currentProgramId", String(currentProgramId.value));
     }
+
+    if (currentSemesterId.value !== null) {
+      localStorage.setItem("currentSemesterId", String(currentSemesterId.value));
+    }
+
+
+    if (theme.value) {
+      localStorage.setItem('theme', theme.value)
+    }
   }
 
   // -------------------------
@@ -179,6 +223,7 @@ export const useUserStore = defineStore("user", () => {
     programs.value = [];
     currentProgramId.value = null;
     error.value = null;
+    currentSemesterId.value = null;
 
     localStorage.clear();
 
@@ -191,8 +236,10 @@ export const useUserStore = defineStore("user", () => {
     authToken,
     programs,
     currentProgramId,
+    currentSemesterId,
     isLoading,
     error,
+    theme,
 
     // Getters
     isLoggedIn,
@@ -208,5 +255,7 @@ export const useUserStore = defineStore("user", () => {
     switchProgram,
     loadFromStorage,
     saveToStorage,
+    setTheme,
+    applyThemeToDocument,
   };
 });

@@ -53,7 +53,6 @@ public class TestDataBuilder {
         course.setCourseCode(courseCode);
         course.setCourseName(courseName);
         course.setCourseDescription(courseDescription);
-        course.setSemesterId(semesterId);
         course.setIsActive(true);
         course.setCreatedAt(LocalDateTime.now());
         course.setUpdatedAt(LocalDateTime.now());
@@ -63,41 +62,37 @@ public class TestDataBuilder {
     /**
      * Create a Course entity without ID (for creation tests)
      */
-    public static Course createCourse(String courseCode, String courseName, String courseDescription, Long semesterId) {
-        return new Course(courseCode, courseName, courseDescription, semesterId);
+    public static Course createCourse(String courseCode, String courseName, String courseDescription, Integer studentCount, Double threshHold) {
+        return new Course(courseCode, courseName, courseDescription, threshHold);
     }
 
     /**
      * Create a default Course entity
      */
     public static Course createCourse() {
-        return createCourse("CS101", "Introduction to Computer Science", "Basic computer science principles", 1L);
+        return createCourse("CS101", "Introduction to Computer Science", "Basic computer science principles", 1, 1.0);
     }
 
     /**
      * Create a CourseDTO for testing
      */
     public static CourseDTO createCourseDTO(String courseCode, String courseName, String courseDescription,
-            Long semesterId) {
-        return new CourseDTO(courseCode, courseName, courseDescription, semesterId);
+            Integer studentCount, Double threshHold) {
+        return new CourseDTO(courseCode, courseName, courseDescription, studentCount, threshHold);
     }
 
     /**
      * Create a default CourseDTO
      */
     public static CourseDTO createCourseDTO() {
-        return createCourseDTO("CS101", "Introduction to Computer Science", "Basic computer science principles", 1L);
+        return createCourseDTO("CS101", "Introduction to Computer Science", "Description", 1, 1.0);
     }
 
     /**
      * Create an invalid Course DTO (for validation tests)
      */
     public static CourseDTO createInvalidCourseDTO() {
-        CourseDTO dto = new CourseDTO();
-        dto.setCourseCode(null); // Invalid - required
-        dto.setCourseName(""); // Invalid - blank
-        dto.setCourseDescription(null); // Invalid - required
-        dto.setSemesterId(null); // Invalid - required
+        CourseDTO dto = new CourseDTO(null, "", null, 15, .5);
         return dto;
     }
 
@@ -200,25 +195,16 @@ public class TestDataBuilder {
     // Create custom user dto
     public static UsersDTO createUsersDTO(String email, String passwordHash, String firstName, String lastName,
             String title, Boolean active) {
-        UsersDTO dto = new UsersDTO();
-        dto.setEmail(email);
-        dto.setPasswordHash(passwordHash);
-        dto.setFirstName(firstName);
-        dto.setLastName(lastName);
-        dto.setTitle(title);
-        dto.setActive(active);
+        UsersDTO dto = new UsersDTO(email, passwordHash, firstName, lastName, title, active);
+
         return dto;
     }
 
     // Create invalid user dto
     public static UsersDTO createInvalidUsersDTO() {
-        UsersDTO dto = new UsersDTO();
-        dto.setEmail("email"); // Must be a valid email address
-        dto.setPasswordHash(null); // Can't be null
-        dto.setFirstName(""); // Can't be empty
-        dto.setLastName(null); // Can't be null
-        dto.setTitle("Thisisaveryverylongtitlethatgoesoverthelimitthatwassetforhowlongatitlteshouldbe"); // Too Long
-        dto.setActive(true);
+        UsersDTO dto = new UsersDTO("email", null, "", null,
+                "Thisisaveryverylongtitlethatgoesoverthelimitthatwassetforhowlongatitlteshouldbe", true);
+
         return dto;
     }
 
@@ -261,10 +247,8 @@ public class TestDataBuilder {
 
     // Create custom ProgramDTO
     public static ProgramDTO createProgramDTO(String name, String institution, Boolean active) {
-        ProgramDTO dto = new ProgramDTO();
-        dto.setName(name);
-        dto.setInstitution(institution);
-        dto.setActive(active);
+        ProgramDTO dto = new ProgramDTO(name, institution, active);
+
         return dto;
     }
 
@@ -347,16 +331,8 @@ public class TestDataBuilder {
      */
     public static SemesterDTO createSemesterDTO(String name, String code, LocalDate startDate, LocalDate endDate,
             Integer academicYear, String type, Long programId, String description, Boolean isCurrent) {
-        SemesterDTO dto = new SemesterDTO();
-        dto.setName(name);
-        dto.setCode(code);
-        dto.setStartDate(startDate);
-        dto.setEndDate(endDate);
-        dto.setAcademicYear(academicYear);
-        dto.setType(type);
-        dto.setProgramId(programId);
-        dto.setDescription(description);
-        dto.setIsCurrent(isCurrent);
+        SemesterDTO dto = new SemesterDTO(name, code, startDate, endDate, academicYear, type, programId, description, isCurrent);
+
         return dto;
     }
 
@@ -420,60 +396,44 @@ public class TestDataBuilder {
         return semester;
     }
 
-    //MEASURE TEST DATA
+    // MEASURE TEST DATA
 
-    //Create Measure
+    // Create Measure
     public static Measure createMeasure(){
-        return createMeasure(1l, "Example Description", "Example Observation", "Example Recommended Action", "Example Fcar", 
-        3, 1, 2, "InProgress", true);
+        return createMeasure(1l, "Example Description", "Example Recommended Action",
+         true);
     }
 
     //Create Custom Measure
-    public static Measure createMeasure(Long courseIndicatorId, String description, String observation, String recAction, String fcar, 
-    Integer met, Integer exceeded, Integer below, String status, Boolean active) {
+    public static Measure createMeasure(Long scheduleEntryId, String description, String recAction,
+     Boolean active) {
         Measure measure = new Measure();
-        measure.setCourseIndicatorId(courseIndicatorId);
+        measure.setScheduleEntryId(scheduleEntryId);
         measure.setDescription(description);
-        measure.setObservation(observation);
         measure.setRecommendedAction(recAction);
-        measure.setFcar(fcar);
-        measure.setStudentsMet(met);
-        measure.setStudentsExceeded(exceeded);
-        measure.setStudentsBelow(below);
-        measure.setStatus(status);
         measure.setActive(active);
         return measure;
     }
 
     //Create Custom Measure with ID
-    public static Measure createMeasureWithId(Long id, Long courseIndicatorId, String description, String observation, String recAction, String fcar, 
-    Integer met, Integer exceeded, Integer below, String status, Boolean active) {
-        Measure measure = createMeasure(courseIndicatorId, description, observation, recAction, fcar, met, exceeded, below, status, active);
+    public static Measure createMeasureWithId(Long id, Long scheduleEntryId, String description, String recAction,
+    Boolean active) {
+        Measure measure = createMeasure(scheduleEntryId, description, recAction, active);
         measure.setId(id);
         return measure;
     }
 
     //Create MeasureDTO
     public static MeasureDTO creaMeasureDTO(){
-        return createMeasureDTO(1l, 1l, "New Description", "New Observation", 
-        "New Recommended Action", "New Fcar", 1, 2, 3, "InReview", true);
+        return createMeasureDTO( 1l,  "New Description",
+        "New Recommended Action", true);
     }
 
     //Create Custom MeasureDTO
-    public static MeasureDTO createMeasureDTO(Long id, Long courseIndicatorId, String description, String observation, String recAction, String fcar,
-    Integer met, Integer exceeded, Integer below, String status, Boolean active){
-        MeasureDTO measureDTO = new MeasureDTO();
-        measureDTO.setId(id);
-        measureDTO.setCourseIndicatorId(courseIndicatorId);
-        measureDTO.setDescription(description);
-        measureDTO.setObservation(observation);
-        measureDTO.setRecommendedAction(recAction);
-        measureDTO.setFCar(fcar);
-        measureDTO.setStudentsMet(met);
-        measureDTO.setStudentsExceeded(exceeded);
-        measureDTO.setStudentsBelow(below);
-        measureDTO.setStatus(status);
-        measureDTO.setActive(active);
+    public static MeasureDTO createMeasureDTO(Long scheduleEntryId, String description, String recAction,
+    Boolean active){
+        MeasureDTO measureDTO = new MeasureDTO(scheduleEntryId, description, recAction, active);
+
         return measureDTO;
     }
 
@@ -485,11 +445,7 @@ public class TestDataBuilder {
                     (long) i,
                     (long) i,
                     "Description" + i,
-                    "Observation" + i,
                     "Action" + i,
-                    "Fcar" + i,
-                    i, i, i,
-                    "InProgress",
                     i % 2 == 0));
         }
         return measures;
@@ -516,15 +472,16 @@ public class TestDataBuilder {
 
     //Create Outcome
     public static Outcome createOutcome(){
-        return createOutcome(1, "Test Outcome", 1l, 80, "Looks good", true);
+        return createOutcome(1, "Test Outcome", 1l, 1l, 80, "Looks good", true);
     }
 
     //Create custom Outcome
-    public static Outcome createOutcome(Integer number, String description, Long semesterId, Integer value, String evaluation, Boolean active){
+    public static Outcome createOutcome(Integer number, String description, Long semesterId, Long programId, Integer value, String evaluation, Boolean active){
         Outcome outcome = new Outcome();
         outcome.setNumber(number);
         outcome.setDescription(description);
         outcome.setSemesterId(semesterId);
+        outcome.setProgramId(programId);
         outcome.setValue(value);
         outcome.setEvaluation(evaluation);
         outcome.setActive(active);
@@ -532,26 +489,23 @@ public class TestDataBuilder {
     }
 
     //Create custom Outcome with Id
-    public static Outcome createOutcomeWithId(Long id, Integer number, String description, Long semesterId, Integer value, String evaluation, Boolean active){
-        Outcome outcome = createOutcome(number, description, semesterId, value, evaluation, active);
+    public static Outcome createOutcomeWithId(Long id, Integer number, String description, Long semesterId, Long programId, Integer value, String evaluation, Boolean active){
+        Outcome outcome = createOutcome(number, description, semesterId, programId, value, evaluation, active);
         outcome.setId(id);
         return outcome;
     }
 
     //Create OutcomeDTO
     public static OutcomeDTO createOutcomeDTO(){
-        return createOutcomeDTO(2, "New Description", 1l, 20, "Looks bad", true);   
+        return createOutcomeDTO(2, "New Description", 1l, 1l, 20, "Looks bad", true);
     }
 
     //Create custom OutcomeDTO
-    public static OutcomeDTO createOutcomeDTO(Integer number, String description, Long semesterId, Integer value, String evaluation, Boolean active){
-        OutcomeDTO dto = new OutcomeDTO();
-        dto.setNumber(number);
-        dto.setDescription(description);
-        dto.setSemesterId(semesterId);
-        dto.setValue(value);
-        dto.setEvaluation(evaluation);
-        dto.setActive(active);
+    public static OutcomeDTO createOutcomeDTO(Integer number, String description, Long semesterId, Long programId, Integer value, String evaluation, Boolean active){
+        OutcomeDTO dto = new OutcomeDTO(number, description, evaluation, semesterId, programId, active);
+
+        // dto.setValue(value);
+
         return dto;
     }
 
@@ -563,6 +517,7 @@ public class TestDataBuilder {
                     (long) i,
                     i,
                     "Description " + i,
+                    1l,
                     1l,
                     80,
                     null,

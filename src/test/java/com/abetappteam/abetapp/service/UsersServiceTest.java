@@ -1,6 +1,7 @@
 package com.abetappteam.abetapp.service;
 
 import com.abetappteam.abetapp.BaseServiceTest;
+import com.abetappteam.abetapp.dto.UpdateUsersDTO;
 import com.abetappteam.abetapp.dto.UsersDTO;
 import com.abetappteam.abetapp.entity.Users;
 import com.abetappteam.abetapp.exception.ConflictException;
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -27,26 +29,38 @@ import static org.mockito.Mockito.*;
 
 class UsersServiceTest extends BaseServiceTest {
 
-    @Mock 
+    @Mock
     private UsersRepository userRepository;
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
 
     @InjectMocks
     private UsersService userService;
     private Users testUser;
     private UsersDTO testDTO;
-    
+    private UpdateUsersDTO updateDTO;
+
     @BeforeEach
     void setUp() {
         testUser = TestDataBuilder.createUserWithId(1L, "test@gmail.com", "password", "Test", "User", "Dr.", true);
-        testDTO = TestDataBuilder.createUsersDTO("newTest@gmail.com", "newPassword", "NewFirstName", "NewLastName", "NewTitle", true);
+        testDTO = TestDataBuilder.createUsersDTO("newTest@gmail.com", "newPassword", "NewFirstName", "NewLastName",
+                "NewTitle", true);
+
+        updateDTO = new UpdateUsersDTO();
+        updateDTO.setEmail("updated@gmail.com");
+        updateDTO.setFirstName("Updated");
+        updateDTO.setLastName("User");
+        updateDTO.setTitle("Prof.");
+        updateDTO.setActive(true);
     }
 
     @Test
     void shouldFindById() {
-        //Given
+        // Given
         when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
 
-        //When
+        // When
         Users found = userService.findById(1L);
         assertThat(found).isNotNull();
         assertThat(found.getId()).isEqualTo(1L);
@@ -54,7 +68,7 @@ class UsersServiceTest extends BaseServiceTest {
         verify(userRepository).findById(1L);
     }
 
-    @Test 
+    @Test
     void shouldThrowExceptionWhenNotFound() {
         when(userRepository.findById(999L)).thenReturn(Optional.empty());
 
@@ -90,13 +104,30 @@ class UsersServiceTest extends BaseServiceTest {
 
     @Test
     void shouldCreateUsers() {
+        // Given
         when(userRepository.existsByEmailIgnoreCase(anyString())).thenReturn(false);
+        when(passwordEncoder.encode(anyString())).thenReturn("hashed_password"); // Mock the encoding
         when(userRepository.save(any(Users.class))).thenReturn(testUser);
 
         Users created = userService.create(testDTO);
 
         assertThat(created).isNotNull();
-        verify(userRepository).existsByEmailIgnoreCase("newTest@gmail.com");
+        verify(passwordEncoder).encode("newPassword");
+        verify(userRepository).save(any(Users.class));
+    }
+
+    @Test
+    void shouldUpdateUser() {
+        // Given
+        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+        when(userRepository.findByEmailIgnoreCase("newTest@gmail.com")).thenReturn(Optional.empty());
+        when(passwordEncoder.encode(anyString())).thenReturn("hashed_password"); // Mock the encoding
+        when(userRepository.save(any(Users.class))).thenReturn(testUser);
+
+        Users updated = userService.update(1L, testDTO);
+
+        assertThat(updated).isNotNull();
+        verify(passwordEncoder).encode("newPassword");
         verify(userRepository).save(any(Users.class));
     }
 
@@ -110,22 +141,12 @@ class UsersServiceTest extends BaseServiceTest {
         verify(userRepository, never()).save(any());
     }
 
-    @Test
-    void shouldUpdateUser() {
-        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
-        when(userRepository.findByEmailIgnoreCase("newTest@gmail.com")).thenReturn(Optional.empty());
-        when(userRepository.save(any(Users.class))).thenReturn(testUser);
 
-        Users updated = userService.update(1L, testDTO);
-
-        assertThat(updated).isNotNull();
-        verify(userRepository).findById(1L);
-        verify(userRepository).save(any(Users.class));
-    }
 
     @Test
     void shouldThrowConflictWhenUpdatingWithDuplicateEmail() {
-        Users anotherUser = TestDataBuilder.createUserWithId(2L, "newTest@gmail.com", "password", "Other", "User", null, true);
+        Users anotherUser = TestDataBuilder.createUserWithId(2L, "newTest@gmail.com", "password", "Other", "User", null,
+                true);
         when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
         when(userRepository.findByEmailIgnoreCase("newTest@gmail.com")).thenReturn(Optional.of(anotherUser));
 
@@ -150,8 +171,7 @@ class UsersServiceTest extends BaseServiceTest {
     void shouldFindAllActive() {
         List<Users> activeUsers = List.of(
                 TestDataBuilder.createUserWithId(1L, "active1@gmail.com", "password", "Active", "User", null, true),
-                TestDataBuilder.createUserWithId(2L, "active2@gmail.com", "password", "Active", "User", null, true)
-        );
+                TestDataBuilder.createUserWithId(2L, "active2@gmail.com", "password", "Active", "User", null, true));
         when(userRepository.findByActiveTrue()).thenReturn(activeUsers);
 
         List<Users> found = userService.findAllActive();
@@ -209,5 +229,64 @@ class UsersServiceTest extends BaseServiceTest {
 
         assertThat(found).hasSize(2);
         assertThat(found).allMatch(s -> s.getLastName() == "Test");
+    }
+
+    @Test
+    void shouldUpdateUserWithUpdateDTO() {
+        // Given
+        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+        when(userRepository.findByEmailIgnoreCase("updated@gmail.com")).thenReturn(Optional.empty());
+        when(userRepository.save(any(Users.class))).thenReturn(testUser);
+
+        // When
+        Users updated = userService.update(1L, updateDTO);
+
+        // Then
+        assertThat(updated).isNotNull();
+        verify(userRepository).findById(1L);
+        verify(userRepository).save(any(Users.class));
+    }
+
+    @Test
+    void shouldFindByEmail() {
+        // Given
+        when(userRepository.findByEmailIgnoreCase("test@gmail.com")).thenReturn(Optional.of(testUser));
+
+        // When
+        Users found = userService.findByEmail("test@gmail.com");
+
+        // Then
+        assertThat(found).isNotNull();
+        assertThat(found.getEmail()).isEqualTo("test@gmail.com");
+        verify(userRepository).findByEmailIgnoreCase("test@gmail.com");
+    }
+
+    @Test
+    void shouldThrowExceptionWhenEmailNotFound() {
+        // Given
+        when(userRepository.findByEmailIgnoreCase("notfound@gmail.com")).thenReturn(Optional.empty());
+
+        // When/Then
+        assertThatThrownBy(() -> userService.findByEmail("notfound@gmail.com"))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("User not found with email address");
+    }
+
+    @Test
+    void shouldFindAllInactive() {
+        // Given
+        List<Users> inactiveUsers = List.of(
+                TestDataBuilder.createUserWithId(1L, "inactive1@gmail.com", "password", "Inactive", "User", null,
+                        false),
+                TestDataBuilder.createUserWithId(2L, "inactive2@gmail.com", "password", "Inactive", "User", null,
+                        false));
+        when(userRepository.findByActiveFalse()).thenReturn(inactiveUsers);
+
+        // When
+        List<Users> found = userService.findAllInactive();
+
+        // Then
+        assertThat(found).hasSize(2);
+        assertThat(found).allMatch(user -> !user.getActive());
     }
 }

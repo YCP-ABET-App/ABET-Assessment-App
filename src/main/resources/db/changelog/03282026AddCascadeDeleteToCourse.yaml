@@ -1,0 +1,37 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-cascade-delete-to-course
+      author: jonathan
+      changes:
+        - dropForeignKeyConstraint:
+            baseTableName: course_indicator
+            constraintName: course_indicator_ibfk_1
+        - addForeignKeyConstraint:
+            baseTableName: course_indicator
+            baseColumnNames: course_id
+            referencedTableName: course
+            referencedColumnNames: id
+            constraintName: course_indicator_ibfk_1
+            onDelete: CASCADE
+
+        - dropForeignKeyConstraint:
+            baseTableName: measure
+            constraintName: measure_ibfk_1
+        - addForeignKeyConstraint:
+            baseTableName: measure
+            baseColumnNames: course_indicator_id
+            referencedTableName: course_indicator
+            referencedColumnNames: id
+            constraintName: measure_ibfk_1
+            onDelete: CASCADE
+
+        - dropForeignKeyConstraint:
+            baseTableName: measure_result
+            constraintName: measure_result_ibfk_1
+        - addForeignKeyConstraint:
+            baseTableName: measure_result
+            baseColumnNames: measure_id
+            referencedTableName: measure
+            referencedColumnNames: id
+            constraintName: measure_result_ibfk_1
+            onDelete: CASCADE

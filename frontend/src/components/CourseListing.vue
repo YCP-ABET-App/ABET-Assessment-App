@@ -2,6 +2,9 @@
 import { ref, watch, onMounted } from "vue";
 import api from "@/api";
 import BaseCard from "@/components/ui/BaseCard.vue";
+import CourseInspectModal from "./CourseInspectModal.vue";
+import NewCourseModal from "./NewCourseModal.vue";
+import CourseEditorModal from "./CourseEditorModal.vue";
 
 interface Course {
   id: number
@@ -12,43 +15,63 @@ interface Course {
 }
 
 const props = defineProps<{
-  programId: number | null
+  programId: number | null,
+  semesterId: number | null
 }>();
-
-const emit = defineEmits(["select"]);
 
 const loading = ref(false);
 const error = ref<string | null>(null);
 const courses = ref<Course[]>([]);
 
-/* -----------------------------
- * Load courses for program
- * ----------------------------- */
+const editingCourse = ref<Course | null>(null);
+
+const selectedCourse = ref<Course | null>(null);
+
+const isNewCourseModalOpen = ref(false);
+
+function startEdit(course: Course) {
+  editingCourse.value = course;
+}
+
+async function saveNewCourse(data: any) {
+  try {
+    await api.post("/courses", {
+      courseCode: data.courseCode,
+      courseName: data.courseName,
+      courseDescription: data.courseDescription,
+      studentCount: data.studentCount,
+      isActive: true
+    });
+    loadCourses(); // Refresh the list
+  } catch (err) {
+    console.error("Failed to save course:", err);
+  }
+}
+
 async function loadCourses() {
-  if (!props.programId) {
+  if (!props.programId || !props.semesterId) {
     courses.value = [];
     return;
   }
-
   loading.value = true;
   error.value = null;
-
   try {
-    const res = await api.get(`/program/${props.programId}/courses/active`);
-    courses.value = res.data.data ?? [];
+    const res = await api.get(`/courses/searchCourse`, {
+      params: { isActive: true }
+    });
+    courses.value = res.data?.data ?? [];
   } catch (err) {
-    console.error("Failed to load courses:", err);
     error.value = "Failed to load courses";
   } finally {
     loading.value = false;
   }
 }
 
-watch(() => props.programId, loadCourses);
+watch(() => [props.programId, props.semesterId], loadCourses);
 onMounted(loadCourses);
 
 function selectCourse(course: Course) {
-  emit("select", course);
+  selectedCourse.value = course;
 }
 </script>
 
@@ -65,10 +88,11 @@ function selectCourse(course: Course) {
     </div>
 
     <div v-else-if="courses.length === 0" class="empty-state">
-      <p>No active courses found for this program.</p>
+      <p>No active courses found.</p>
     </div>
 
     <div v-else class="course-grid">
+
       <BaseCard
         v-for="course in courses"
         :key="course.id"
@@ -78,19 +102,53 @@ function selectCourse(course: Course) {
         @click="selectCourse(course)"
       >
         <div class="course-card-content">
-          <div class="course-code">
-            {{ course.courseCode }}
-          </div>
-
+          <div class="course-code">{{ course.courseCode }}</div>
           <div class="course-info">
             <h3 class="course-name">{{ course.courseName }}</h3>
-            <p v-if="course.courseDescription" class="course-description">
-              {{ course.courseDescription }}
-            </p>
           </div>
+
+          <button
+            class="simple-edit-btn"
+            @click.stop="startEdit(course)"
+            title="Edit course"
+          >
+            <img src="@/assets/icons/edit-pencil.svg" alt="Edit" class="edit-icon" />
+          </button>
         </div>
       </BaseCard>
+
+      <BaseCard
+        variant="bordered"
+        hoverable
+        class="course-card add-new-card"
+        @click="isNewCourseModalOpen = true"
+      >
+        <div class="add-new-content">
+          <span class="plus-icon">+</span>
+          <span class="add-text">New Course</span>
+        </div>
+      </BaseCard>
+
     </div>
+
+    <!-- @vue-ignore -->
+    <CourseInspectModal
+      :course="selectedCourse"
+      @close="selectedCourse = null"
+    />
+
+    <NewCourseModal
+      :is-open="isNewCourseModalOpen"
+      @close="isNewCourseModalOpen = false"
+      @submitted="saveNewCourse"
+    />
+
+    <CourseEditorModal
+      :course="editingCourse"
+      @close="editingCourse = null"
+      @saved="loadCourses"
+    />
+
   </section>
 </template>
 
@@ -109,9 +167,23 @@ function selectCourse(course: Course) {
   gap: 1.25rem;
 }
 
+.course-card :deep(.base-card) {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg-secondary);
+}
+
+.course-card :deep(.card-body) {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
 .course-card {
   cursor: pointer;
   transition: all 0.2s ease;
+  height: 100%;
 }
 
 .course-card-content {
@@ -119,6 +191,7 @@ function selectCourse(course: Course) {
   flex-direction: row;
   gap: 0.5rem;
   align-items: center;
+  height: 100%;
 }
 
 .course-code {
@@ -161,5 +234,33 @@ function selectCourse(course: Course) {
 
 .error-state {
   color: var(--color-error);
+}
+
+.course-info {
+  flex: 1;
+  text-align: left;
+}
+
+.simple-edit-btn {
+  background: var(--color-primary);
+  border: none;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+  flex-shrink: 0;
+}
+
+.simple-edit-btn:hover {
+  opacity: 0.25;
+}
+
+.edit-icon {
+  width: 18px;
+  height: 18px;
+  display: block;
 }
 </style>

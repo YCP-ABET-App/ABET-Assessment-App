@@ -1,0 +1,108 @@
+Summary results 2023-24
+5/17/24 - David Babcock, James Moscola, Dean Zeller
+Outcome (1) - Partially Met
+(1.1) - CS 101
+1.1-cs101: Assignment 3 MS1, Dominoes Initialization, Met comfortably (86.4%) (1.1) - CS 201
+1.1-cs201: Assignment 6, Final project, Met (64.3%)
+(1.1) - CS 360
+1.1-cs360: Exam 1 Takehome, Question 3a, Derive recursive equation, Met comfortably (86.7%)
+(1.1) - CS 360
+1.1-cs360: Exam 2 Inclass, Question 1, Derive recursive equation, Not met (40.0%) Recommended actions:
+● Since students were solid on the concept for simpler problems (exam 1), provide some additional practice and slightly reduce the difficulty for the inclass exam problem
+(1.2) - CS 201
+1.2-cs201: Exam 2, Question 2, Fibonacci, Met (64.3%)
+(1.2) - CS 360
+1.2-cs360: Exam 2 Inclass, Question 3, Master Theorem, Not met (40.0%) Recommended actions:
+● Ensure better consistency of coverage of the material across sections and reassess
+(1.2) - CS 360
+1.2-cs360: Exam 4 Inclass, Question 1, Dijkstra’s Algorithm, Met (78.6%) (1.3) - CS 101
+1.3-cs101: Assignment 3 MS2, Dominoes Simulation, Met comfortably (81.8%) (1.3) - CS 201
+1.3-cs201: Final Project Checkpoint 2, Basic design, Met comfortably (79.6%) (1.3) - CS 360
+1.3-cs360: Exam 1 Takehome, Question 1b, More efficient algorithm, Met comfortably (93.3%) (1.3) - CS 360
+1.3-cs360: Exam 4 Takehome, Question 3, Maximum matching, Not met (50.0%) Recommended actions:
+● Provide additional hints as problem was quite difficult
+(1.4) - CS 400
+1.4-cs400: Assignment 3, Requirements, Met (81.5%)
+(1.5) - CS 400
+1.5-cs400: Assignment 3, Use Cases, Not Met (59.3%)
+Recommended actions:
+● More weight and emphasis on creation of use cases as part of requirements document
+(1.6) - CS 201
+1.6-cs201: Exam 3, Question 7, Asymptotic Behavior, Met (64.3%)
+This indicator was used rather than 2.5 as the course material covered asymptotic behavior instead of empirical benchmarking.
+(1.6) - CS 360
+1.6-cs360: Empirical Comparison Report, Not met (60.0%)
+Recommended actions:
+● Provide additional material on plotting multiple data sets on a single graph to compare results visually
+Outcome (2) - MET
+(2.1) - CS 400
+2.1-cs400: Assignment 1, Project Proposal, Met comfortably (96.3%)
+(2.2) - CS 400
+2.2-cs400: Assignment 4, Analysis and Design - UML, Not Met (66.7%)
+Recommended actions:
+● None, as students were able to demonstrate proficiency upon resubmission (2.3) - CS 400
+2.3-cs400: Assignment 4, Analysis and Design - UI, Met (81.5%)
+(2.4) - CS 400
+2.4-cs400: Assignment 5, Minimal Working System - Unit Tests, Not Met (59.3%) Recommended actions:
+● None, one group started a project from scratch and thus did not have a testing framework at this stage. By the end of the project they had a well developed testing architecture including CI/CD server deployment.
+(2.5) - CS 201
+2.5-cs201: NOT ASSESSED IN LIEU OF 1.6
+(2.5) - CS 360
+2.5-cs360: Exam 1, Question 3d, Empirical benchmark subarray sum, Met comfortably (80.0%) (2.5) - CS 360
+2.5-cs360: Exam 2, Question 3d, Empirical benchmark median, Barely not met (66.7%) Recommended action:
+● A bit more instruction on constructing multiple curve graphs. Students also struggled with this on the subsequent empirical comparison report
+(2.6) - CS 330
+2.6-cs330: Lab 2, HTTP, Met comfortably (81.3%)
+(2.6) - CS 330
+2.6-cs330: Quiz 3, Question 10, Host authentication, Met comfortably (100.0%) (2.6) - CS 335
+2.6-cs335: Lab 1, Shellshock attack, Met comfortably (84.6%)
+(2.6) - CS 335
+2.6-cs335: Exam 1, Question 6, Authorization vs. Authentication, Met comfortably (100.0%) (2.6) - CS 335
+2.6-cs335: Quiz 2, Question 4, XSS identification, Barely not met (69.2%) (2.7) - CS 330
+2.7-cs330: Quiz 3, Question 11, Symmetric Key Cryptography, Met comfortably (100.0%) (2.7) - CS 335
+2.7-cs335: Quiz 2, Question 5, XSS mitigation, Met (76.9%)
+(2.7) - CS 335
+2.7-cs335: Quiz 2, Question 8, SQL injection, Met comfortably (92.3%)
+Outcome (3) - MET
+(3.1) - CS 400
+3.1-cs400: Final Presentation, Quality, Met comfortably (96.3%)
+(3.2) - CS 400
+3.2-cs400: Final Presentation, Technical, Met comfortably (92.6%)
+(3.3) - CS 400
+3.3-cs400: Final Report, Draft, Met (81.5%)
+Outcome (4) - MET
+(4.1) - CS 330
+4.1-cs330: Ethical Hacking Acknowledgement, Met comfortably (100.0%) (4.1) - CS 335
+4.1-cs335: Ethical Hacking Acknowledgement, Met comfortably (100.0%) (4.1) - CS 335
+4.1-cs335: Exam 1, Question 15, MAC tracking, Met comfortably (100.0%)
+Outcome (5) - MET
+(5.1) - CS 400
+5.1-cs400: Issue Tracker, Instructor Observations, Peer Evaluations, Met (85.2%) (5.2) - CS 400
+5.2-cs400: Peer Evaluations, Instructor Observations, Met (85.2%)
+
+
+
+
+
+Outcome (6) - MET
+(6.1) - CS 101
+6.1-cs101: Assignment 4, Roulette (functions), Met comfortably (77.3%) (6.1) - CS 201
+6.1-cs201: Final Project, Met comfortably (78.6%)
+(6.1) - CS 340
+6.1-cs340: Final Project, Compiler Design, Met comfortably (80%)
+(6.1) - CS 420
+6.1-cs420: Programming Assignment #2, Shared Memory, Met comfortably (92%) (6.2) - CS 201
+6.2-cs201: Final Project, UI, Met comfortably (85.7%)
+(6.3) - CS 201
+6.3-cs201: NOT ASSESSED IN LIEU OF 6.4
+(6.3) - CS 420
+6.3-cs420: Programming Assignment #3, Multithreaded Application, Met (89%) (6.4) - CS 201
+6.4-cs201: Lab 6 and Assignment 6, Unit tests, Met comfortably (71.4%) This indicator was used rather than 6.3 as the course material covered unit testing instead of concurrency.
+(6.4) - CS 400
+6.4-cs400: Assignment 6, 50% Working System - Testing Framework, Met (88.9%) (6.5) - CS 335
+6.5-cs335: Lab 6, XSS vulnerabilities, Not met (46.2%)
+Recommended actions:
+● Consider timing to avoid major capstone milestones for seniors
+(6.5) - CS 335
+6.5-cs335: Quiz 2, Question 14, “Man-in-the-Middle” attacks, Met comfortably (100.0%) (6.5) - CS 420
+6.5-cs420: Programming Assignment #1, Error Checking, Met comfortably (100%)

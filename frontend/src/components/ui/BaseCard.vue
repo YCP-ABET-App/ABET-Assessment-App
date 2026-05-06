@@ -45,14 +45,14 @@ const cardClasses = computed(() => {
 
 <style scoped>
 .base-card {
-  background-color: var(--color-bg-tertiary);
+  background-color: var(--color-bg-secondary);
   border-radius: 0.5rem;
   overflow: hidden;
   transition: all 0.2s ease-in-out;
 }
 
 .card-default {
-  border: 1px solid var(--color-border-light);
+  border: 1px solid var(--color-border-dark);
 }
 
 .card-bordered {

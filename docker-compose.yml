@@ -1,24 +1,71 @@
 services:
-  app:
+
+  local-database:
+    image: mariadb:10.3
+    container_name: mariadb-local-abet
+    restart: always
+    environment:
+      MARIADB_ROOT_PASSWORD: secure_root_password
+      MARIADB_USER: username
+      MARIADB_PASSWORD: password
+      MARIADB_DATABASE: abet_assessment_local
+    ports:
+      - "3307:3306"
+    networks:
+      - web-network
+    volumes:
+      # Initialize database with docker-schema.sql on first container startup
+      - ./src/main/resources/docker-schema.sql:/docker-entrypoint-initdb.d/init.sql
+      # Specify location on volume for data
+      - mariadb_volume:/var/lib/mysql
+
+  liquibase:
+    image: liquibase/liquibase:4.33.0
+    depends_on:
+      - local-database
+    volumes:
+      - ./src/main/resources:/liquibase/resources
+    working_dir: /liquibase/resources
+    command: >
+      /bin/bash -c "sleep 15 && liquibase --username=username --password=password --url='jdbc:mariadb://mariadb-local-abet:3306/abet_assessment_local' --changelog-file=db/changelog/changelog-master.yaml update"
+    networks:
+      - web-network
+
+  backend:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: abet-dev
-    environment:
-      SPRING_PROFILES_ACTIVE: dev-docker
-      JAVA_OPTS: ${JAVA_OPTS:--Xmx512m -Xms256m -XX:+UseG1GC}
+    container_name: spring-backend
+    restart: always
     ports:
       - "8080:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://mariadb-local-abet:3306/abet_assessment_local
+      - SPRING_DATASOURCE_USERNAME=username
+      - SPRING_DATASOURCE_PASSWORD=password
     networks:
-      - abet-network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+      - web-network
+    depends_on:
+      liquibase:
+        condition: service_completed_successfully
+      local-database:
+        condition: service_started
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: vue-frontend
+    restart: always
+    ports:
+      - "3000:80"
+    networks:
+      - web-network
+    depends_on:
+      - backend
+
+volumes:
+  mariadb_volume:
 
 networks:
-  abet-network:
-    driver: bridge
+  web-network:

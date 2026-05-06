@@ -2,17 +2,16 @@ package com.abetappteam.abetapp.controller;
 
 import com.abetappteam.abetapp.dto.ApiResponse;
 import com.abetappteam.abetapp.dto.CourseDTO;
-import com.abetappteam.abetapp.dto.PagedResponse;
 import com.abetappteam.abetapp.entity.Course;
+import com.abetappteam.abetapp.entity.Requests.Course.CourseSearchRequest;
 import com.abetappteam.abetapp.service.CourseService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
+
 import java.util.List;
 
 /**
@@ -26,53 +25,41 @@ public class CourseController extends BaseController {
     @Autowired
     private CourseService courseService;
 
-    @GetMapping("/instructor")
-    public ResponseEntity<ApiResponse<List<Course>>> getCoursesByInstructor(
-            @RequestParam Long programUserId) {
+    /**
+     * Search courses by name or course code
+     */
+    @GetMapping("/searchCourse")
+    public ResponseEntity<ApiResponse<List<Course>>> searchCourse(
+            @RequestParam(required = false) Integer id,
+            @RequestParam(required = false) String courseCode,
+            @RequestParam(required = false) String courseName,
+            @RequestParam(required = false) String courseDescription,
+            @RequestParam(required = false) Integer student_count,
+            @RequestParam(required = false) Integer mirrorId,
+            @RequestParam(required = false) Boolean isActive) {
+        CourseSearchRequest request = new CourseSearchRequest(id, courseCode, courseName, courseDescription,
+                student_count, mirrorId, isActive);
 
-        logger.info("Fetching courses for instructor with program user ID: {}", programUserId);
-        validateId(programUserId);
-        List<Course> courses = courseService.getActiveCoursesByProgramUserId(programUserId);
-        return success(courses, "Courses retrieved successfully for instructor");
+        logger.info("Search request received for: {}", request);
+
+        List<Course> courses = courseService.searchCourse(request);
+
+        return success(courses, "Courses retrieved successfully");
     }
 
-    /**
-     * Get a specific course by ID
-     */
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<Course>> getCourse(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Course>> getCourseById(@PathVariable Long id) {
         logger.info("Fetching course with ID: {}", id);
         validateId(id);
         Course course = courseService.findById(id);
         return success(course, "Course retrieved successfully");
     }
 
-    /**
-     * Get all courses for a specific semester
-     */
-    @GetMapping
-    public ResponseEntity<PagedResponse<Course>> getAllCourses(
-            @RequestParam Long semesterId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
-            @RequestParam(defaultValue = "courseName") String sort,
-            @RequestParam(defaultValue = "asc") String direction) {
-
-        logger.info("Fetching all courses for semester ID: {}", semesterId);
-        validateId(semesterId);
-        Pageable pageable = createPageable(page, size, sort, direction);
-        Page<Course> courses = courseService.getCoursesBySemester(semesterId, pageable);
-        return pagedSuccess(courses);
-    }
-
-    /**
-     * Get all active courses
-     */
-    @GetMapping("/active/all")
-    public ResponseEntity<ApiResponse<List<Course>>> getAllActiveCourses() {
-        logger.info("Fetching ALL active courses (no semester filter)");
-        List<Course> courses = courseService.getAllActiveCourses();
-        return success(courses, "Active courses retrieved successfully");
+    @GetMapping("/courseIndicator/getIds/{courseIndicatorId}")
+    public ResponseEntity<ApiResponse<List<Long>>> getIdsByCourseIndicator(@PathVariable Long courseIndicatorId) {
+        logger.info("Fetching course and indicator IDs for courseIndicatorId: {}", courseIndicatorId);
+        List<Long> ids = courseService.getIdsByCourseIndicator(courseIndicatorId);
+        return success(ids, "IDs retrieved successfully");
     }
 
     /**
@@ -156,93 +143,68 @@ public class CourseController extends BaseController {
     }
 
     /**
-     * Get measure completeness status for a course
-     */
-    @GetMapping("/{courseId}/completeness")
-    public ResponseEntity<ApiResponse<CourseService.MeasureCompletenessResponse>> measureCompleteness(
-            @PathVariable Long courseId) {
-
-        logger.info("Checking measure completeness for course ID: {}", courseId);
-        validateId(courseId);
-        CourseService.MeasureCompletenessResponse completeness = courseService.calculateMeasureCompleteness(courseId);
-        return success(completeness, "Measure completeness retrieved successfully");
-    }
-
-    /**
-     * Get active courses by semester
+     * Get active courses, optionally filtered by program.
      */
     @GetMapping("/active")
-    public ResponseEntity<PagedResponse<Course>> getActiveCourses(
-            @RequestParam Long semesterId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
-            @RequestParam(defaultValue = "courseName") String sort,
-            @RequestParam(defaultValue = "asc") String direction) {
+    public ResponseEntity<ApiResponse<List<Course>>> getActiveCourses(
+            @RequestParam(required = false) Long programId) {
 
-        logger.info("Fetching active courses for semester ID: {}", semesterId);
-        validateId(semesterId);
-        Pageable pageable = createPageable(page, size, sort, direction);
-        Page<Course> courses = courseService.getActiveCoursesBySemester(semesterId, pageable);
-        return pagedSuccess(courses);
+        List<Course> courses;
+        if (programId != null) {
+            logger.info("Fetching active courses for programId: {}", programId);
+            courses = courseService.getActiveCoursesByProgramId(programId);
+        } else {
+            logger.info("Fetching all active courses");
+            courses = courseService.getAllActiveCourses();
+        }
+        return success(courses, "Active courses retrieved successfully");
     }
 
     /**
-     * Search courses by name or course code
+     * Get indicator IDs assigned to a course.
      */
-    @GetMapping("/search")
-    public ResponseEntity<PagedResponse<Course>> searchCourses(
-            @RequestParam String searchTerm,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
-
-        logger.info("Searching courses with term: {}", searchTerm);
-        Pageable pageable = createPageable(page, size, "courseName", "asc");
-        Page<Course> courses = courseService.searchByNameOrCourseCode(searchTerm, pageable);
-        return pagedSuccess(courses);
+    @GetMapping("/{courseId}/indicators")
+    public ResponseEntity<List<Long>> getIndicatorIds(@PathVariable Long courseId) {
+        logger.info("Fetching indicator IDs for courseId: {}", courseId);
+        validateId(courseId);
+        List<Long> ids = courseService.getIndicatorIds(courseId);
+        return ResponseEntity.ok(ids);
     }
 
     /**
-     * Find course by course code (e.g., "CS101")
+     * Get all soft-deleted courses
      */
-    @GetMapping("/code/{courseCode}")
-    public ResponseEntity<ApiResponse<Course>> getCourseByCourseCode(@PathVariable String courseCode) {
-        logger.info("Fetching course by course code: {}", courseCode);
-        Course course = courseService.findByCourseCode(courseCode);
-        return success(course, "Course retrieved successfully");
+    @GetMapping("/deleted")
+    public ResponseEntity<ApiResponse<List<Course>>> getDeletedCourses() {
+        logger.info("Fetching all soft-deleted courses");
+        List<Course> deleted = courseService.findDeletedCourses();
+        return success(deleted, "Deleted courses retrieved successfully");
     }
 
     /**
-     * Check if course code exists
+     * Permanently delete a soft-deleted course
      */
-    @GetMapping("/code/{courseCode}/exists")
-    public ResponseEntity<ApiResponse<Boolean>> checkCourseCodeExists(@PathVariable String courseCode) {
-        logger.info("Checking if course code exists: {}", courseCode);
-        boolean exists = courseService.existsByCourseCode(courseCode);
-        return success(exists, "Course code existence checked successfully");
+    @DeleteMapping("/{id}/permanent")
+    public ResponseEntity<ApiResponse<Void>> permanentDeleteCourse(@PathVariable Long id) {
+        logger.info("Permanently deleting course with ID: {}", id);
+        validateId(id);
+        courseService.permanentDeleteCourse(id);
+        return success(null, "Course permanently deleted");
     }
 
     /**
-     * Count courses in a semester
+     * Create a new version of a course (preserves original as inactive)
      */
-    @GetMapping("/count")
-    public ResponseEntity<ApiResponse<Long>> countCoursesBySemester(@RequestParam Long semesterId) {
-        logger.info("Counting courses for semester ID: {}", semesterId);
-        validateId(semesterId);
-        long count = courseService.countBySemester(semesterId);
-        return success(count, "Course count retrieved successfully");
-    }
+    @PostMapping("/{id}/version")
+    public ResponseEntity<ApiResponse<Course>> versionCourse(
+            @PathVariable Long id,
+            @Valid @RequestBody CourseDTO dto) {
 
-    /**
-     * Count active courses in a semester
-     */
-    @GetMapping("/count/active")
-    public ResponseEntity<ApiResponse<Long>> countActiveCoursesBySemester(@RequestParam Long semesterId) {
-        logger.info("Counting active courses for semester ID: {}", semesterId);
-        validateId(semesterId);
-        long count = courseService.countActiveBySemester(semesterId);
-        return success(count, "Active course count retrieved successfully");
+        logger.info("Versioning course with ID: {}", id);
+        validateId(id);
+        Course versioned = courseService.versionCourse(id, dto);
+        return created(versioned);
     }
-
 
     // Instructor assignments
     @PostMapping("/{courseId}/instructors/{programUserId}")
@@ -261,11 +223,6 @@ public class CourseController extends BaseController {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/{courseId}/instructors")
-    public ResponseEntity<List<Long>> getInstructors(@PathVariable Long courseId) {
-        return ResponseEntity.ok(courseService.getInstructorIds(courseId));
-    }
-
     // Indicator assignments
     @PostMapping("/{courseId}/indicators/{indicatorId}")
     public ResponseEntity<Void> assignIndicator(
@@ -281,11 +238,6 @@ public class CourseController extends BaseController {
             @PathVariable Long indicatorId) {
         courseService.removeIndicator(courseId, indicatorId);
         return ResponseEntity.ok().build();
-    }
-
-    @GetMapping("/{courseId}/indicators")
-    public ResponseEntity<List<Long>> getIndicators(@PathVariable Long courseId) {
-        return ResponseEntity.ok(courseService.getIndicatorIds(courseId));
     }
 
     /**

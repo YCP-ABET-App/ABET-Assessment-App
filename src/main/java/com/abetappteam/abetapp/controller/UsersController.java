@@ -8,8 +8,8 @@ import com.abetappteam.abetapp.entity.Users;
 import com.abetappteam.abetapp.exception.BadRequestException;
 import com.abetappteam.abetapp.dto.UsersDTO;
 import com.abetappteam.abetapp.dto.UpdateUsersDTO;
-import com.abetappteam.abetapp.exception.ForbiddenException;
 import com.abetappteam.abetapp.security.JwtUtil;
+import com.abetappteam.abetapp.service.CourseService;
 import com.abetappteam.abetapp.service.ProgramService;
 import com.abetappteam.abetapp.service.UsersService;
 
@@ -36,10 +36,14 @@ public class UsersController extends BaseController {
     private UsersService usersService;
 
     @Autowired
+    private CourseService courseService;
+
+    @Autowired
     private JwtUtil jwtUtil;
 
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
+
     @Autowired
     private ProgramService programService;
 
@@ -67,6 +71,9 @@ public class UsersController extends BaseController {
 
         // Get default program (first admin program or just first program)
         ProgramUser defaultProgram = programService.getDefaultProgramForUser(user.getId());
+
+        // Check if this program user has courses assigned
+        boolean hasCourses = courseService.hasActiveCourses(defaultProgram.getId());
 
         // Determine role in default program
         String role = defaultProgram.getAdminStatus() ? "ADMIN" : "INSTRUCTOR";
@@ -102,6 +109,7 @@ public class UsersController extends BaseController {
         response.put("authToken", token);
         response.put("user", userMap);
         response.put("programs", programsList);
+        response.put("hasCourses", hasCourses);
 
         return ResponseEntity.ok(response);
     }
@@ -113,8 +121,22 @@ public class UsersController extends BaseController {
 
         Users user = usersService.create(dto);
 
+        // Get default program for new user
+        ProgramUser defaultProgram = programService.getDefaultProgramForUser(user.getId());
+
+        // Check if user has courses
+        boolean hasCourses = courseService.hasActiveCourses(defaultProgram.getId());
+
+        // Determine role
+        String role = defaultProgram.getAdminStatus() ? "ADMIN" : "INSTRUCTOR";
+
         // Generate JWT token
-        String token = jwtUtil.generateToken(user.getId(), user.getEmail(), user.getCurrentRole(), programService.getDefaultProgramForUser(user.getId()).getProgramId());
+        String token = jwtUtil.generateToken(
+                user.getId(),
+                user.getEmail(),
+                role,
+                defaultProgram.getProgramId()
+        );
 
         // Prepare response
         Map<String, Object> userMap = new HashMap<>();
@@ -122,11 +144,13 @@ public class UsersController extends BaseController {
         userMap.put("email", user.getEmail());
         userMap.put("firstName", user.getFirstName());
         userMap.put("lastName", user.getLastName());
-        userMap.put("role", user.getCurrentRole());
+        userMap.put("role", role);
+        userMap.put("currentProgramId", defaultProgram.getProgramId());
 
         Map<String, Object> response = new HashMap<>();
-        response.put("token", token);
+        response.put("authToken", token);
         response.put("user", userMap);
+        response.put("hasCourses", hasCourses);
 
         return ResponseEntity.ok(response);
     }
@@ -171,11 +195,14 @@ public class UsersController extends BaseController {
         String token = authHeader.substring(7);
         Long userId = jwtUtil.extractUserId(token);
 
-        // Verify user has access to this program
-        String role = programService.getRoleInProgram(userId, programId);
-        if (role == null) {
-            throw new ForbiddenException("You do not have access to this program");
-        }
+        // Verify user has access to this program and get their ProgramUser record
+        ProgramUser programUser = programService.getProgramUser(userId, programId);
+
+        // Check if this program user has courses
+        boolean hasCourses = courseService.hasActiveCourses(programUser.getId());
+
+        // Determine role
+        String role = programUser.getAdminStatus() ? "ADMIN" : "INSTRUCTOR";
 
         // Generate new token with new program context
         Users user = usersService.findById(userId);
@@ -190,6 +217,7 @@ public class UsersController extends BaseController {
         response.put("token", newToken);
         response.put("role", role);
         response.put("programId", programId);
+        response.put("hasCourses", hasCourses);
 
         return ResponseEntity.ok(response);
     }

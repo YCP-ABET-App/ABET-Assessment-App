@@ -1,28 +1,34 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useUserStore } from '@/stores/user-store'
 import ConnectionTest from '@/components/ConnectionTest.vue'
-import HomePage from '@/pages/HomePage.vue'
-import SummaryPage from '@/pages/SummaryPage.vue'
-import FCARPage from '@/pages/FCARPage.vue'
-import CourseViewPage from '@/pages/CourseViewPage.vue'
-import InstructorViewPage from '@/pages/InstructorViewPage.vue'
-import ProgramCoursesPage from '@/pages/ProgramCoursesPage.vue'
-import ProgramInstructorsPage from '@/pages/ProgramInstructorsPage.vue'
-import LogInPage from '@/pages/LogIn.vue'
-import SignUpPage from '@/pages/SignUp.vue'
-import AdminDashboard from '@/pages/AdminDashboard.vue'
-import ExamplePage from "@/pages/ExamplePage.vue";
-import ManagementPage from "@/pages/ManagementPage.vue";
+import HomePage from '@/components/pages/HomePage.vue'
+import SummaryPage from '@/components/pages/SummaryPage.vue'
+import FCARPage from '@/components/pages/FCARPage.vue'
+import SectionViewPage from '@/components/pages/SectionViewPage.vue'
+import InstructorViewPage from '@/components/pages/InstructorViewPage.vue'
+import ProgramCoursesPage from '@/components/pages/ProgramCoursesPage.vue'
+import ProgramInstructorsPage from '@/components/pages/ProgramInstructorsPage.vue'
+import LogInPage from '@/components/pages/LogIn.vue'
+import SignUpPage from '@/components/pages/SignUp.vue'
+import ManagementPage from "@/components/ManagementPage.vue";
+import InstitutionLoginPage from "@/components/pages/InstitutionLoginPage.vue";
+import MultiYearReportPage from "@/components/pages/MultiYearReportPage.vue";
 
 const routes = [
   {
     path: '/',
-    redirect: '/dashboard',
+    redirect: '/institution-login',
   },
   {
     path: '/test-connection',
     name: 'ConnectionTest',
     component: ConnectionTest,
+  },
+{
+    path: '/admin-dashboard',
+    name: 'Admin Dashboard',
+    component: () => import('@/components/pages/AdminDashboardPage.vue'),
+    meta: { requiresAuth: true, requiresAdmin: true }
   },
   {
     path: '/dashboard',
@@ -31,7 +37,7 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
-    path: '/:program_id/summary/',
+    path: '/:program_id/:semester_id/summary/',
     name: 'Summary',
     component: SummaryPage,
     meta: { requiresAuth: true }
@@ -43,9 +49,9 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
-    path: '/course/:course_id',
-    name: 'Course',
-    component: CourseViewPage,
+    path: '/section/:section_id',
+    name: 'Section',
+    component: SectionViewPage,
     meta: { requiresAuth: true }
   },
   {
@@ -72,15 +78,14 @@ const routes = [
     component: LogInPage,
   },
   {
+    path: '/institution-login',
+    name: 'Institution Log In',
+    component: InstitutionLoginPage,
+  },
+  {
     path: '/signup',
     name: 'Sign Up',
     component: SignUpPage,
-  },
-  {
-    path: '/admin-dashboard',
-    name: 'Admin Dashboard',
-    component: AdminDashboard,
-    meta: { requiresAuth: true, requiresAdmin: true }
   },
   {
     path: '/setup',
@@ -89,9 +94,22 @@ const routes = [
     meta: { requiresAuth: true, requiresAdmin: true }
   },
   {
-    path: '/examples',
-    name: 'Examples',
-    component: ExamplePage
+    path: '/settings',
+    name: 'Settings',
+    component: () => import('@/components/pages/SettingsPage.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/import-tool',
+    name: 'Import Tool',
+    component: () => import('@/components/pages/ImportToolPage.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/:program_id/multi-year-summary',
+    name: 'Multi-Year Summary',
+    component: MultiYearReportPage,
+    meta: { requiresAuth: true }
   }
 ]
 
@@ -103,6 +121,7 @@ const router = createRouter({
 // Navigation guard
 router.beforeEach((to, from, next) => {
   const userStore = useUserStore()
+  const institutionId = localStorage.getItem('selectedInstitutionId')
 
   // Load user data from storage if not already loaded
   if (!userStore.isLoggedIn && localStorage.getItem('authToken')) {
@@ -112,21 +131,63 @@ router.beforeEach((to, from, next) => {
   const requiresAuth = to.meta.requiresAuth
   const requiresAdmin = to.meta.requiresAdmin
 
+  // Allow institution login page for all users
+  if (to.name === 'Institution Log In') {
+    next()
+    return
+  }
+
+  // If user is logged in but trying to access login/signup pages, redirect to dashboard
+  if (userStore.isLoggedIn && (to.name === 'Log In' || to.name === 'Sign Up')) {
+    next({ name: 'Home' })
+    return
+  }
+
+  // If user is not logged in and trying to access login/signup, ensure institution is selected
+  if (!userStore.isLoggedIn && (to.name === 'Log In' || to.name === 'Sign Up')) {
+    if (!institutionId) {
+      next({
+        name: 'Institution Log In',
+        query: { redirect: to.fullPath }
+      })
+      return
+    }
+    // Institution is selected, allow access to login/signup
+    next()
+    return
+  }
+
+  // If user is not logged in and trying to access a protected route
   if (requiresAuth && !userStore.isLoggedIn) {
-    // Redirect to login, save intended destination
+    // If institution not selected, go to institution login
+    if (!institutionId) {
+      next({
+        name: 'Institution Log In',
+        query: { redirect: to.fullPath }
+      })
+      return
+    }
+    // If institution selected but not logged in, go to login page
     next({
       name: 'Log In',
       query: { redirect: to.fullPath }
     })
-  } else if (requiresAdmin && !userStore.isAdmin) {
-    // Redirect non-admins away from admin routes
-    next({ name: 'Home' })
-  } else if ((to.name === 'Log In' || to.name === 'Sign Up') && userStore.isLoggedIn) {
-    // Redirect authenticated users away from login/signup
-    next({ name: 'Home' })
-  } else {
-    next()
+    return
   }
+
+  // If user is logged in but trying to access institution login, redirect to dashboard
+  if (userStore.isLoggedIn && to.name === 'Institution Log In') {
+    next({ name: 'Home' })
+    return
+  }
+
+  // Handle admin routes
+  if (requiresAdmin && !userStore.isAdmin) {
+    next({ name: 'Home' })
+    return
+  }
+
+  next()
 })
 
 export default router

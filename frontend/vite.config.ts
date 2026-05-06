@@ -56,7 +56,7 @@ export default defineConfig({
     },
   },
   server: {
-    host: 'localhost', // Exclude Tailscale, allow Docker access via host.docker.internal
+    host: '127.0.0.1', // Exclude Tailscale, allow Docker access via host.docker.internal
     port: 5173,
     // Proxy API requests to Spring Boot backend
     proxy: {

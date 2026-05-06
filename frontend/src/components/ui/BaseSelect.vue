@@ -49,7 +49,7 @@ export interface SelectOption {
 
 export interface SelectProps {
   id?: string
-  modelValue?: string | number
+  modelValue?: string | number | null
   options: (SelectOption | string | number)[]
   label?: string
   placeholder?: string
@@ -65,7 +65,7 @@ const props = withDefaults(defineProps<SelectProps>(), {
 })
 
 const emit = defineEmits<{
-  'update:modelValue': [value: string | number]
+  'update:modelValue': [value: string | number | null]
 }>()
 
 const handleChange = (event: Event) => {
@@ -73,7 +73,10 @@ const handleChange = (event: Event) => {
   emit('update:modelValue', target.value)
 }
 
-const getOptionValue = (option: SelectOption | string | number): string | number => {
+const getOptionValue = (option: SelectOption | string | number | null): string | number => {
+  if (option === null || option === undefined) {
+    return ''
+  }
   if (typeof option === 'object') {
     return option.value
   }

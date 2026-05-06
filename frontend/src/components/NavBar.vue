@@ -2,6 +2,9 @@
 const props = defineProps({
   loggedIn: Boolean,
   username: String,
+  isInstructor: Boolean,
+  isAdmin: Boolean,
+  isInstitutionLoginPage: Boolean,
 })
 
 const emit = defineEmits(["logout"])
@@ -12,13 +15,27 @@ const emit = defineEmits(["logout"])
     <div class="navbar-container">
       <div id="logo">ABET Assessment App</div>
 
-      <div class="navbar-links">
-        <router-link to="/" class="nav_button">Home</router-link>
+<div class="navbar-links">
+        <router-link
+          :to="loggedIn ? '/dashboard' : '/institution-login'"
+          class="nav_button"
+        >
+          Home
+        </router-link>
+
         <template v-if="loggedIn">
+
+        <template v-if="isAdmin && isInstructor">
           <div class="nav-divider"></div>
-          <router-link to="/setup" class="nav_button">Setup</router-link>
+          <router-link to="/admin-dashboard" class="nav_button">Admin</router-link>
         </template>
 
+          <div class="nav-divider"/>
+          <router-link to="/import-tool" class="nav_button">Importer</router-link>
+
+          <div class="nav-divider"></div>
+          <router-link to="/settings" class="nav_button">Settings</router-link>
+        </template>
       </div>
 
       <!-- USER + LOGIN/LOGOUT SECTION -->
@@ -27,31 +44,39 @@ const emit = defineEmits(["logout"])
 
         <!-- When logged in -->
         <template v-if="loggedIn">
-          <!-- Username displayed separately -->
-          <div class="username-display">
-            {{ username }}
+          <div class="user-profile-chip">
+            <div class="user-avatar">
+              {{ username ? username[0].toUpperCase() : 'U' }}
+            </div>
+            <div class="user-details">
+              <span class="user-name">{{ username }}</span>
+            </div>
           </div>
 
           <div class="nav-divider"></div>
 
-          <!-- Stand-alone logout button -->
-          <button
-            class="nav_button auth-button logout-btn"
-            @click="$emit('logout')"
-          >
+          <button class="nav_button auth-button logout-btn" @click="$emit('logout')">
             Log Out
           </button>
         </template>
 
         <!-- When logged out -->
         <router-link
-          v-else
+          v-if="!isInstitutionLoginPage && !loggedIn"
           to="/login"
           class="nav_button auth-button"
           id="login"
         >
           Log In
         </router-link>
+        <span
+          v-else
+          class="nav_button auth-button disabled-login"
+          id="login"
+          title="Complete institution verification first"
+        >
+          Log In
+        </span>
       </div>
     </div>
   </nav>
@@ -139,16 +164,6 @@ const emit = defineEmits(["logout"])
   opacity: 0.6;
 }
 
-.username-display {
-  display: flex;
-  align-items: center;
-  padding: 0 var(--navbar-item-padding-x);
-  font-weight: var(--font-weight-bold);
-  border-radius: var(--radius-md);
-  color: white;
-  white-space: nowrap;
-}
-
 .logout-btn {
   background: none;
   color: var(--navbar-text);
@@ -163,6 +178,12 @@ const emit = defineEmits(["logout"])
 
 .logout-btn:hover {
   background-color: var(--navbar-hover-bg);
+}
+
+.disabled-login {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 /* Responsive Design */
@@ -180,6 +201,52 @@ const emit = defineEmits(["logout"])
     padding: 0 var(--spacing-md);
     font-size: var(--font-size-sm);
   }
+}
+
+.user-profile-chip {
+  display: flex;
+  flex-direction: column; /* Stacks the circle on top of the name */
+  align-items: center;
+  justify-content: center;
+  gap: 2px;               /* gap between circle and name */
+  padding: 0 var(--navbar-item-padding-x);
+  height: 100%;
+}
+
+.user-avatar {
+  width: 28px;
+  height: 28px;
+  background-color: var(--color-primary-dark, #3498db);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 12px;
+  color: white;
+  flex-shrink: 0;
+}
+
+.user-details {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  line-height: 1.2;
+}
+
+.user-name {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--navbar-text, white);
+  white-space: nowrap;
+  opacity: 0.9;
+}
+
+.user-role {
+  font-size: 10px;
+  color: var(--navbar-text, white);
+  opacity: 0.7;
+  text-transform: uppercase;
 }
 
 @media (max-width: 768px) {
@@ -224,8 +291,5 @@ const emit = defineEmits(["logout"])
     height: auto;
   }
 
-  .user-info {
-    font-size: var(--font-size-xs);
-  }
 }
 </style>

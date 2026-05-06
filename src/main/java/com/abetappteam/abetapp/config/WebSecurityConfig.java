@@ -1,5 +1,6 @@
 package com.abetappteam.abetapp.config;
 
+import com.abetappteam.abetapp.filter.RateLimitingFilter;
 import com.abetappteam.abetapp.security.JwtAuthenticationFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -20,6 +21,9 @@ public class WebSecurityConfig {
     @Autowired
     private JwtAuthenticationFilter jwtAuthFilter;
 
+    @Autowired
+    private RateLimitingFilter rateLimitingFilter;
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -38,13 +42,26 @@ public class WebSecurityConfig {
                                 "/signup",
                                 "/login",
                                 "/test-connection",
-                                "/h2-console/**",
-                                "/api/**"
+                                "/h2-console/**"
                         ).permitAll()
+                        // Public API endpoints
+                        .requestMatchers(
+                                "/api/users/login",
+                                "/api/users/signup",
+                                "/api/institution/login"
+                        ).permitAll()
+                        // Protected API endpoints
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/instructor/**").hasAnyRole("ADMIN", "INSTRUCTOR")
+                        .requestMatchers("/api/hello").authenticated()
+                        .requestMatchers("/api/**").authenticated()
+                        // Everything else (for Vue routing)
+                        .anyRequest().permitAll()
                 )
                 .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable))
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
+                .addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

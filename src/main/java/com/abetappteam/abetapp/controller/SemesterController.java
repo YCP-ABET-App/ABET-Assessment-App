@@ -3,6 +3,7 @@ package com.abetappteam.abetapp.controller;
 import com.abetappteam.abetapp.dto.ApiResponse;
 import com.abetappteam.abetapp.dto.PagedResponse;
 import com.abetappteam.abetapp.dto.SemesterDTO;
+import com.abetappteam.abetapp.entity.Requests.Semester.SemesterSearchRequest;
 import com.abetappteam.abetapp.entity.Semester;
 import com.abetappteam.abetapp.entity.Semester.SemesterStatus;
 import com.abetappteam.abetapp.entity.Semester.SemesterType;
@@ -30,33 +31,11 @@ public class SemesterController extends BaseController {
     @Autowired
     private SemesterService semesterService;
 
-    /**
-     * Get all semesters for a specific program
-     */
     @GetMapping
-    public ResponseEntity<PagedResponse<Semester>> getAllSemesters(
-            @RequestParam Long programId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
-            @RequestParam(defaultValue = "startDate") String sort,
-            @RequestParam(defaultValue = "desc") String direction) {
-
-        logger.info("Fetching all semesters for program ID: {}", programId);
-        validateId(programId);
-        Pageable pageable = createPageable(page, size, sort, direction);
-        Page<Semester> semesters = semesterService.getSemestersByProgram(programId, pageable);
-        return pagedSuccess(semesters);
-    }
-
-    /**
-     * Get a specific semester by ID
-     */
-    @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<Semester>> getSemester(@PathVariable Long id) {
-        logger.info("Fetching semester with ID: {}", id);
-        validateId(id);
-        Semester semester = semesterService.findById(id);
-        return success(semester, "Semester retrieved successfully");
+    public ResponseEntity<ApiResponse<List<Semester>>> getAllSemesters(@ModelAttribute SemesterSearchRequest request) {
+        logger.info("Fetching all semesters");
+        List<Semester> semesters = semesterService.searchSemesters(request);
+        return success(semesters, "Semesters retrieved successfully");
     }
 
     /**
@@ -101,75 +80,7 @@ public class SemesterController extends BaseController {
         return success(null, "Semester removed successfully");
     }
 
-    /**
-     * Get semesters by academic year
-     */
-    @GetMapping("/academic-year/{academicYear}")
-    public ResponseEntity<PagedResponse<Semester>> getSemestersByAcademicYear(
-            @PathVariable Integer academicYear,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
-            @RequestParam(defaultValue = "startDate") String sort,
-            @RequestParam(defaultValue = "asc") String direction) {
 
-        logger.info("Fetching semesters for academic year: {}", academicYear);
-        Pageable pageable = createPageable(page, size, sort, direction);
-        Page<Semester> semesters = semesterService.getSemestersByAcademicYear(academicYear, pageable);
-        return pagedSuccess(semesters);
-    }
-
-    /**
-     * Get semesters by type (FALL, SPRING, SUMMER, WINTER)
-     */
-    @GetMapping("/type/{type}")
-    public ResponseEntity<PagedResponse<Semester>> getSemestersByType(
-            @PathVariable String type,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
-            @RequestParam(defaultValue = "startDate") String sort,
-            @RequestParam(defaultValue = "asc") String direction) {
-
-        logger.info("Fetching semesters of type: {}", type);
-        SemesterType semesterType = SemesterType.valueOf(type.toUpperCase());
-        Pageable pageable = createPageable(page, size, sort, direction);
-        Page<Semester> semesters = semesterService.getSemestersByType(semesterType, pageable);
-        return pagedSuccess(semesters);
-    }
-
-    /**
-     * Get semesters by status (UPCOMING, ACTIVE, COMPLETED, ARCHIVED)
-     */
-    @GetMapping("/status/{status}")
-    public ResponseEntity<PagedResponse<Semester>> getSemestersByStatus(
-            @PathVariable String status,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
-            @RequestParam(defaultValue = "startDate") String sort,
-            @RequestParam(defaultValue = "asc") String direction) {
-
-        logger.info("Fetching semesters with status: {}", status);
-        SemesterStatus semesterStatus = SemesterStatus.valueOf(status.toUpperCase());
-        Pageable pageable = createPageable(page, size, sort, direction);
-        Page<Semester> semesters = semesterService.getSemestersByStatus(semesterStatus, pageable);
-        return pagedSuccess(semesters);
-    }
-
-    /**
-     * Get current semester for a program
-     */
-    @GetMapping("/program/{programId}/current")
-    public ResponseEntity<ApiResponse<Object>> getCurrentSemesterByProgram(@PathVariable Long programId) {
-        logger.info("Fetching current semester for program ID: {}", programId);
-        validateId(programId);
-        Optional<Semester> currentSemester = semesterService.getCurrentSemesterByProgram(programId);
-
-        if (currentSemester.isPresent()) {
-            return success(currentSemester.get(), "Current semester retrieved successfully");
-        } else {
-            return error("No current semester found for program",
-                    org.springframework.http.HttpStatus.NOT_FOUND);
-        }
-    }
 
     /**
      * Set a semester as current for a program
@@ -195,114 +106,6 @@ public class SemesterController extends BaseController {
         SemesterStatus newStatus = SemesterStatus.valueOf(status.toUpperCase());
         Semester updated = semesterService.updateSemesterStatus(id, newStatus);
         return success(updated, "Semester status updated successfully");
-    }
-
-    /**
-     * Get active and upcoming semesters for a program
-     */
-    @GetMapping("/program/{programId}/active-upcoming")
-    public ResponseEntity<ApiResponse<List<Semester>>> getActiveAndUpcomingSemesters(
-            @PathVariable Long programId) {
-        logger.info("Fetching active and upcoming semesters for program ID: {}", programId);
-        validateId(programId);
-        List<Semester> semesters = semesterService.getActiveAndUpcomingSemestersByProgram(programId);
-        return success(semesters, "Active and upcoming semesters retrieved successfully");
-    }
-
-    /**
-     * Search semesters by name or code
-     */
-    @GetMapping("/search")
-    public ResponseEntity<PagedResponse<Semester>> searchSemesters(
-            @RequestParam String searchTerm,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
-
-        logger.info("Searching semesters with term: {}", searchTerm);
-        Pageable pageable = createPageable(page, size, "name", "asc");
-        Page<Semester> semesters = semesterService.searchByNameOrCode(searchTerm, pageable);
-        return pagedSuccess(semesters);
-    }
-
-    /**
-     * Find semester by code (e.g., "FALL-2025")
-     */
-    @GetMapping("/code/{code}")
-    public ResponseEntity<ApiResponse<Semester>> getSemesterByCode(@PathVariable String code) {
-        logger.info("Fetching semester by code: {}", code);
-        Semester semester = semesterService.findByCode(code);
-        return success(semester, "Semester retrieved successfully");
-    }
-
-    /**
-     * Get active semesters on a specific date
-     */
-    @GetMapping("/active-on-date")
-    public ResponseEntity<ApiResponse<List<Semester>>> getActiveSemestersOnDate(
-            @RequestParam String date) {
-
-        logger.info("Fetching active semesters on date: {}", date);
-        LocalDate targetDate = LocalDate.parse(date);
-        List<Semester> semesters = semesterService.getActiveSemestersOnDate(targetDate);
-        return success(semesters, "Active semesters on date retrieved successfully");
-    }
-
-    /**
-     * Get all current semesters
-     */
-    @GetMapping("/current")
-    public ResponseEntity<ApiResponse<List<Semester>>> getCurrentSemesters() {
-        logger.info("Fetching all current semesters");
-        List<Semester> semesters = semesterService.getCurrentSemesters();
-        return success(semesters, "Current semesters retrieved successfully");
-    }
-
-    /**
-     * Get distinct academic years for a program
-     */
-    @GetMapping("/program/{programId}/academic-years")
-    public ResponseEntity<ApiResponse<List<Integer>>> getDistinctAcademicYears(@PathVariable Long programId) {
-        logger.info("Fetching distinct academic years for program ID: {}", programId);
-        validateId(programId);
-        List<Integer> academicYears = semesterService.getDistinctAcademicYearsByProgram(programId);
-        return success(academicYears, "Distinct academic years retrieved successfully");
-    }
-
-    /**
-     * Check if semester has courses
-     */
-    @GetMapping("/{id}/has-courses")
-    public ResponseEntity<ApiResponse<Boolean>> hasCourses(@PathVariable Long id) {
-        logger.info("Checking if semester {} has courses", id);
-        validateId(id);
-        boolean hasCourses = semesterService.hasCourses(id);
-        return success(hasCourses, "Course existence checked successfully");
-    }
-
-    /**
-     * Count courses in a semester
-     */
-    @GetMapping("/{id}/course-count")
-    public ResponseEntity<ApiResponse<Long>> countCoursesBySemester(@PathVariable Long id) {
-        logger.info("Counting courses in semester {}", id);
-        validateId(id);
-        long courseCount = semesterService.countCoursesBySemester(id);
-        return success(courseCount, "Course count retrieved successfully");
-    }
-
-    /**
-     * Count semesters by program and status
-     */
-    @GetMapping("/program/{programId}/status/{status}/count")
-    public ResponseEntity<ApiResponse<Long>> countByProgramAndStatus(
-            @PathVariable Long programId,
-            @PathVariable String status) {
-
-        logger.info("Counting semesters for program {} with status {}", programId, status);
-        validateId(programId);
-        SemesterStatus semesterStatus = SemesterStatus.valueOf(status.toUpperCase());
-        long count = semesterService.countByProgramAndStatus(programId, semesterStatus);
-        return success(count, "Semester count retrieved successfully");
     }
 
     /**

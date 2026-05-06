@@ -4,6 +4,7 @@ plugins {
     id 'java'
     id 'com.github.node-gradle.node' version '7.0.1'
     id 'jacoco'
+    id 'war'
 }
 
 version = '0.0.31-dev'
@@ -33,6 +34,9 @@ dependencies {
     implementation 'io.jsonwebtoken:jjwt-api:0.12.5'
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.5'
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.5'
+
+    // Rate limiting with Bucket4j
+    implementation 'com.bucket4j:bucket4j-core:8.10.1'
 
     runtimeOnly 'org.mariadb.jdbc:mariadb-java-client' // Database driver
     runtimeOnly 'com.h2database:h2'
@@ -97,6 +101,7 @@ tasks.register('devWithBuiltInFrontend') {
     group = 'abet-dev'
     description = 'Run with built frontend locally'
     dependsOn 'copyFrontend'
+
     doFirst {
         tasks.bootRun.configure {
             args = ['--spring.profiles.active=dev-builtin']
@@ -105,6 +110,35 @@ tasks.register('devWithBuiltInFrontend') {
 
     finalizedBy 'bootRun'
 }
+
+tasks.register('devWithBrowser') {
+    group = 'abet-dev'
+    description = 'Run with built frontend locally'
+    dependsOn 'copyFrontend'
+
+    doFirst {
+        tasks.bootRun.configure {
+            args = ['--spring.profiles.active=dev-builtin']
+        }
+    }
+
+    finalizedBy 'bootRun', 'openWebsite'
+}
+
+tasks.register('openWebsite') {
+    doLast {
+        def url = 'http://localhost:8080'
+        println "Opening $url in default browser..."
+        if (System.properties['os.name'].contains('Windows')) {
+            exec { commandLine 'cmd', '/c', "start $url" }
+        } else if (System.properties['os.name'].contains('Mac')) {
+            exec { commandLine 'open', url }
+        } else {
+            exec { commandLine 'xdg-open', url }
+        }
+    }
+}
+
 
 // FRONTEND BUILD TASKS
 // Cleans and then installs the dependencies
@@ -249,4 +283,12 @@ tasks.register('composeBuild', Exec) {
     description = 'Build Docker images'
     args 'compose', 'build'
     executable 'docker'
+}
+
+tasks.register('installWar', Exec) {
+    description = 'Generates the WAR file for deployment'
+    dependsOn 'war'
+    doLast {
+        println "WAR file generated at: ${buildDir}/libs/${project.name}-${version}.war"
+    }
 }
