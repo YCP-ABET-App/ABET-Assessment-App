@@ -63,10 +63,10 @@ async function login() {
           Submit
         </BaseButton>
       </div>
-
+     
       <p class="tooltip">
-        Don't have an account? Sign up
-        <router-link to="/signup">here</router-link>.
+        Forgot your password?
+        <router-link to="/reset-password">Reset Password</router-link>.
       </p>
     </BaseCard>
   </div>
