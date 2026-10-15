@@ -3,7 +3,7 @@ name: Deploy to Production
 on:
   push:
     branches:
-      - main
+      - Production
     tags:
       - 'v*'
   workflow_dispatch:
