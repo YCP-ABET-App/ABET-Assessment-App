@@ -12,6 +12,8 @@ import LoginPage from '@/components/pages/Login.vue'
 import ManagementPage from "@/components/ManagementPage.vue";
 import InstitutionLoginPage from "@/components/pages/InstitutionLoginPage.vue";
 import MultiYearReportPage from "@/components/pages/MultiYearReportPage.vue";
+import AccountRecoveryPage from '@/components/pages/AccountRecoveryPage.vue'
+import InstitutionSignup from '@/components/pages/InstitutionSignup.vue'
 
 const routes = [
   {
@@ -75,6 +77,16 @@ const routes = [
     path: '/login',
     name: 'Login',
     component: LoginPage,
+  },
+  {
+    path: "/reset-password",
+    name: "Reset Password",
+    component: AccountRecoveryPage
+  },
+  {
+    path: "/institution-signup",
+    name: "Institution Signup",
+    component: InstitutionSignup
   },
   {
     path: '/institution-login',
