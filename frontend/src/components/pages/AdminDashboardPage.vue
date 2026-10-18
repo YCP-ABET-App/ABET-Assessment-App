@@ -43,10 +43,10 @@ function navigateToMultiYearReport() {
 
 <template>
   <div class="page-container">
-    <NavBar 
-      :logged-in="isLoggedIn" 
-      :username="displayName" 
-      @logout="handleLogout" 
+    <NavBar
+      :logged-in="isLoggedIn"
+      :username="displayName"
+      @logout="handleLogout"
     />
 
     <main class="content-area">
