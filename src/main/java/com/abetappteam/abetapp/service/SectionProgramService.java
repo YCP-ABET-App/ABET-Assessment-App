@@ -1,8 +1,12 @@
 package com.abetappteam.abetapp.service;
 
+import com.abetappteam.abetapp.entity.Section;
 import com.abetappteam.abetapp.entity.SectionProgram;
 import com.abetappteam.abetapp.entity.Requests.SectionProgram.SectionProgramSearchRequest;
+import com.abetappteam.abetapp.exception.ResourceNotFoundException;
+import com.abetappteam.abetapp.repository.ScheduleEntryRepository;
 import com.abetappteam.abetapp.repository.SectionProgramRepository;
+import com.abetappteam.abetapp.repository.SectionRepository;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -18,6 +22,12 @@ public class SectionProgramService extends BaseService<SectionProgram, Long, Sec
     @Autowired
     public SectionProgramService(SectionProgramRepository repository){ super(repository); }
 
+    @Autowired
+    private SectionRepository sectionRepository;
+
+    @Autowired
+    private ScheduleEntryRepository scheduleEntryRepository;
+
     @Override
     protected String getEntityName() { return "SectionProgram"; }
 
@@ -28,6 +38,17 @@ public class SectionProgramService extends BaseService<SectionProgram, Long, Sec
         {
             throw new IllegalArgumentException(
                 "This section is already assigned to the given program."
+            );
+        }
+
+        Section section = sectionRepository.findById((long) sectionId)
+                .orElseThrow(() -> new ResourceNotFoundException("Section", (long) sectionId));
+
+        if(!Boolean.TRUE.equals(scheduleEntryRepository.existsBySemesterIdAndCourseIdAndProgramId(
+                section.getSemesterId(), section.getCourseId(), programId)))
+        {
+            throw new IllegalArgumentException(
+                "This program has no performance indicators scheduled for this course and semester."
             );
         }
 

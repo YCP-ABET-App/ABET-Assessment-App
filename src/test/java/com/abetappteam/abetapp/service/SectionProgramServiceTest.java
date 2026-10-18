@@ -2,13 +2,17 @@ package com.abetappteam.abetapp.service;
 
 import com.abetappteam.abetapp.BaseServiceTest;
 import com.abetappteam.abetapp.entity.Requests.SectionProgram.SectionProgramSearchRequest;
+import com.abetappteam.abetapp.entity.Section;
 import com.abetappteam.abetapp.entity.SectionProgram;
 import com.abetappteam.abetapp.exception.ResourceNotFoundException;
+import com.abetappteam.abetapp.repository.ScheduleEntryRepository;
 import com.abetappteam.abetapp.repository.SectionProgramRepository;
+import com.abetappteam.abetapp.repository.SectionRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
 import java.util.Optional;
@@ -23,6 +27,12 @@ class SectionProgramServiceTest extends BaseServiceTest {
     @Mock
     private SectionProgramRepository repository;
 
+    @Mock
+    private SectionRepository sectionRepository;
+
+    @Mock
+    private ScheduleEntryRepository scheduleEntryRepository;
+
     @InjectMocks
     private SectionProgramService sectionProgramService;
 
@@ -30,6 +40,9 @@ class SectionProgramServiceTest extends BaseServiceTest {
 
     @BeforeEach
     void setUp() {
+        ReflectionTestUtils.setField(sectionProgramService, "sectionRepository", sectionRepository);
+        ReflectionTestUtils.setField(sectionProgramService, "scheduleEntryRepository", scheduleEntryRepository);
+
         testSectionProgram = new SectionProgram();
         testSectionProgram.setId(1L);
         testSectionProgram.setSectionId(1);
@@ -50,7 +63,11 @@ class SectionProgramServiceTest extends BaseServiceTest {
 
     @Test
     void shouldCreateSectionProgram() {
+        Section section = new Section("001", 10, 5);
+        section.setId(1L);
         when(repository.existsBySectionIdAndProgramId(1, 2)).thenReturn(false);
+        when(sectionRepository.findById(1L)).thenReturn(Optional.of(section));
+        when(scheduleEntryRepository.existsBySemesterIdAndCourseIdAndProgramId(5, 10, 2)).thenReturn(true);
         when(repository.save(any(SectionProgram.class))).thenReturn(testSectionProgram);
 
         SectionProgram created = sectionProgramService.createSectionProgram(1, 2);
@@ -59,7 +76,23 @@ class SectionProgramServiceTest extends BaseServiceTest {
         assertThat(created.getSectionId()).isEqualTo(1);
         assertThat(created.getProgramId()).isEqualTo(2);
         verify(repository).existsBySectionIdAndProgramId(1, 2);
+        verify(scheduleEntryRepository).existsBySemesterIdAndCourseIdAndProgramId(5, 10, 2);
         verify(repository).save(any(SectionProgram.class));
+    }
+
+    @Test
+    void shouldThrowWhenProgramHasNoScheduleEntries() {
+        Section section = new Section("001", 10, 5);
+        section.setId(1L);
+        when(repository.existsBySectionIdAndProgramId(1, 2)).thenReturn(false);
+        when(sectionRepository.findById(1L)).thenReturn(Optional.of(section));
+        when(scheduleEntryRepository.existsBySemesterIdAndCourseIdAndProgramId(5, 10, 2)).thenReturn(false);
+
+        assertThatThrownBy(() -> sectionProgramService.createSectionProgram(1, 2))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("no performance indicators scheduled");
+
+        verify(repository, never()).save(any());
     }
 
     @Test

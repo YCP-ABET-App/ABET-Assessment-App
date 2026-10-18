@@ -43,6 +43,9 @@ public class PerformanceIndicatorService
         indicator.setIndicatorNumber(dto.getIndicatorNumber());
         indicator.setStudentOutcomeId(dto.getStudentOutcomeId());
         indicator.setProgramId(dto.getProgramId());
+        indicator.setMetRubric(dto.getMetRubric());
+        indicator.setBelowRubric(dto.getBelowRubric());
+        indicator.setExceedsRubric(dto.getExceedsRubric());
         indicator.setIsActive(true);
 
         logger.info("Creating new performance indicator: {} for student outcome {}", dto.getIndicatorNumber(),
@@ -65,6 +68,9 @@ public class PerformanceIndicatorService
         }
 
         indicator.setDescription(dto.getDescription());
+        indicator.setMetRubric(dto.getMetRubric());
+        indicator.setBelowRubric(dto.getBelowRubric());
+        indicator.setExceedsRubric(dto.getExceedsRubric());
         logger.info("Updating performance indicator: {}", indicatorId);
         return repository.save(indicator);
     }

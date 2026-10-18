@@ -463,7 +463,8 @@ async function loadProgramInstructors() {
           const sectionRes = await api.get(`/section`, {
             params: {
               userId: pu.userId,
-              semesterId: currentSemesterId.value
+              semesterId: currentSemesterId.value,
+              programId: props.programId
             }
           });
           const allSections = sectionRes.data.data.sections ?? [];
