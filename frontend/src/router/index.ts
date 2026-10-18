@@ -13,6 +13,7 @@ import SignUpPage from '@/components/pages/SignUp.vue'
 import ManagementPage from "@/components/ManagementPage.vue";
 import InstitutionLoginPage from "@/components/pages/InstitutionLoginPage.vue";
 import MultiYearReportPage from "@/components/pages/MultiYearReportPage.vue";
+import SchedulePage from '@/components/pages/SchedulePage.vue';
 
 const routes = [
   {
@@ -110,6 +111,14 @@ const routes = [
     name: 'Multi-Year Summary',
     component: MultiYearReportPage,
     meta: { requiresAuth: true }
+  },
+  {
+    // This creates a dedicated URL for schedule entry page
+    path: '/:programId/schedule-entry',
+    name: 'ScheduleEntry',
+    component: SchedulePage,
+    meta: { requiresAuth: true },
+    props: true
   }
 ]
 
