@@ -221,19 +221,19 @@ async function createNewProgram(){
         />
       </BaseCard>
 
-      <!-- PROGRAM PREFERENCE -->
-      <BaseCard title="Program Preferences" variant="elevated" class="settings-section">
-        <BaseSelect
-          v-model="selectedProgram"
-          :options="
-            programs.map(p => ({
-              label: 'Computer Science – York College of Pennsylvania',
-              value: p.programId
-            }))
-          "
-          label="Preferred Program"
-        />
-      </BaseCard>
+<!--      &lt;!&ndash; PROGRAM PREFERENCE &ndash;&gt;-->
+<!--      <BaseCard title="Program Preferences" variant="elevated" class="settings-section">-->
+<!--        <BaseSelect-->
+<!--          v-model="selectedProgram"-->
+<!--          :options="-->
+<!--            programs.map(p => ({-->
+<!--              label: 'Computer Science – York College of Pennsylvania',-->
+<!--              value: p.programId-->
+<!--            }))-->
+<!--          "-->
+<!--          label="Preferred Program"-->
+<!--        />-->
+<!--      </BaseCard>-->
 
       <!-- ADD NEW PROGRAM -->
       <BaseCard title="Add New Program" variant="elevated" class="settings-section">
