@@ -52,7 +52,7 @@
         variant="bordered"
         hoverable
         class="instructor-card add-new-card"
-        @click="showCreateModal = true"
+        @click="showInstructorChoiceModal = true"
       >
         <div class="add-new-content">
           <span class="plus-icon">+</span>
@@ -63,7 +63,110 @@
 
     <div v-else class="empty-state">
       <p>No instructors found in this program.</p>
+
+      <BaseCard
+        variant="bordered"
+        hoverable
+        class="instructor-card add-new-card"
+        @click="showInstructorChoiceModal = true"
+      >
+        <div class="add-new-content">
+          <span class="plus-icon">+</span>
+          <span class="add-text">New Instructor</span>
+        </div>
+      </BaseCard>
     </div>
+
+
+    <!-- New Instructor Choice Modal -->
+    <BaseModal
+      v-model:isOpen="showInstructorChoiceModal"
+      title="Add Instructor"
+      size="md"
+      @close="showInstructorChoiceModal = false"
+    >
+      <div class="instructor-choice">
+        <p>How would you like to add an instructor?</p>
+
+        <button
+          class="btn-primary"
+          @click="openExistingInstructors"
+        >
+          Choose from existing
+        </button>
+
+        <button
+          class="btn-secondary"
+          @click="openCreateInstructor"
+        >
+          Create new
+        </button>
+      </div>
+
+      <template #footer>
+        <button
+          class="btn-secondary"
+          @click="showInstructorChoiceModal = false"
+        >
+          Cancel
+        </button>
+      </template>
+    </BaseModal>
+
+    <!-- Choose Existing Instructor Modal -->
+    <BaseModal
+      v-model:isOpen="showExistingInstructorsModal"
+      title="Choose Existing Instructor"
+      size="md"
+      @close="showExistingInstructorsModal = false"
+    >
+      <div v-if="loadingExistingInstructors">
+        Loading instructors...
+      </div>
+
+      <div v-else-if="existingInstructors.length === 0">
+        No existing users available to add.
+      </div>
+
+      <div v-else class="existing-instructor-list">
+        <label
+          v-for="instructor in existingInstructors"
+          :key="instructor.userId"
+          class="existing-instructor-option"
+        >
+          <input
+            v-model="selectedExistingUserId"
+            type="radio"
+            :value="instructor.userId"
+          />
+
+          <span>
+        <strong>
+          {{ instructor.firstName }} {{ instructor.lastName }}
+        </strong>
+        <br />
+        <small>{{ instructor.email }}</small>
+      </span>
+        </label>
+      </div>
+
+      <template #footer>
+        <button
+          class="btn-secondary"
+          @click="showExistingInstructorsModal = false"
+        >
+          Cancel
+        </button>
+
+        <button
+          class="btn-primary"
+          :disabled="selectedExistingUserId === null"
+          @click="addExistingInstructor"
+        >
+          Add Instructor
+        </button>
+      </template>
+    </BaseModal>
 
     <!-- Instructor Details Modal -->
     <BaseModal
@@ -319,6 +422,21 @@ const toast = useToast() as {
 
 const showCreateModal = ref(false);
 
+const showInstructorChoiceModal = ref(false);
+const showExistingInstructorsModal = ref(false);
+
+const loadingExistingInstructors = ref(false);
+
+const existingInstructors = ref<ExistingInstructor[]>([]);
+const selectedExistingUserId = ref<number | null>(null);
+
+interface ExistingInstructor {
+  userId: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+}
+
 // User store for semester filtering
 const userStore = useUserStore();
 const { currentSemesterId } = storeToRefs(userStore);
@@ -381,6 +499,8 @@ interface SectionIndicatorInfo {
 const props = defineProps<{
   programId: number | null
 }>();
+
+
 
 const instructors = ref<Instructor[]>([]);
 const selectedInstructor = ref<Instructor | null>(null);
@@ -533,6 +653,59 @@ async function loadProgramInstructors() {
     error.value = "Failed to load instructors";
   } finally {
     loading.value = false;
+  }
+}
+
+function openCreateInstructor() {
+  showInstructorChoiceModal.value = false;
+  showCreateModal.value = true;
+}
+
+async function openExistingInstructors() {
+  showInstructorChoiceModal.value = false;
+  showExistingInstructorsModal.value = true;
+  loadingExistingInstructors.value = true;
+  selectedExistingUserId.value = null;
+
+  try {
+    const response = await api.get("/users");
+    const users = response.data.data ?? [];
+
+    const currentProgramUserIds = new Set(
+      instructors.value.map(instructor => instructor.userId)
+    );
+
+    existingInstructors.value = users.filter(
+      (user: any) => !currentProgramUserIds.has(user.userId)
+    );
+  } catch (err) {
+    console.error("Error loading existing users:", err);
+    toast.error("Failed to load existing users.");
+    showExistingInstructorsModal.value = false;
+  } finally {
+    loadingExistingInstructors.value = false;
+  }
+}
+
+async function addExistingInstructor() {
+  if (selectedExistingUserId.value === null) {
+    toast.error('Please select an instructor.');
+    return;
+  }
+
+  try {
+    await api.post(`/program/${props.programId}/users`, {
+      userId: selectedExistingUserId.value,
+      isAdmin: false,
+    });
+
+    toast.success('Instructor added successfully.');
+    showExistingInstructorsModal.value = false;
+
+    await loadProgramInstructors();
+  } catch (error) {
+    console.error('Error adding instructor:', error);
+    toast.error('Failed to add instructor.');
   }
 }
 
@@ -1361,6 +1534,47 @@ function closeCourseModal() {
 .btn-small {
   padding: 0.375rem 1rem;
   font-size: 0.8125rem;
+}
+
+.instructor-choice {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.instructor-choice p {
+  color: var(--color-text-secondary);
+  margin: 0 0 0.5rem;
+}
+
+.instructor-choice button {
+  width: 100%;
+}
+
+.existing-instructor-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: 350px;
+  overflow-y: auto;
+}
+
+.existing-instructor-option {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem;
+  border: 1px solid var(--color-border-light);
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+
+.existing-instructor-option:hover {
+  background: var(--color-bg-secondary);
+}
+
+.existing-instructor-option small {
+  color: var(--color-text-secondary);
 }
 
 /* Responsive */
