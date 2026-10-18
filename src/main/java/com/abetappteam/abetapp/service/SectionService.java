@@ -26,6 +26,9 @@ public class SectionService extends BaseService<Section, Long, SectionRepository
     @Autowired
     private SectionUserRepository sectionUserRepository;
 
+    @Autowired
+    private SectionProgramService sectionProgramService;
+
     @Override
     protected String getEntityName() {
         return "Section";
@@ -33,6 +36,11 @@ public class SectionService extends BaseService<Section, Long, SectionRepository
 
     @Transactional
     public Section createSection(String sectionNumber, int courseId, int semesterId) {
+        return createSection(sectionNumber, courseId, semesterId, null);
+    }
+
+    @Transactional
+    public Section createSection(String sectionNumber, int courseId, int semesterId, Integer programId) {
 
         // Check for duplicates
         if (repository.existsBySectionNumberAndSemesterIdAndCourseId(sectionNumber, semesterId, courseId)) {
@@ -47,7 +55,9 @@ public class SectionService extends BaseService<Section, Long, SectionRepository
         if(result != null) {
             logger.info("Section created successfully with id {}: {}", result.getId(), result);
 
-            // TODO: In the future, we'll add performance indicators here
+            if (programId != null) {
+                sectionProgramService.createSectionProgram(result.getId().intValue(), programId);
+            }
 
             return result;
         } else {

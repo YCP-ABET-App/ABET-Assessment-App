@@ -95,7 +95,7 @@ class SectionControllerUnitTest extends BaseControllerTest {
 
     @Test
     void shouldCreateSection() throws Exception {
-        when(sectionService.createSection(anyString(), anyInt(), anyInt())).thenReturn(testSection);
+        when(sectionService.createSection(anyString(), anyInt(), anyInt(), any())).thenReturn(testSection);
 
         mockMvc.perform(post("/api/section")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -108,7 +108,8 @@ class SectionControllerUnitTest extends BaseControllerTest {
         verify(sectionService).createSection(
                 testDTO.getSectionNumber(),
                 testDTO.getCourseId(),
-                testDTO.getSemesterId());
+                testDTO.getSemesterId(),
+                testDTO.getProgramId());
     }
 
     @Test
