@@ -89,7 +89,7 @@
         <p>How would you like to add an instructor?</p>
 
         <button
-          class="btn-primary"
+          class="btn-secondary"
           @click="openExistingInstructors"
         >
           Choose from existing
@@ -273,7 +273,7 @@
 
             <div class="form-actions">
               <button
-                class="btn-secondary"
+                class="btn-primary"
                 @click="cancelEditingInfo"
                 :disabled="saving"
               >
@@ -669,7 +669,14 @@ async function openExistingInstructors() {
 
   try {
     const response = await api.get("/users");
-    const users = response.data.data ?? [];
+    const users = response.data.content ?? [];
+
+    console.log("First user:", users[0]);
+    console.log("User IDs:", users.map((user: any) => ({
+      id: user.id,
+      userId: user.userId,
+      email: user.email
+    })));
 
     const currentProgramUserIds = new Set(
       instructors.value.map(instructor => instructor.userId)
@@ -678,6 +685,7 @@ async function openExistingInstructors() {
     existingInstructors.value = users.filter(
       (user: any) => !currentProgramUserIds.has(user.userId)
     );
+
   } catch (err) {
     console.error("Error loading existing users:", err);
     toast.error("Failed to load existing users.");
