@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { ref, reactive } from "vue";
+import { computed } from 'vue';
+
 // Removed unused Pinia imports to resolve TS6133
 
 // --- TYPES ---
@@ -57,16 +59,81 @@ function saveRubric() {
 // --- STATE: 6-Year Outcome Schedule ---
 const academicYears = ["2024-2025", "2025-2026", "2026-2027", "2027-2028", "2028-2029", "2029-2030"];
 const outcomes = [1, 2, 3, 4, 5, 6];
+// --- STATE: Table Highlight Tool ---
+const highlightQuery = ref("");
 
-// Fix TS7053 by explicitly typing the object structure with Record
-const sixYearSchedule: Record<number, Record<string, string>> = reactive({
-  1: { "2024-2025": "350, 400", "2025-2026": "101, 201, 360", "2026-2027": "320, 350, 400", "2027-2028": "201, 360, 402", "2028-2029": "101, 320, 350, 400", "2029-2030": "201, 320, 360, 402" },
-  2: { "2024-2025": "320, 330", "2025-2026": "335, 360, 400", "2026-2027": "201, 330", "2027-2028": "320, 335, 360, 402", "2028-2029": "330", "2029-2030": "201, 330, 360, 402" },
-  3: { "2024-2025": "400", "2025-2026": "320", "2026-2027": "320, 400", "2027-2028": "402", "2028-2029": "400", "2029-2030": "320, 402" },
-  4: { "2024-2025": "330", "2025-2026": "335, 456", "2026-2027": "330", "2027-2028": "335, 456", "2028-2029": "330", "2029-2030": "335, 456" },
-  5: { "2024-2025": "400", "2025-2026": "320", "2026-2027": "320, 400", "2027-2028": "402", "2028-2029": "400", "2029-2030": "320, 402" },
-  6: { "2024-2025": "201, 420", "2025-2026": "101, 320, 335, 340, 400", "2026-2027": "201, 420", "2027-2028": "101, 335, 340, 402", "2028-2029": "101, 320, 420", "2029-2030": "201, 335, 340, 402" }
+// Updated to store arrays of strings instead of comma-separated strings
+const sixYearSchedule = reactive<Record<number, Record<string, string[]>>>({
+  1: { "2024-2025": ["CS 350", "CS 400"], "2025-2026": ["CS 101", "CS 201", "CS 360"], "2026-2027": ["CS 320", "CS 350", "CS 400"], "2027-2028": ["CS 201", "CS 360", "CS 402"], "2028-2029": ["CS 101", "CS 320", "CS 350", "CS 400"], "2029-2030": ["CS 201", "CS 320", "CS 360", "CS 402"] },
+  2: { "2024-2025": ["CS 320", "CS 330"], "2025-2026": ["CS 335", "CS 360", "CS 400"], "2026-2027": ["CS 201", "CS 330"], "2027-2028": ["CS 320", "CS 335", "CS 360", "CS 402"], "2028-2029": ["CS 330"], "2029-2030": ["CS 201", "CS 330", "CS 360", "CS 402"] },
+  3: { "2024-2025": ["CS 400"], "2025-2026": ["CS 320"], "2026-2027": ["CS 320", "CS 400"], "2027-2028": ["CS 402"], "2028-2029": ["CS 400"], "2029-2030": ["CS 320", "CS 402"] },
+  4: { "2024-2025": ["CS 330"], "2025-2026": ["CS 335", "CS 456"], "2026-2027": ["CS 330"], "2027-2028": ["CS 335", "CS 456"], "2028-2029": ["CS 330"], "2029-2030": ["CS 335", "CS 456"] },
+  5: { "2024-2025": ["CS 400"], "2025-2026": ["CS 320"], "2026-2027": ["CS 320", "CS 400"], "2027-2028": ["CS 402"], "2028-2029": ["CS 400"], "2029-2030": ["CS 320", "CS 402"] },
+  6: { "2024-2025": ["CS 201", "CS 420"], "2025-2026": ["CS 101", "CS 320", "CS 335", "CS 340", "CS 400"], "2026-2027": ["CS 201", "CS 420"], "2027-2028": ["CS 101", "CS 335", "CS 340", "CS 402"], "2028-2029": ["CS 101", "CS 320", "CS 420"], "2029-2030": ["CS 201", "CS 335", "CS 340", "CS 402"] }
 });
+
+// --- STATE: Cell Course Search & Creation ---
+const activeTargetCell = ref<{ outcome: number; year: string } | null>(null);
+const searchQuery = ref("");
+const isCreatingCourse = ref(false);
+const newCourseName = ref("");
+
+// Mock global course list
+const allAvailableCourses = ref([
+  "CS 101", "CS 201", "CS 320", "CS 330", "CS 335",
+  "CS 340", "CS 350", "CS 360", "CS 400", "CS 402",
+  "CS 420", "CS 456", "CS 499", "MATH 210"
+]);
+
+const filteredCourses = computed(() => {
+  if (!searchQuery.value) return [];
+  const query = searchQuery.value.toLowerCase();
+
+  // Filter by query and exclude courses already in the active cell
+  return allAvailableCourses.value.filter(course => {
+    const isMatch = course.toLowerCase().includes(query);
+    const isAlreadyInCell = activeTargetCell.value
+      && sixYearSchedule[activeTargetCell.value.outcome][activeTargetCell.value.year].includes(course);
+    return isMatch && !isAlreadyInCell;
+  });
+});
+
+function removeCourseFromCell(outcome: number, year: string, courseToRemove: string) {
+  sixYearSchedule[outcome][year] = sixYearSchedule[outcome][year].filter(c => c !== courseToRemove);
+}
+
+function openCourseSearch(outcome: number, year: string) {
+  activeTargetCell.value = { outcome, year };
+  searchQuery.value = "";
+  isCreatingCourse.value = false;
+}
+
+function closeCourseSearch() {
+  activeTargetCell.value = null;
+}
+
+function addCourseToActiveCell(courseName: string) {
+  if (activeTargetCell.value) {
+    const { outcome, year } = activeTargetCell.value;
+    if (!sixYearSchedule[outcome][year].includes(courseName)) {
+      sixYearSchedule[outcome][year].push(courseName);
+    }
+  }
+  closeCourseSearch();
+}
+
+function createAndAddNewCourse() {
+  if (!newCourseName.value) return;
+  const courseName = newCourseName.value.toUpperCase();
+
+  // TODO: API Call to save new course globally
+
+  if (!allAvailableCourses.value.includes(courseName)) {
+    allAvailableCourses.value.push(courseName);
+  }
+  addCourseToActiveCell(courseName);
+  newCourseName.value = "";
+}
 
 // --- STATE: Course/Outcome Mapping ---
 const courses = ["CS 101", "CS 201", "CS 320", "CS 330", "CS 335", "CS 340", "CS 350", "CS 360", "CS 400", "CS 402", "CS 420", "CS 456"];
@@ -123,7 +190,17 @@ const courseOutcomeMap: Record<string, Record<number, string>> = reactive({
 
     <!-- SECTION 2: 6-Year Outcome Schedule -->
     <section class="mapping-section">
-      <h2>6-Year Outcome to Course Schedule Mapping</h2>
+      <!-- Updated header for perfect centering -->
+      <div class="section-header">
+        <h2>6-Year Outcome to Course Schedule Mapping</h2>
+        <input
+          type="text"
+          v-model="highlightQuery"
+          placeholder="Highlight course (e.g. CS 400)..."
+          class="search-input highlight-input"
+        />
+      </div>
+
       <div class="table-container">
         <table class="data-table">
           <thead>
@@ -135,15 +212,33 @@ const courseOutcomeMap: Record<string, Record<number, string>> = reactive({
           <tbody>
           <tr v-for="outcome in outcomes" :key="outcome">
             <th class="row-header">{{ outcome }}</th>
-            <td v-for="year in academicYears" :key="year">
-              <input type="text" v-model="sixYearSchedule[outcome][year]" class="cell-input" placeholder="-" />
+            <td v-for="year in academicYears" :key="year" class="cell-courses">
+              <div class="chip-container">
+                  <span
+                    v-for="course in sixYearSchedule[outcome][year]"
+                    :key="course"
+                    class="course-chip"
+                    :class="{
+                      'is-highlighted': highlightQuery && course.toLowerCase().includes(highlightQuery.toLowerCase()),
+                      'is-dimmed': highlightQuery && !course.toLowerCase().includes(highlightQuery.toLowerCase())
+                    }"
+                  >
+                    {{ course }}
+                    <button class="chip-remove" @click="removeCourseFromCell(outcome, year, course)">×</button>
+                  </span>
+                <!-- Removed the 'is-dimmed' class check so this button always stays active -->
+                <button
+                  class="btn-add-chip"
+                  @click="openCourseSearch(outcome, year)"
+                  title="Add Course"
+                >+</button>
+              </div>
             </td>
           </tr>
           </tbody>
         </table>
       </div>
     </section>
-
     <!-- SECTION 3: Course/Outcome PI Mapping -->
     <section class="mapping-section">
       <h2>Course / Outcome PI Mapping</h2>
@@ -167,29 +262,40 @@ const courseOutcomeMap: Record<string, Record<number, string>> = reactive({
       </div>
     </section>
 
-    <!-- MODAL: Rubric Editor -->
-    <div v-if="selectedPI" class="modal-overlay" @click.self="closeRubricModal">
-      <div class="modal-content">
-        <h3>{{ selectedPI.outcomeDesc }}</h3>
-        <p class="pi-highlight">[ {{ selectedPI.piName }} ]</p>
+    <!-- MODAL: Course Search & Add -->
+    <div v-if="activeTargetCell" class="modal-overlay" @click.self="closeCourseSearch">
+      <div class="modal-content search-modal-content">
+        <h3>Add Course to Outcome {{ activeTargetCell.outcome }} ({{ activeTargetCell.year }})</h3>
 
-        <h4>Rubric</h4>
         <div class="form-group">
-          <label>Met:</label>
-          <input type="text" v-model="rubricForm.met" />
+          <input
+            type="text"
+            v-model="searchQuery"
+            placeholder="Search courses..."
+            autofocus
+          />
         </div>
-        <div class="form-group">
-          <label>Below:</label>
-          <input type="text" v-model="rubricForm.below" />
-        </div>
-        <div class="form-group">
-          <label>Exceeds:</label>
-          <input type="text" v-model="rubricForm.exceeds" />
+
+        <ul v-if="filteredCourses.length > 0" class="autocomplete-list">
+          <li v-for="course in filteredCourses" :key="course" @click="addCourseToActiveCell(course)">
+            Add: <strong>{{ course }}</strong>
+          </li>
+        </ul>
+
+        <div v-if="searchQuery && filteredCourses.length === 0" class="create-course-prompt">
+          <p>No matches found.</p>
+          <button v-if="!isCreatingCourse" @click="isCreatingCourse = true" class="btn-save btn-small">
+            Create New Course
+          </button>
+          <div v-if="isCreatingCourse" class="create-inline">
+            <input v-model="newCourseName" placeholder="e.g. CS 500" />
+            <button @click="createAndAddNewCourse" class="btn-save btn-small">Save & Add</button>
+            <button @click="isCreatingCourse = false" class="btn-cancel btn-small">Cancel</button>
+          </div>
         </div>
 
         <div class="modal-actions">
-          <button class="btn-cancel" @click="closeRubricModal">Cancel</button>
-          <button class="btn-save" @click="saveRubric">Save Rubric</button>
+          <button class="btn-cancel" @click="closeCourseSearch">Close</button>
         </div>
       </div>
     </div>
@@ -374,4 +480,164 @@ details.so-pi-dropdown summary {
 .btn-save:hover {
   background: #16a34a;
 }
+
+.cell-courses {
+  vertical-align: top;
+}
+
+.chip-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+  align-items: center;
+}
+
+.course-chip {
+  background: #3d3d3d;
+  border: 1px solid #555;
+  border-radius: 16px;
+  padding: 0.2rem 0.5rem 0.2rem 0.75rem;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.chip-remove {
+  background: transparent;
+  border: none;
+  color: #ef4444;
+  font-size: 1rem;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0 0.2rem;
+  border-radius: 50%;
+}
+
+.chip-remove:hover {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+.btn-add-chip {
+  background: #22c55e;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.btn-add-chip:hover {
+  background: #16a34a;
+}
+
+.search-modal-content {
+  width: 400px;
+}
+
+.autocomplete-list {
+  background: #3d3d3d;
+  border: 1px solid #555;
+  border-radius: 4px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.autocomplete-list li {
+  padding: 0.75rem;
+  cursor: pointer;
+  border-bottom: 1px solid #444;
+}
+
+.autocomplete-list li:hover {
+  background: #4ade80;
+  color: #1e1e1e;
+}
+
+.create-course-prompt {
+  background: #3d3d3d;
+  padding: 1rem;
+  border-radius: 4px;
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.create-inline {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  justify-content: center;
+}
+
+.create-inline input {
+  padding: 0.5rem;
+  border: 1px solid #555;
+  background: #1e1e1e;
+  color: white;
+  border-radius: 4px;
+}
+
+.btn-small {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.85rem;
+}
+
+/* Section Header for Highlight Tool */
+.section-header {
+  position: relative; /* Allows absolute positioning of the input */
+  display: flex;
+  justify-content: center; /* Centers the h2 */
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.section-header h2 {
+  margin-bottom: 0; /* Override default bottom margin to stay vertically centered */
+}
+
+.highlight-input {
+  position: absolute;
+  right: 0; /* Pins the search bar to the far right */
+  width: 250px;
+  padding: 0.5rem;
+  border: 1px solid #555;
+  background: #1e1e1e;
+  color: white;
+  border-radius: 4px;
+}
+
+/* Highlight & Dimming Effects */
+.course-chip {
+  transition: all 0.3s ease; /* Smooth fade effect */
+}
+
+.course-chip.is-dimmed,
+.btn-add-chip.is-dimmed {
+  opacity: 0.15;
+  filter: grayscale(100%);
+  pointer-events: none; /* Prevents clicking while dimmed out */
+}
+
+.course-chip.is-highlighted {
+  background: #22c55e;
+  color: white;
+  border-color: #16a34a;
+  transform: scale(1.05); /* Slight pop-out effect */
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.4);
+  z-index: 2;
+}
+
+.course-chip.is-highlighted .chip-remove {
+  color: white;
+}
+
 </style>
