@@ -24,7 +24,7 @@ async function login() {
     }
   } catch (err) {
     showError(
-      userStore.error || "Email or password is incorrect.",
+      "Email or password is incorrect.",
       "Login Failed"
     )
   }
