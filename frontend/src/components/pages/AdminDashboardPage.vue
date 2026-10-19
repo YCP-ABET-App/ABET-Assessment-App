@@ -39,6 +39,16 @@ function navigateToMultiYearReport() {
     router.push(`/${currentProgramId.value}/multi-year-summary`);
   }
 }
+
+function navigateToScheduleEntry() {
+  if (!currentProgramId.value) {
+    console.error("No program selected!");
+    // You can add validation/toast notification here later
+    return;
+  }
+  router.push(`/${currentProgramId.value}/schedule-entry`);
+}
+
 </script>
 
 <template>
@@ -74,6 +84,13 @@ function navigateToMultiYearReport() {
           </BaseButton>
           <BaseButton @click="navigateToMultiYearReport">
             View Multi-Year Summary Report
+          </BaseButton>
+          <BaseButton
+            @click="navigateToScheduleEntry"
+            variant="primary"
+            class="ml-2"
+          >
+            Schedule Entry
           </BaseButton>
         </div>
       </section>

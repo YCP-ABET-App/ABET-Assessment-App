@@ -102,15 +102,15 @@ const courseOutcomeMap: Record<string, Record<number, string>> = reactive({
           <table class="data-table">
             <thead>
             <tr>
-              <th>Outcome</th>
+              <th class="col-so-num">SO #</th>
+              <th class="col-desc">Description</th>
               <th colspan="2">Performance Indicators</th>
             </tr>
             </thead>
             <tbody>
             <tr v-for="so in soPiMap" :key="so.id">
-              <td class="desc-cell">
-                <strong>{{ so.id }}:</strong> {{ so.description }}
-              </td>
+              <td class="so-num-cell">{{ so.id }}</td>
+              <td class="desc-cell">{{ so.description }}</td>
               <td v-for="(pi, index) in so.pis" :key="index" class="pi-cell" @click="openRubricModal(so, pi)">
                 {{ pi }}
               </td>
@@ -128,15 +128,15 @@ const courseOutcomeMap: Record<string, Record<number, string>> = reactive({
         <table class="data-table">
           <thead>
           <tr>
-            <th>Outcome</th>
-            <th v-for="year in academicYears" :key="year">{{ year }}</th>
+            <th class="col-header">Outcome</th>
+            <th class="col-header" v-for="year in academicYears" :key="year">{{ year }}</th>
           </tr>
           </thead>
           <tbody>
           <tr v-for="outcome in outcomes" :key="outcome">
-            <th>{{ outcome }}</th>
+            <th class="row-header">{{ outcome }}</th>
             <td v-for="year in academicYears" :key="year">
-              <input type="text" v-model="sixYearSchedule[outcome][year]" class="cell-input" placeholder="e.g. 350, 400" />
+              <input type="text" v-model="sixYearSchedule[outcome][year]" class="cell-input" placeholder="-" />
             </td>
           </tr>
           </tbody>
@@ -151,13 +151,13 @@ const courseOutcomeMap: Record<string, Record<number, string>> = reactive({
         <table class="data-table">
           <thead>
           <tr>
-            <th>Course</th>
-            <th v-for="outcome in outcomes" :key="outcome">{{ outcome }}</th>
+            <th class="col-header">Course</th>
+            <th class="col-header" v-for="outcome in outcomes" :key="outcome">{{ outcome }}</th>
           </tr>
           </thead>
           <tbody>
           <tr v-for="course in courses" :key="course">
-            <th>{{ course }}</th>
+            <th class="row-header">{{ course }}</th>
             <td v-for="outcome in outcomes" :key="outcome">
               <input type="text" v-model="courseOutcomeMap[course][outcome]" class="cell-input" />
             </td>
@@ -201,7 +201,7 @@ const courseOutcomeMap: Record<string, Record<number, string>> = reactive({
   max-width: 1400px;
   margin: 2rem auto;
   padding: 0 2rem;
-  color: var(--color-text-primary);
+  color: white; /* Updated to white text */
 }
 
 header h1 {
@@ -212,15 +212,16 @@ header h1 {
 
 .mapping-section {
   margin-bottom: 3rem;
-  background: var(--color-background-soft);
+  background: #2c2c2c; /* Grey container background */
   padding: 1.5rem;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
 }
 
 h2 {
   font-size: 1.25rem;
   margin-bottom: 1rem;
+  color: white;
 }
 
 /* SO-PI Dropdown */
@@ -228,24 +229,28 @@ details.so-pi-dropdown summary {
   font-size: 1.2rem;
   font-weight: bold;
   cursor: pointer;
-  padding: 0.5rem;
-  background: var(--color-border);
+  padding: 0.75rem;
+  background: #3d3d3d;
   border-radius: 4px;
+  color: white;
 }
 
 .dropdown-content {
   margin-top: 1rem;
 }
 
+.col-so-num { width: 80px; }
+.so-num-cell { font-weight: bold; font-size: 1.1rem; }
+
 .pi-cell {
   cursor: pointer;
-  color: #0056b3;
+  color: #4ade80; /* Light green for clickable items */
   text-align: center;
   transition: background 0.2s;
 }
 
 .pi-cell:hover {
-  background: #e9ecef;
+  background: #3d3d3d;
   text-decoration: underline;
 }
 
@@ -257,17 +262,19 @@ details.so-pi-dropdown summary {
 .data-table {
   width: 100%;
   border-collapse: collapse;
-  background: white;
+  background: #1e1e1e; /* Darker inner table background */
 }
 
 .data-table th, .data-table td {
-  border: 1px solid var(--color-border-dark);
-  padding: 0.5rem;
+  border: 1px solid #444; /* Dark grey borders */
+  padding: 0.75rem;
   text-align: center;
+  color: white;
 }
 
-.data-table th {
-  background: #f8f9fa;
+.col-header, .row-header {
+  background: #333; /* Distinct color for headers */
+  color: #a7f3d0; /* Soft green tint for column/row titles */
   font-weight: 600;
 }
 
@@ -283,11 +290,12 @@ details.so-pi-dropdown summary {
   font-family: inherit;
   font-size: 1rem;
   padding: 0.25rem;
+  color: white; /* White text for inputs */
 }
 
 .cell-input:focus {
-  outline: 2px solid #0056b3;
-  background: #fdfdfd;
+  outline: 2px solid #22c55e; /* Green focus ring */
+  background: #2a2a2a;
 }
 
 /* Modal */
@@ -297,7 +305,7 @@ details.so-pi-dropdown summary {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0,0,0,0.7);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -305,7 +313,8 @@ details.so-pi-dropdown summary {
 }
 
 .modal-content {
-  background: white;
+  background: #2c2c2c;
+  color: white;
   padding: 2rem;
   border-radius: 8px;
   width: 500px;
@@ -314,7 +323,7 @@ details.so-pi-dropdown summary {
 
 .pi-highlight {
   font-weight: bold;
-  color: #0056b3;
+  color: #4ade80;
   margin: 1rem 0;
 }
 
@@ -331,7 +340,9 @@ details.so-pi-dropdown summary {
 
 .form-group input {
   padding: 0.5rem;
-  border: 1px solid #ccc;
+  border: 1px solid #555;
+  background: #1e1e1e;
+  color: white;
   border-radius: 4px;
 }
 
@@ -347,14 +358,20 @@ details.so-pi-dropdown summary {
   border: none;
   border-radius: 4px;
   cursor: pointer;
+  font-weight: 600;
 }
 
 .btn-cancel {
-  background: #e9ecef;
+  background: #555;
+  color: white;
 }
 
 .btn-save {
-  background: #0056b3;
+  background: #22c55e; /* Green button */
   color: white;
+}
+
+.btn-save:hover {
+  background: #16a34a;
 }
 </style>
