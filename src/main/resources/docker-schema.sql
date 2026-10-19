@@ -349,6 +349,7 @@ VALUES
     (5, 5, NULL, 'Function effectively as a member or leader of a team engaged in activities appropriate to the program''s discipline.', 2, TRUE),
     (6, 6, NULL, 'Apply computer science theory and software development fundamentals to produce computing-based solutions.', 2, TRUE);
 
+
 ------------------------------------------------------------
 -- PERFORMANCE INDICATORS (Based on CSV)
 ------------------------------------------------------------
@@ -402,8 +403,78 @@ VALUES
     (25, 4, NULL, 'Student can implement automated tests to satisfy the goals of a testing strategy', 6, 70.00, TRUE),
     (26, 5, NULL, 'Student can use appropriate implementation techniques and practices to meet security requirements and/or mitigate discovered vulnerabilities', 6, 70.00, TRUE);
 
+
 ------------------------------------------------------------
--- COURSES (Based on Summary Report)
+-- STUDENT OUTCOMES for Electrical Engineering (Meah's SO/PI mapping .xlxs)
+------------------------------------------------------------
+INSERT INTO student_outcome (id, out_number, out_value, out_description, semester_id, is_active)
+VALUES
+    (7, 1, NULL, 'An ability to identify, formulate, and solve complex engineering problems by applying principles of engineering, science, and mathematics.', 2, TRUE),
+    (8, 2, NULL, 'An ability to apply engineering design to produce solutions that meet specified needs with consideration of public health, safety, and welfare, as well as global, cultural, social, environmental, and economic factors.', 2, TRUE),
+    (9, 3, NULL, 'An ability to communicate effectively with a range of audiences', 2, TRUE),
+    (10, 4, NULL, 'An ability to recognize ethical and professional responsibilities in engineering situations and make informed judgments, which must consider the impact of engineering solutions in global, economic, environmental, and societal contexts', 2, TRUE),
+    (11, 5, NULL, 'An ability to function effectively on a team whose members together provide leadership, create a collaborative and inclusive environment, establish goals, plan tasks, and meet objectives', 2, TRUE),
+    (12, 6, NULL, 'An ability to develop and conduct appropriate experimentation, analyze and interpret data, and use engineering judgment to draw conclusions.', 2, TRUE),
+    (13, 7, NULL, 'An ability to acquire and apply new knowledge as needed, using appropriate learning strategies.', 2, TRUE);
+
+
+-- Outcome 1 Indicators EE (id 7)
+INSERT INTO performance_indicator (id, ind_number, ind_value, ind_description, student_outcome_id, threshold_percentage, is_active)
+VALUES
+    (27, 1, NULL, 'Identifies a well-defined engineering problem statement motivated by a real-world problem or issue.', 7, 70.00, TRUE),
+    (28, 2, NULL, 'Applies principles of engineering, science and mathematics to formulate models.', 7, 70.00, TRUE),
+    (29, 3, NULL, 'Solves complex engineering problems given an appropriate model and modern tools.', 7, 70.00, TRUE);
+
+-- Outcome 2 Indicators EE (id 8)
+INSERT INTO performance_indicator (id, ind_number, ind_value, ind_description, student_outcome_id, threshold_percentage, is_active)
+VALUES
+    (30, 1, NULL, 'Apply engineering design to produce a solution that meets specified needs', 8, 70.00, TRUE),
+    (31, 2, NULL, 'Explain how the engineering design solution developed by the student considers public health, safety, and welfare factors', 8, 70.00, TRUE),
+    (32, 3, NULL, 'Explain how the engineering design solution developed by the student considers global, cultural, and social factors', 8, 70.00, TRUE),
+    (33, 4, NULL, 'Explain how the engineering design solution developed by the student considers environmental and economic factors.', 8, 70.00, TRUE);
+
+-- Outcome 3 Indicators EE (id 9)
+INSERT INTO performance_indicator (id, ind_number, ind_value, ind_description, student_outcome_id, threshold_percentage, is_active)
+VALUES
+    (34, 1, NULL, 'Composes documents to communicate with peers and practicing engineers.', 9, 70.00, TRUE),
+    (35, 2, NULL, 'Composes documents to communicate with general audiences.', 9, 70.00, TRUE),
+    (36, 3, NULL, 'Constructs and delivers presentations to communicate with peers and professional audiences.', 9, 70.00, TRUE),
+    (37, 4, NULL, 'Communicates with peers and practicing engineers in a group meeting', 9, 70.00, TRUE);
+
+-- Outcome 4 Indicators EE (id 10)
+INSERT INTO performance_indicator (id, ind_number, ind_value, ind_description, student_outcome_id, threshold_percentage, is_active)
+VALUES
+    (38, 1, NULL, 'Understands the IEEE Code of Ethics and other relevant professional codes of ethics and conduct.', 10, 70.00, TRUE),
+    (39, 2, NULL, 'Recognizes ethical and professional responsibilities in engineering situations.', 10, 70.00, TRUE),
+    (40, 3, NULL, 'Makes one or more informed ethical or professional judgments, which consider the impact of engineering solutions in global, economic, environmental, and societal contexts.', 10, 70.00, TRUE);
+
+-- Outcome 5 Indicators EE (id 11)
+INSERT INTO performance_indicator (id, ind_number, ind_value, ind_description, student_outcome_id, threshold_percentage, is_active)
+VALUES
+    (41, 1, NULL, 'Contributes to team objectives', 11, 70.00, TRUE),
+    (42, 2, NULL, 'Participates in establishing goals and task planning', 11, 70.00, TRUE),
+    (43, 3, NULL, 'Participates within an organizational structure and process to create an inclusive environment', 11, 70.00, TRUE),
+    (44, 3, NULL, 'Fosters collaborative team environment', 11, 70.00, TRUE);
+
+-- Outcome 6 Indicators EE (id 12)
+INSERT INTO performance_indicator (id, ind_number, ind_value, ind_description, student_outcome_id, threshold_percentage, is_active)
+VALUES
+    (45, 1, NULL, 'Designs an experiment', 12, 70.00, TRUE),
+    (46, 2, NULL, 'Conducts an experiment', 12, 70.00, TRUE),
+    (47, 3, NULL, 'Analyzes and interprets data from an experiment', 12, 70.00, TRUE),
+    (48, 4, NULL, 'Uses engineering judgement to draw conclusions from experimental data', 12, 70.00, TRUE);
+
+-- Outcome 7 Indicators EE (id 13)
+INSERT INTO performance_indicator (id, ind_number, ind_value, ind_description, student_outcome_id, threshold_percentage, is_active)
+VALUES
+    (49, 1, NULL, 'Conducts a reflective self-assessment of knowledge and knowledge gaps', 13, 70.00, TRUE),
+    (50, 2, NULL, 'Acquires new knowledge', 13, 70.00, TRUE),
+    (51, 3, NULL, 'Applies new knowledge to an engineering project/problem', 13, 70.00, TRUE);
+
+
+
+------------------------------------------------------------
+-- CS COURSES (Based on Summary Report)
 ------------------------------------------------------------
 INSERT INTO course (id, course_code, course_name, course_description, student_count, is_active)
 VALUES
@@ -415,6 +486,45 @@ VALUES
     (6, 'CS 360', 'Analysis of Algorithms', 'Algorithm design and analysis', 15, TRUE),
     (7, 'CS 400', 'Software Engineering', 'Software development lifecycle and team projects', 27, TRUE),
     (8, 'CS 420', 'Operating Systems', 'Operating system concepts and programming', 25, TRUE);
+
+
+------------------------------------------------------------
+-- ECE COURSES (From Meah's SO/PI mapping and course catalog
+------------------------------------------------------------
+INSERT INTO course (id, course_code, course_name, course_description, student_count, is_active)
+VALUES
+    (9, 'FYS 115', 'First Year Seminar: Exploring Engineering', 'The Exploring Engineering First Year Seminar will to introduce students to college‐level rigor and expectations; to encourage the academic growth of students; to purposefully expose students to a variety of co‐curricular experiences and resources available at York College; and to introduce students to the engineering profession, the engineering design process, team development, and problem‐solving. Students will consider social, economic, and political issues associated with the field of Engineering. Students will learn to apply basic electrical, civil, mechanical, and computer engineering concepts and techniques to design projects. ', 44, TRUE),
+
+    (10, 'ECE 100', 'Intro to Electrical Engineering', 'Introduces electrical engineering fundamentals, professional practice, and basic circuit concepts.', 28, TRUE),
+    (16, 'ECE 220', 'Design and Analysis of Digital Circuits', 'Covers combinational and sequential digital logic design, analysis, and implementation.', 25, TRUE),
+    (20, 'ECE 260', 'Fundamentals of Computer Engineering', 'Introduces computer organization, digital systems, and hardware-software fundamentals for computer engineering.', 13, TRUE),
+    (21, 'ECE 280', 'Fundamentals of Electrical Engineering', 'Develops core electrical engineering principles including circuit analysis and electrical systems.', 15, TRUE),
+    (22, 'ECE 491', 'Engineering Cooperative Work Experience (Co-op I)', 'Provides supervised professional work experience applying electrical and computer engineering skills in industry.', 15, TRUE),
+    (23, 'ECE 300', 'Electrical Engineering Design', 'Applies the engineering design process to electrical systems through team-based projects and documentation.', 27, TRUE),
+    (24, 'ECE 310', 'Design and Analysis of Analog Circuits', 'Covers analysis and design of analog electronic circuits including amplifiers, filters, and semiconductor devices.', 25, TRUE),
+    (25, 'ECE 332', 'Introduction to Signal Processing', 'Introduces continuous- and discrete-time signals, systems, and fundamental signal processing techniques.', 13, TRUE),
+    (27, 'ECE 492', 'Engineering Cooperative Work Experience (Co-op II)', 'Continues supervised industrial experience with increased electrical and computer engineering responsibility.', 15, TRUE),
+    (28, 'ECE 400', 'Capstone Design I', 'Begins a team-based senior design project addressing a real electrical or computer engineering problem.', 27, TRUE),
+    (29, 'ECE 340', 'Random Signals', 'Introduces probability, random variables, and stochastic processes as applied to signals and systems.', 25, TRUE),
+    (30, 'ECE 350', 'Electromagnetic Fields', 'Covers electrostatics, magnetostatics, and time-varying electromagnetic fields in engineering applications.', 13, TRUE),
+    (31, 'ECE 335', 'Discrete Mathematics with Applications', 'Presents discrete mathematical structures and methods used in computer and electrical engineering.', 15, TRUE),
+    (32, 'ECE 315', 'Power Systems and Electronics', 'Introduces electric power systems, energy conversion, and power electronic circuits.', 15, TRUE),
+    (36, 'ECE 370', 'Microprocessor System Design', 'Covers microprocessor architecture, interfacing, and hardware/software design of microcomputer systems.', 15, TRUE),
+    (33, 'ECE 334', 'Communication Networks and Applications', 'Introduces communication network architectures, protocols, and applications.', 27, TRUE),
+    (34, 'ECE 402', 'Capstone Design II', 'Completes the senior capstone project begun in Capstone Design I, including implementation, testing, and reporting.', 25, TRUE),
+    (35, 'ECE 420', 'Embedded System Design', 'Covers design of embedded hardware and software systems for real-time engineering applications.', 25, TRUE),
+
+    (12, 'CHM 134', 'General Chemistry I', 'Introduction to Chemistry Foundations', 13, TRUE),
+    (11, 'PHY 160', 'Engineering Physics: Mechanics', 'A calculus‐based Physics course in mechanics for engineering and science majors.', 16, TRUE),
+    (15, 'PHY 260', 'Engineering Physics: Electricity & Magnetism', 'A calculus-based Physics course in electricity and magnetism for engineering and science majors. ', 27, TRUE),
+
+    (13, 'MAT 171', 'Calculus I', 'Introduction to Calculus', 15, TRUE),
+    (14, 'MAT 172', 'Calculus II', 'Continues fundamental calculus principles', 15, TRUE),
+    (18, 'MAT 272', 'Differential Equations', 'Analyzing systems and how different aspects of that system change over time (or relative to each other).', 28, TRUE),
+
+    (17, 'EGR 290', 'Engineering Career Training Preparation', 'Introduction to programming and problem solving', 44, TRUE),
+    (19, 'EGR 240', 'Mathematical Methods in Engineering', 'Computer networking fundamentals', 16, TRUE),
+    (26, 'ERG 342', 'System Modeling and Control', 'Compiler design and implementation', 15, TRUE);
 
 ------------------------------------------------------------
 -- SECTIONS (Based on Summary Report)
