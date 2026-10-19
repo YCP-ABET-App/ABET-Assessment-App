@@ -58,15 +58,18 @@ export default defineConfig({
   server: {
     host: '127.0.0.1', // Exclude Tailscale, allow Docker access via host.docker.internal
     port: 5173,
+    hmr: {
+      clientPort: 3000
+    },
     // Proxy API requests to Spring Boot backend
     proxy: {
       '/api': {
-        target: 'http://localhost:8080',
+        target: 'http://backend:8080',
         changeOrigin: true,
         secure: false,
       },
       '/actuator': {
-        target: 'http://localhost:8080',
+        target: 'http://backend:8080',
         changeOrigin: true,
         secure: false,
       }
