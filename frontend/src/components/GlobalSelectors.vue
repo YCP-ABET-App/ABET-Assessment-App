@@ -48,6 +48,12 @@ const semesterOptions = computed(() =>
   }))
 );
 
+const props = withDefaults(defineProps<{
+  showProgramSelector?: boolean
+}>(), {
+  showProgramSelector: true
+})
+
 
 // Load programs on mount
 onMounted(async () => {
@@ -135,6 +141,7 @@ watch(localSemesterId, async (id) => {
     <div v-if="!loading">
       <div class="selector-row">
         <BaseSelect
+          v-if="props.showProgramSelector"
           label="Program"
           :options="programOptions"
           v-model="localProgramId"

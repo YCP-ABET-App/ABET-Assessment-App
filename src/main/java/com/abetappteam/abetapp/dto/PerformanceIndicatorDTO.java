@@ -13,6 +13,9 @@ public class PerformanceIndicatorDTO {
 
     private Integer indicatorValue;
     private String evaluation;
+    private String metRubric;
+    private String belowRubric;
+    private String exceedsRubric;
 
     @NotNull(message = "Student outcome ID is required")
     private final Long studentOutcomeId;
@@ -65,6 +68,27 @@ public class PerformanceIndicatorDTO {
         this.evaluation = evaluation;
     }
 
+    public String getMetRubric() {
+        return metRubric;
+    }
+    public void setMetRubric(String metRubric) {
+        this.metRubric = metRubric;
+    }
+
+    public String getBelowRubric() {
+        return belowRubric;
+    }
+    public void setBelowRubric(String belowRubric) {
+        this.belowRubric = belowRubric;
+    }
+
+    public String getExceedsRubric() {
+        return exceedsRubric;
+    }
+    public void setExceedsRubric(String exceedsRubric) {
+        this.exceedsRubric = exceedsRubric;
+    }
+
     public Long getStudentOutcomeId() {
         return studentOutcomeId;
     }
@@ -92,6 +116,9 @@ public class PerformanceIndicatorDTO {
                 ", indicatorNumber=" + indicatorNumber +
                 ", indicatorValue=" + indicatorValue +
                 ", evaluation='" + evaluation + '\'' +
+                ", metRubric='" + metRubric + '\'' +
+                ", belowRubric='" + belowRubric + '\'' +
+                ", exceedsRubric='" + exceedsRubric + '\'' +
                 ", studentOutcomeId=" + studentOutcomeId +
                 ", programId=" + programId +
                 ", thresholdPercentage=" + thresholdPercentage +

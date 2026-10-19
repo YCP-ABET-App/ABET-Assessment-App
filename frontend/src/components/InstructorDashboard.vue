@@ -95,7 +95,8 @@ async function loadInstructorSections() {
   const sectionRes = await api.get("/section", {
     params: {
       ids: sectionIds,
-      semesterId: semesterId.value
+      semesterId: semesterId.value,
+      programId: programId.value
     },
   });
 
