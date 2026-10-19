@@ -134,11 +134,14 @@
           :key="instructor.userId"
           class="existing-instructor-option"
         >
+
           <input
             v-model="selectedExistingUserId"
             type="radio"
+            name="existing-instructor"
             :value="instructor.userId"
           />
+
 
           <span>
         <strong>
@@ -661,6 +664,7 @@ function openCreateInstructor() {
   showCreateModal.value = true;
 }
 
+
 async function openExistingInstructors() {
   showInstructorChoiceModal.value = false;
   showExistingInstructorsModal.value = true;
@@ -671,21 +675,24 @@ async function openExistingInstructors() {
     const response = await api.get("/users");
     const users = response.data.content ?? [];
 
-    console.log("First user:", users[0]);
-    console.log("User IDs:", users.map((user: any) => ({
-      id: user.id,
-      userId: user.userId,
-      email: user.email
-    })));
+    console.log("Users returned:", users);
 
     const currentProgramUserIds = new Set(
-      instructors.value.map(instructor => instructor.userId)
+      instructors.value.map(instructor => Number(instructor.userId))
     );
 
-    existingInstructors.value = users.filter(
-      (user: any) => !currentProgramUserIds.has(user.userId)
-    );
+    existingInstructors.value = users
+      .map((user: any) => ({
+        ...user,
+        userId: Number(user.userId ?? user.id),
+      }))
+      .filter(
+        (user: ExistingInstructor) =>
+          Number.isFinite(user.userId) &&
+          !currentProgramUserIds.has(user.userId)
+      );
 
+    console.log("Existing instructors:", existingInstructors.value);
   } catch (err) {
     console.error("Error loading existing users:", err);
     toast.error("Failed to load existing users.");
@@ -694,6 +701,7 @@ async function openExistingInstructors() {
     loadingExistingInstructors.value = false;
   }
 }
+
 
 async function addExistingInstructor() {
   if (selectedExistingUserId.value === null) {
