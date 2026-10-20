@@ -315,7 +315,8 @@ VALUES
 ------------------------------------------------------------
 INSERT INTO program (id, program_name, institution, is_active)
 VALUES
-    (1, 'Computer Science', 'York College of Pennsylvania', TRUE);
+    (1, 'Computer Science', 'York College of Pennsylvania', TRUE),
+    (2, 'Electrical Engineering', 'York College of Pennsylvania', TRUE);
 
 ------------------------------------------------------------
 -- PROGRAM_USER (maps users to programs)
@@ -325,7 +326,8 @@ VALUES
     (1, TRUE, 1, 1, TRUE),   -- David Babcock (Admin)
     (2, FALSE, 1, 2, TRUE),   -- James Moscola (Admin)
     (3, FALSE, 1, 3, TRUE),   -- Dean Zeller (Admin)
-    (4, TRUE, 1, 4, TRUE);   -- System Admin
+    (4, TRUE, 1, 4, TRUE),   -- System Admin
+    (5, TRUE, 2, 1, TRUE);   -- David Babcock (Admin, Electrical Engineering)
 
 ------------------------------------------------------------
 -- SEMESTERS
@@ -642,6 +644,13 @@ VALUES
     (35, 2, 8, 1, 22, TRUE),  -- 6.1: Programming proficiency
     (36, 2, 8, 1, 24, TRUE),  -- 6.3: Concurrency
     (37, 2, 8, 1, 26, TRUE);  -- 6.5: Security implementation
+
+-- EE overlap on CS 101 (same semester as CS plan; not on section_program yet)
+INSERT INTO schedule_entry (id, semester_id, course_id, program_id, indicator_id, is_active)
+VALUES
+    (38, 2, 1, 2, 27, TRUE),  -- EE 1.1
+    (39, 2, 1, 2, 28, TRUE),  -- EE 1.2
+    (40, 2, 1, 2, 29, TRUE);  -- EE 1.3
 
 ------------------------------------------------------------
 -- MEASURES (Based on Summary Report data)
