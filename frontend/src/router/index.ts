@@ -8,12 +8,13 @@ import SectionViewPage from '@/components/pages/SectionViewPage.vue'
 import InstructorViewPage from '@/components/pages/InstructorViewPage.vue'
 import ProgramCoursesPage from '@/components/pages/ProgramCoursesPage.vue'
 import ProgramInstructorsPage from '@/components/pages/ProgramInstructorsPage.vue'
-import LogInPage from '@/components/pages/LogIn.vue'
-import SignUpPage from '@/components/pages/SignUp.vue'
+import LoginPage from '@/components/pages/LogIn.vue';
 import ManagementPage from "@/components/ManagementPage.vue";
 import InstitutionLoginPage from "@/components/pages/InstitutionLoginPage.vue";
 import MultiYearReportPage from "@/components/pages/MultiYearReportPage.vue";
 import SchedulePage from '@/components/pages/SchedulePage.vue';
+import AccountRecoveryPage from '@/components/pages/AccountRecoveryPage.vue'
+import InstitutionSignup from '@/components/pages/InstitutionSignup.vue'
 
 const routes = [
   {
@@ -75,18 +76,23 @@ const routes = [
   },
   {
     path: '/login',
-    name: 'Log In',
-    component: LogInPage,
+    name: 'Login',
+    component: LoginPage,
+  },
+  {
+    path: "/reset-password",
+    name: "Reset Password",
+    component: AccountRecoveryPage
+  },
+  {
+    path: "/institution-signup",
+    name: "Institution Signup",
+    component: InstitutionSignup
   },
   {
     path: '/institution-login',
-    name: 'Institution Log In',
+    name: 'Institution Login',
     component: InstitutionLoginPage,
-  },
-  {
-    path: '/signup',
-    name: 'Sign Up',
-    component: SignUpPage,
   },
   {
     path: '/setup',
@@ -147,13 +153,13 @@ router.beforeEach((to, from, next) => {
   }
 
   // If user is logged in but trying to access login/signup pages, redirect to dashboard
-  if (userStore.isLoggedIn && (to.name === 'Log In' || to.name === 'Sign Up')) {
+  if (userStore.isLoggedIn && (to.name === 'Log In')) {
     next({ name: 'Home' })
     return
   }
 
   // If user is not logged in and trying to access login/signup, ensure institution is selected
-  if (!userStore.isLoggedIn && (to.name === 'Log In' || to.name === 'Sign Up')) {
+  if (!userStore.isLoggedIn && (to.name === 'Log In')) {
     if (!institutionId) {
       next({
         name: 'Institution Log In',
