@@ -48,7 +48,9 @@ public class WebSecurityConfig {
                         .requestMatchers(
                                 "/api/users/login",
                                 "/api/users/signup",
-                                "/api/institution/login"
+                                "/api/institution/login",
+                                "/api/auth/recovery/send",
+                                "/api/auth/recovery/reset"
                         ).permitAll()
                         // Protected API endpoints
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")

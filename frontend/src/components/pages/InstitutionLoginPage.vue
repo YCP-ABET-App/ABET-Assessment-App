@@ -90,6 +90,12 @@ function handleKeyUp(event: KeyboardEvent) {
       <p class="tooltip">
         Don't have an institution ID? Contact your administrator.
       </p>
+      <p class="tooltip">
+        Setting up and institution?
+        <router-link to="/institution-signup">Setup here</router-link>.
+      </p>
+
+      
     </BaseCard>
   </div>
 </template>
@@ -122,19 +128,5 @@ function handleKeyUp(event: KeyboardEvent) {
   margin-bottom: var(--spacing-md);
 }
 
-.tooltip {
-  text-align: center;
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-  margin: 0;
-}
 
-.tooltip a {
-  color: var(--primary-color);
-  text-decoration: none;
-}
-
-.tooltip a:hover {
-  text-decoration: underline;
-}
 </style>
