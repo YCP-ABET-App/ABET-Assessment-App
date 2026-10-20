@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { ref } from 'vue'
+import { ref} from 'vue'
 import { BaseButton, BaseCard, BaseInput } from "@/components/ui"
 import { useRouter } from 'vue-router'
 import { useToast } from "@/composables/use-toast.ts"
@@ -33,7 +33,7 @@ async function login() {
 
 <template>
   <div class="login">
-    <BaseCard class="login-card" title="Log In">
+    <BaseCard class="login-card" title="Login">
       <div>
         <BaseInput
           id="email"

@@ -73,7 +73,7 @@ async function signUp(){
 
       <p class="tooltip">
         Signing in?
-        <router-link to="/login">Return to login</router-link>.
+        <router-link to="/institution-login">Return to login</router-link>.
       </p>
     </BaseCard>
   </div>
