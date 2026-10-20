@@ -56,8 +56,12 @@ export default defineConfig({
     },
   },
   server: {
-    host: '127.0.0.1', // Exclude Tailscale, allow Docker access via host.docker.internal
+    host: '0.0.0.0', // Exclude Tailscale, allow Docker access via host.docker.internal
     port: 5173,
+    watch: {
+      usePolling: true,
+      interval: 100
+    },
     hmr: {
       clientPort: 3000
     },

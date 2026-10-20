@@ -56,7 +56,7 @@ export const useUserStore = defineStore('user', () => {
   // -------------------------
   const isLoggedIn = computed(() => !!authToken.value && !!user.value);
   const isAdmin = computed(() => user.value?.role?.toUpperCase() === "ADMIN");
-const isInstructor = computed(() => {
+  const isInstructor = computed(() => {
     const role = user.value?.role?.toUpperCase();
     return user.value?.hasCourses === true || role === "INSTRUCTOR" || role === "ADMIN";
   });

@@ -67,7 +67,7 @@ const emit = defineEmits(["logout"])
           class="nav_button auth-button"
           id="login"
         >
-          Log In
+          Login
         </router-link>
         <span
           v-else
@@ -75,7 +75,7 @@ const emit = defineEmits(["logout"])
           id="login"
           title="Complete institution verification first"
         >
-          Log In
+          Login
         </span>
       </div>
     </div>
