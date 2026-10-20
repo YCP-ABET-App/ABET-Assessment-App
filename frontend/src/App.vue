@@ -9,7 +9,8 @@ import { useUserStore } from '@/stores/user-store.js'
 const userStore = useUserStore()
 const route = useRoute()
 
-const isHomePage = computed(() => route.path === '/dashboard' || route.name === 'Home' || route.path === '/admin-dashboard')
+const isHomePage = computed(() => route.path === '/dashboard' || route.name === 'Home')
+const isAdminPage = computed(() => route.path === '/admin-dashboard')
 const isInstitutionLoginPage = computed(() => route.name === 'Institution Log In')
 
 onMounted(() => {
@@ -35,11 +36,21 @@ function handleLogout() {
         @logout="handleLogout"
       />
 
-      <!-- Only show selectors when logged in AND on home page -->
-      <div class="selectors-div" v-if="userStore.isLoggedIn && isHomePage">
-        <GlobalSelectors/>
+      <!-- Admin: show program and semester selectors -->
+      <div
+        class="selectors-div"
+        v-if="userStore.isLoggedIn && isAdminPage"
+      >
+        <GlobalSelectors />
       </div>
-    </div>
+
+      <!-- Instructor: show semester selector only -->
+      <div
+        class="selectors-div"
+        v-else-if="userStore.isLoggedIn && isHomePage && userStore.isInstructor"
+      >
+        <GlobalSelectors :show-program-selector="false" />
+      </div>
 
     <!-- PAGE CONTENT -->
     <main id="page-container">
@@ -53,6 +64,7 @@ function handleLogout() {
     </footer>
 
     <GlobalToast />
+  </div>
   </div>
 </template>
 

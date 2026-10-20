@@ -19,7 +19,7 @@ public class InstitutionLoginController extends BaseController {
         // Mockup: validate against hardcoded institution code
         logger.info("Institution login attempt with code: {}", institutionId);
 
-        boolean successfulLogin = Objects.equals(institutionId, "ycp");
+        boolean successfulLogin = Objects.equals(institutionId, "ycp123");
 
         return success(successfulLogin, "Institution login " + (successfulLogin ? "successful" : "failed"));
     }

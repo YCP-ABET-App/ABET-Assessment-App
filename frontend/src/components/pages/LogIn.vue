@@ -24,7 +24,7 @@ async function login() {
     }
   } catch (err) {
     showError(
-      userStore.error || "Email or password is incorrect.",
+      "Email or password is incorrect try again.",
       "Login Failed"
     )
   }
@@ -63,7 +63,7 @@ async function login() {
           Submit
         </BaseButton>
       </div>
-     
+
       <p class="tooltip">
         Forgot your password?
         <router-link to="/reset-password">Reset Password</router-link>.

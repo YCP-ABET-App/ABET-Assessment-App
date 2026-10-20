@@ -8,10 +8,11 @@ import SectionViewPage from '@/components/pages/SectionViewPage.vue'
 import InstructorViewPage from '@/components/pages/InstructorViewPage.vue'
 import ProgramCoursesPage from '@/components/pages/ProgramCoursesPage.vue'
 import ProgramInstructorsPage from '@/components/pages/ProgramInstructorsPage.vue'
-import LoginPage from '@/components/pages/Login.vue'
+import LoginPage from '@/components/pages/LogIn.vue';
 import ManagementPage from "@/components/ManagementPage.vue";
 import InstitutionLoginPage from "@/components/pages/InstitutionLoginPage.vue";
 import MultiYearReportPage from "@/components/pages/MultiYearReportPage.vue";
+import SchedulePage from '@/components/pages/SchedulePage.vue';
 import AccountRecoveryPage from '@/components/pages/AccountRecoveryPage.vue'
 import InstitutionSignup from '@/components/pages/InstitutionSignup.vue'
 
@@ -116,6 +117,14 @@ const routes = [
     name: 'Multi-Year Summary',
     component: MultiYearReportPage,
     meta: { requiresAuth: true }
+  },
+  {
+    // This creates a dedicated URL for schedule entry page
+    path: '/:programId/schedule-entry',
+    name: 'ScheduleEntry',
+    component: SchedulePage,
+    meta: { requiresAuth: true },
+    props: true
   }
 ]
 

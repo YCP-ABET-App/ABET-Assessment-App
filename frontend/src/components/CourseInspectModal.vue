@@ -36,14 +36,26 @@ interface Measure {
   description: string;
   observation?: string;
   recommendedAction?: string;
+  studentsMet?: number | null;
+  studentsExceeded?: number | null;
+  studentsBelow?: number | null;
+  status: string;
+}
+
+interface MeasureResult {
+  id: number;
+  measureId: number;
+  sectionProgramId: number;
   studentsMet?: number;
   studentsExceeded?: number;
   studentsBelow?: number;
-  status: string;
+  observation?: string;
+  status?: string;
 }
 
 interface IndicatorWithMeasures {
   indicator: PerformanceIndicator;
+  outcomeNumber: number | null;
   measures: Measure[];
 }
 
@@ -81,13 +93,15 @@ async function loadCourseData() {
     const sectionRes = await api.get(`/section`, {
       params: {
         courseId: props.course.id,
-        semesterId: currentSemesterId.value
+        semesterId: currentSemesterId.value,
+        programId: currentProgramId.value
       }
     });
 
-    const sectionsData = sectionRes.data?.data ?? [];
+    const sectionsData = sectionRes.data?.data ?? {};
+    const sectionsList = sectionsData.sections ?? [];
 
-    for (const section of sectionsData.sections) {
+    for (const section of sectionsList) {
 
       const sectionUserRes = await api.get(`/section-user`, {
         params: {
@@ -112,40 +126,82 @@ async function loadCourseData() {
     }
 
 
-    const indicatorIdsRes = await api.get(`/courses/searchCourse`, {
+    const seRes = await api.get(`/schedule-entry`, {
       params: {
-        courseId: props.course.id
+        courseId: props.course.id,
+        semesterId: currentSemesterId.value,
+        programId: currentProgramId.value
       }
     });
-
-    const res = await api.get(`/courses/searchCourse`, { // Added "const res ="
-      params: { courseId: props.course.id }
+    const entries = seRes.data?.data ?? [];
+    const seenIndicators = new Set<number>();
+    const uniqueEntries = entries.filter((entry: { indicatorId: number }) => {
+      if (seenIndicators.has(entry.indicatorId)) return false;
+      seenIndicators.add(entry.indicatorId);
+      return true;
     });
-    const rawData = res.data?.data ?? res.data ?? [];
 
-    // 3. Ensure we are working with an array of numbers
-    // This helps TypeScript understand exactly what 'indicatorId' is
-    const indicatorIds: number[] = Array.isArray(rawData)
-      ? rawData.map((item: any) => typeof item === 'object' ? item.id : item)
-      : [];
-
-    if (indicatorIds.length === 0) {
+    if (uniqueEntries.length === 0) {
       loading.value = false;
       return;
     }
 
-    // Now indicatorId won't be red because TypeScript knows indicatorIds is number[]
-    const indicatorPromises = indicatorIds.map(async (indicatorId) => {
+    const sectionProgramIds = new Set<number>();
+    for (const section of currentCourseSemesterSections.value) {
+      const spRes = await api.get(`/section-program`, {
+        params: { sectionId: section.id, programId: currentProgramId.value }
+      });
+      for (const sp of (spRes.data?.data ?? [])) {
+        if (sp.id != null) sectionProgramIds.add(Number(sp.id));
+      }
+    }
+
+    const indicatorPromises = uniqueEntries.map(async (entry: { id: number; indicatorId: number }) => {
       try {
-        const indicatorRes = await api.get(`/performance-indicators/${indicatorId}`);
+        const indicatorRes = await api.get(`/performance-indicators/${entry.indicatorId}`);
         const indicator = indicatorRes.data.data as PerformanceIndicator;
 
-        const measuresRes = await api.get(`/measure/byIndicator/${indicatorId}`);
-        const measures = measuresRes.data.data as Measure[];
+        let outcomeNumber: number | null = null;
+        try {
+          const outcomeRes = await api.get(`/outcome/${indicator.studentOutcomeId}`);
+          outcomeNumber = outcomeRes.data?.data?.number ?? null;
+        } catch (err) {
+          console.error(`Error loading outcome ${indicator.studentOutcomeId}:`, err);
+        }
 
-        return { indicator, measures };
+        const measuresRes = await api.get(`/measure`, {
+          params: { scheduleEntryId: entry.id, active: true }
+        });
+        const rawMeasures = (measuresRes.data?.data ?? []) as Measure[];
+
+        const measures = await Promise.all(rawMeasures.map(async (measure) => {
+          const mrRes = await api.get(`/measure-result`, {
+            params: { measureId: measure.id }
+          });
+          const results = ((mrRes.data?.data ?? []) as MeasureResult[]).filter((result) =>
+            sectionProgramIds.has(Number(result.sectionProgramId))
+          );
+
+          const studentsMet = results.reduce((sum, result) => sum + (result.studentsMet || 0), 0);
+          const studentsExceeded = results.reduce((sum, result) => sum + (result.studentsExceeded || 0), 0);
+          const studentsBelow = results.reduce((sum, result) => sum + (result.studentsBelow || 0), 0);
+          const observations = results
+            .map((result) => result.observation)
+            .filter((text): text is string => !!text && text.trim().length > 0);
+
+          return {
+            ...measure,
+            studentsMet: results.length > 0 ? studentsMet : null,
+            studentsExceeded: results.length > 0 ? studentsExceeded : null,
+            studentsBelow: results.length > 0 ? studentsBelow : null,
+            observation: observations.join("\n") || measure.observation,
+            status: results[0]?.status || measure.status || "InProgress"
+          };
+        }));
+
+        return { indicator, outcomeNumber, measures };
       } catch (err) {
-        console.error(`Error loading indicator ${indicatorId}:`, err);
+        console.error(`Error loading indicator ${entry.indicatorId}:`, err);
         return null;
       }
     });
@@ -312,11 +368,21 @@ async function submitNewSection() {
   error.value = null;
 
   try {
-    const sectionRes = await api.post(`/section`, {
+    const sectionPayload: {
+      courseId: number;
+      semesterId: number | null;
+      sectionNumber: string;
+      programId?: number;
+    } = {
         courseId: props.course.id,
         semesterId: currentSemesterId.value,
         sectionNumber: newSectionNumber.value.trim().toString()
-    });
+    };
+    if (currentProgramId.value) {
+      sectionPayload.programId = currentProgramId.value;
+    }
+
+    const sectionRes = await api.post(`/section`, sectionPayload);
 
     const newSection = sectionRes.data?.data;
     if (newSection) {
@@ -395,7 +461,7 @@ function openSectionDetails(sectionId: number) {
       <section class="detail-section">
         <h3>Sections ({{ currentCourseSemesterSections.length }})</h3>
 
-        <div v-if="currentCourseSemesterSections.length > 0">
+        <div>
           <table class="courses-table">
             <thead>
             <tr>
@@ -476,14 +542,11 @@ function openSectionDetails(sectionId: number) {
           </table>
         </div>
 
-        <p class="no-courses">
-          No courses assigned to this instructor for the current semester.
-        </p>
       </section>
 
       <!-- Empty State -->
       <div v-if="indicatorsWithMeasures.length === 0" class="empty-state">
-        <p>No performance indicators attached to this course.</p>
+        <p>No performance indicators scheduled for this course this semester.</p>
       </div>
 
       <div v-else class="indicators-container">
@@ -495,7 +558,9 @@ function openSectionDetails(sectionId: number) {
         >
           <div class="indicator-header">
             <div class="indicator-title">
-              <span class="indicator-number">PI {{ item.indicator.indicatorNumber }}</span>
+              <span class="indicator-number">
+                {{ item.outcomeNumber != null ? `SO ${item.outcomeNumber} PI ${item.indicator.indicatorNumber}` : `PI ${item.indicator.indicatorNumber}` }}
+              </span>
               <h3>{{ item.indicator.description }}</h3>
             </div>
           </div>
