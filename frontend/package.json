@@ -8,6 +8,7 @@
   },
   "scripts": {
     "dev": "vite",
+    "dev:docker-develop": "vite --config vite.docker.develop.config.ts",
     "build": "run-p type-check \"build-only {@}\" --",
     "preview": "vite preview",
     "test:unit": "vitest",
