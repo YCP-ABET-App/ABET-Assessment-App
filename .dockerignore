@@ -1,0 +1,9 @@
+.git
+.gradle
+build
+**/build
+**/.gradle
+frontend/node_modules
+frontend/dist
+.idea
+.vscode

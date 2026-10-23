@@ -279,6 +279,22 @@ tasks.register('dockerLogs', Exec) {
     executable 'docker'
 }
 
+tasks.register('dockerDebug', Exec) {
+    group 'abet-dev'
+    description 'Spin up the dev docker where hot reloads and debugging port are open'
+
+    workingDir = rootProject.projectDir
+    executable 'docker'
+
+    args 'compose',
+            '-f', 'docker-compose.yml',
+            '-f', 'docker-compose-watch.yml',
+            '-f', 'docker-compose-debug.yml',
+            'up', '--watch', '--build'
+
+    environment 'COMPOSE_BAKE', 'false'
+}
+
 tasks.register('composeBuild', Exec) {
     description = 'Build Docker images'
     args 'compose', 'build'
