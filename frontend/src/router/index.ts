@@ -15,6 +15,7 @@ import MultiYearReportPage from "@/components/pages/MultiYearReportPage.vue";
 import SchedulePage from '@/components/pages/SchedulePage.vue';
 import AccountRecoveryPage from '@/components/pages/AccountRecoveryPage.vue'
 import InstitutionSignup from '@/components/pages/InstitutionSignup.vue'
+import SuperAdminPage from "@/components/pages/SuperAdminPage.vue";
 
 const routes = [
   {
@@ -125,7 +126,15 @@ const routes = [
     component: SchedulePage,
     meta: { requiresAuth: true },
     props: true
-  }
+  },
+  {
+    path: '/super-admin', name: 'SuperAdmin',
+    component: SuperAdminPage,
+    meta: {
+      requiresAuth: true,
+      requiresSuperAdmin: true,
+    },
+  },
 ]
 
 const router = createRouter({
