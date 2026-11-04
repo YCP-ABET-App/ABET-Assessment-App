@@ -37,7 +37,7 @@ const loadingUsers = ref(false);
 const selectedProgramName = ref('');
 const institutionName = ref('');
 const initialAdminId = ref<number | null>(null);
-const showCreateForm = ref(false);
+const showCreateForm = ref(true);
 
 const finalInstitutionName = computed(() =>
   institutionName.value.trim()
@@ -94,7 +94,9 @@ async function loadPrograms() {
       name: p.name ?? p.programName ?? '',
       institution:
         typeof p.institution === 'object'
-          ? p.institution?.name ?? p.institution?.institutionName ?? ''
+          ? p.institution?.name ??
+          p.institution?.institutionName ??
+          ''
           : p.institution ?? p.institutionName ?? '',
       active: p.active ?? p.isActive ?? false,
       assignedAdmins: [] as User[],
@@ -343,21 +345,14 @@ onMounted(() => {
             <div class="form-field">
               <label for="program-name">Program Name</label>
 
-              <select
+              <input
                 id="program-name"
                 v-model="selectedProgramName"
+                type="text"
+                placeholder="Enter a new program name"
+                maxlength="255"
                 required
-              >
-                <option value="" disabled>Select a program</option>
-
-                <option
-                  v-for="name in existingProgramNames"
-                  :key="name"
-                  :value="name"
-                >
-                  {{ name }}
-                </option>
-              </select>
+              />
             </div>
 
             <div class="form-field">
@@ -435,13 +430,6 @@ onMounted(() => {
             </div>
 
             <div class="program-list-actions">
-              <button
-                class="primary-button"
-                type="button"
-                @click="startAddingProgram"
-              >
-                + Add Program
-              </button>
               <span class="count-badge">
                 {{ programs.length }} loaded
               </span>
