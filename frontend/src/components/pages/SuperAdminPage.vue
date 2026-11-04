@@ -23,6 +23,8 @@ interface User {
   lastName: string;
   email: string;
 }
+const selectedAdminByProgram = ref<Record<number, number | null>>({});
+const assigningAdminToProgram = ref<number | null>(null);
 
 const programs = ref<Program[]>([]);
 const loading = ref(false);
@@ -93,9 +95,10 @@ async function loadPrograms() {
       id: p.id ?? p.programId,
       name: p.name ?? p.programName ?? '',
       institution:
-        typeof p.institution === 'object'
-          ? p.institution?.name ??
-          p.institution?.institutionName ??
+        typeof p.institution === 'object' && p.institution !== null
+          ? p.institution.name ??
+          p.institution.institutionName ??
+          p.institution.institution?.name ??
           ''
           : p.institution ?? p.institutionName ?? '',
       active: p.active ?? p.isActive ?? false,
@@ -285,6 +288,57 @@ async function createProgram() {
   }
 }
 
+async function assignAdditionalAdmin(programId: number) {
+  errorMessage.value = '';
+  successMessage.value = '';
+
+  const adminId = selectedAdminByProgram.value[programId];
+
+  if (!adminId) {
+    errorMessage.value = 'Please select an administrator.';
+    return;
+  }
+
+  const program = programs.value.find(p => p.id === programId);
+
+  if (!program) {
+    errorMessage.value = 'Program not found.';
+    return;
+  }
+
+  const alreadyAssigned = program.assignedAdmins.some(
+    admin => admin.id === adminId
+  );
+
+  if (alreadyAssigned) {
+    errorMessage.value =
+      'This administrator is already assigned to this program.';
+    return;
+  }
+
+  assigningAdminToProgram.value = programId;
+
+  try {
+    await api.post(`/program/${programId}/users`, {
+      userId: adminId,
+      isAdmin: true,
+    });
+
+    successMessage.value =
+      'Administrator successfully added to ' + program.name + '.';
+
+    selectedAdminByProgram.value[programId] = null;
+
+    await loadPrograms();
+  } catch (error: any) {
+    errorMessage.value =
+      error?.response?.data?.message ??
+      'Could not assign administrator to this program.';
+  } finally {
+    assigningAdminToProgram.value = null;
+  }
+}
+
 
 
 function startAddingProgram() {
@@ -426,7 +480,6 @@ onMounted(() => {
           <div class="section-heading programs-heading">
             <div>
               <h2>All Programs</h2>
-              <p>View the programs currently returned by the backend.</p>
             </div>
 
             <div class="program-list-actions">
@@ -464,7 +517,6 @@ onMounted(() => {
             <table>
               <thead>
               <tr>
-                <th>ID</th>
                 <th>Program</th>
                 <th>Institution</th>
                 <th>Assigned Administrator</th>
@@ -474,7 +526,6 @@ onMounted(() => {
 
               <tbody>
               <tr v-for="program in programs" :key="program.id">
-                <td>{{ program.id ?? 'Not returned' }}</td>
 
                 <td class="program-name-cell">
                   {{ program.name || 'Not provided' }}
@@ -494,17 +545,59 @@ onMounted(() => {
                       :key="admin.id"
                       class="assigned-admin"
                     >
-                      <strong>{{ admin.firstName }} {{ admin.lastName }}</strong>
+                      <strong>
+                        {{ admin.firstName }} {{ admin.lastName }}
+                      </strong>
                       <small>{{ admin.email }}</small>
                     </div>
                   </div>
 
                   <span v-else class="no-admin">
-        No administrator found
-      </span>
+    No administrator assigned
+  </span>
+
+                  <div class="add-admin-control">
+                    <select
+                      v-model="selectedAdminByProgram[program.id]"
+                      :disabled="assigningAdminToProgram === program.id"
+                    >
+                      <option :value="null" disabled>
+                        Select an administrator
+                      </option>
+
+                      <option
+                        v-for="user in users.filter(
+          user => !program.assignedAdmins.some(
+            admin => admin.id === user.id
+          )
+        )"
+                        :key="user.id"
+                        :value="user.id"
+                      >
+                        {{ user.firstName }} {{ user.lastName }}
+                      </option>
+                    </select>
+
+                    <button
+                      class="primary-button add-admin-button"
+                      type="button"
+                      :disabled="
+                      !selectedAdminByProgram[program.id] ||
+                       assigningAdminToProgram === program.id
+                      "
+                      @click="assignAdditionalAdmin(program.id)"
+                    >
+                      {{
+                        assigningAdminToProgram === program.id
+                          ? 'Adding...'
+                          : 'Add Admin'
+                      }}
+                    </button>
+                  </div>
                 </td>
 
                 <td>
+
       <span
         class="status"
         :class="
@@ -871,6 +964,33 @@ tbody tr:hover {
 .no-admin {
   color: #62666d;
   font-size: 0.82rem;
+}
+
+.add-admin-control {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 14px;
+  min-width: 160px;
+}
+
+.add-admin-control select {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 38px;
+  padding: 8px;
+  border: 1px solid #cfd2d8;
+  border-radius: 7px;
+  background-color: white;
+  color: #202124;
+  font: inherit;
+}
+
+.add-admin-button {
+  width: 100%;
+  min-height: 36px;
+  padding: 7px 12px;
+  font-size: 0.85rem;
 }
 
 /* Responsive layout */
