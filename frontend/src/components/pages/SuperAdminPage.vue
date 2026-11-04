@@ -94,16 +94,12 @@ async function loadPrograms() {
       ...p,
       id: p.id ?? p.programId,
       name: p.name ?? p.programName ?? '',
-      institution:
-        typeof p.institution === 'object' && p.institution !== null
-          ? p.institution.name ??
-          p.institution.institutionName ??
-          p.institution.institution?.name ??
-          ''
-          : p.institution ?? p.institutionName ?? '',
+      institution: p.institution ?? '',
       active: p.active ?? p.isActive ?? false,
       assignedAdmins: [] as User[],
     }));
+
+    console.log('Normalized programs:', normalizedPrograms);
 
     console.log('Programs returned by backend:', rawPrograms);
 
@@ -532,7 +528,7 @@ onMounted(() => {
                 </td>
 
                 <td>
-                  {{ program.institution || 'Not provided' }}
+                  <strong>{{ program.institution }}</strong>
                 </td>
 
                 <td>
@@ -895,6 +891,10 @@ tbody tr:hover {
 .program-name-cell {
   color: #263746;
   font-weight: 600;
+}
+
+.table-wrapper td {
+  color: #263746;
 }
 
 .status {
