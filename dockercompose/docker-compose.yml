@@ -15,7 +15,7 @@ services:
       - web-network
     volumes:
       # Initialize database with docker-schema.sql on first container startup
-      - ./src/main/resources/docker-schema.sql:/docker-entrypoint-initdb.d/init.sql
+      - ../src/main/resources/docker-schema.sql:/docker-entrypoint-initdb.d/init.sql
       # Specify location on volume for data
       - mariadb_volume:/var/lib/mysql
 
@@ -24,7 +24,7 @@ services:
     depends_on:
       - local-database
     volumes:
-      - ./src/main/resources:/liquibase/resources
+      - ../src/main/resources:/liquibase/resources
     working_dir: /liquibase/resources
     command: >
       /bin/bash -c "sleep 15 && liquibase --username=username --password=password --url='jdbc:mariadb://mariadb-local-abet:3306/abet_assessment_local' --changelog-file=db/changelog/changelog-master.yaml update"
@@ -33,7 +33,7 @@ services:
 
   backend:
     build:
-      context: .
+      context: ..
       dockerfile: Dockerfile
     container_name: spring-backend
     restart: always
@@ -53,7 +53,7 @@ services:
 
   frontend:
     build:
-      context: ./frontend
+      context: ../frontend
       dockerfile: Dockerfile
     container_name: vue-frontend
     restart: always

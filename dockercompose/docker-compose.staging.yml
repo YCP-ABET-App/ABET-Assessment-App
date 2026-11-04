@@ -37,7 +37,7 @@ services:
       MYSQL_PASSWORD: ${DB_PASSWORD}
     volumes:
       - db_data_staging:/var/lib/mysql
-      - ./database/init:/docker-entrypoint-initdb.d:ro
+      - ../database/init:/docker-entrypoint-initdb.d:ro
     ports:
       - "100.79.13.76:3307:3306"
     networks:
@@ -51,7 +51,7 @@ services:
   # E2E test runner service (use with --profile e2e-test)
   playwright-tests:
     build:
-      context: .
+      context: ..
       dockerfile: Dockerfile.playwright
     container_name: abet-e2e-tests
     profiles:
@@ -65,11 +65,11 @@ services:
       CI: 'true'
     volumes:
       # Mount test results for retrieval
-      - ./frontend/test-results:/app/test-results
-      - ./frontend/playwright-report:/app/playwright-report
+      - ../frontend/test-results:/app/test-results
+      - ../frontend/playwright-report:/app/playwright-report
       # Mount the test files (for development)
-      - ./frontend/e2e:/app/e2e:ro
-      - ./frontend/playwright.staging.config.ts:/app/playwright.staging.config.ts:ro
+      - ../frontend/e2e:/app/e2e:ro
+      - ../frontend/playwright.staging.config.ts:/app/playwright.staging.config.ts:ro
     networks:
       - abet-network-staging
     depends_on:
