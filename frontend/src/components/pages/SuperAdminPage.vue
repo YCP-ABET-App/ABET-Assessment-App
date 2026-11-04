@@ -1,6 +1,6 @@
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import api from '@/api';
 
 interface Program {
@@ -32,13 +32,40 @@ const successMessage = ref('');
 const users = ref<User[]>([]);
 const loadingUsers = ref(false);
 
-// Create-program form
-const programName = ref('');
+
+
+const selectedProgramName = ref('');
 const institutionName = ref('');
 const initialAdminId = ref<number | null>(null);
+const showCreateForm = ref(false);
 
-// Global institution setting UI.
-// This cannot be saved until a backend settings endpoint exists.
+const finalInstitutionName = computed(() =>
+  institutionName.value.trim()
+);
+
+const finalProgramName = computed(() =>
+  selectedProgramName.value.trim()
+);
+
+
+const existingProgramNames = computed(() =>
+  [...new Set(
+    programs.value
+      .map(program => program.name?.trim())
+      .filter((name): name is string => !!name)
+  )].sort()
+);
+
+const existingInstitutions = computed(() =>
+  [...new Set(
+    programs.value
+      .map(program => program.institution?.trim())
+      .filter((name): name is string => !!name)
+  )].sort()
+);
+
+
+
 const globalInstitutionName = ref('');
 
 function getPayload(response: any): any {
@@ -165,17 +192,18 @@ async function loadUsers() {
   }
 }
 
+
 async function createProgram() {
   errorMessage.value = '';
   successMessage.value = '';
 
-  if (!programName.value.trim()) {
-    errorMessage.value = 'Enter a program name.';
+  if (!finalProgramName.value) {
+    errorMessage.value = 'Select a program name.';
     return;
   }
 
-  if (!institutionName.value.trim()) {
-    errorMessage.value = 'Enter the institution for this program.';
+  if (!finalInstitutionName.value) {
+    errorMessage.value = 'Select an institution.';
     return;
   }
 
@@ -184,7 +212,21 @@ async function createProgram() {
     !Number.isInteger(initialAdminId.value) ||
     initialAdminId.value <= 0
   ) {
-    errorMessage.value = 'Enter a valid initial administrator user ID.';
+    errorMessage.value = 'Select an initial administrator.';
+    return;
+  }
+
+  const duplicate = programs.value.some(
+    program =>
+      program.name.trim().toLowerCase() ===
+      finalProgramName.value.toLowerCase() &&
+      program.institution.trim().toLowerCase() ===
+      finalInstitutionName.value.toLowerCase()
+  );
+
+  if (duplicate) {
+    errorMessage.value =
+      'This program already exists at the selected institution.';
     return;
   }
 
@@ -193,57 +235,67 @@ async function createProgram() {
   let createdProgram: any = null;
 
   try {
-    // Step 1: Create the program.
     const response = await api.post('/program', {
-      name: programName.value.trim(),
-      institution: institutionName.value.trim(),
+      name: finalProgramName.value,
+      institution: finalInstitutionName.value,
       active: true,
     });
 
     createdProgram = getPayload(response);
 
-    const programId = createdProgram?.id;
+    const programId =
+      createdProgram?.id ?? createdProgram?.programId;
 
     if (!programId) {
       throw new Error(
-        'The program was created, but its ID was not returned by the server.'
+        'Program was created, but the server did not return its ID.'
       );
     }
 
-    // Assign the initial administrator.
-    // ProgramUser.isAdmin represents a program-level ADMIN,
-    // not a global SUPER_ADMIN.
     await api.post(`/program/${programId}/users`, {
       userId: initialAdminId.value,
       isAdmin: true,
     });
 
     successMessage.value =
-      `Program "${programName.value.trim()}" was created and its initial administrator was assigned.`;
+      `Program "${finalProgramName.value}" was created successfully.`;
 
-    programName.value = '';
+    selectedProgramName.value = '';
     institutionName.value = '';
     initialAdminId.value = null;
 
     await loadPrograms();
+
   } catch (error: any) {
     const message =
       error?.response?.data?.message ??
       error?.message ??
       'An unexpected error occurred.';
 
-    if (createdProgram?.id) {
-      errorMessage.value =
-        `The program may have been created, but assigning its initial administrator failed. ` +
-        `Program ID: ${createdProgram.id}. Details: ${message}`;
-      await loadPrograms();
-    } else {
-      errorMessage.value = message;
-    }
+    errorMessage.value = createdProgram
+      ? `Program ${createdProgram.id ?? createdProgram.programId} may have been created, but assigning its administrator failed: ${message}`
+      : message;
+
+    await loadPrograms();
+
   } finally {
     creating.value = false;
   }
 }
+
+
+
+function startAddingProgram() {
+  showCreateForm.value = true;
+
+  selectedProgramName.value = '';
+  institutionName.value = '';
+  initialAdminId.value = null;
+
+  errorMessage.value = '';
+  successMessage.value = '';
+}
+
 
 onMounted(() => {
   loadPrograms();
@@ -264,7 +316,6 @@ onMounted(() => {
           </p>
         </header>
 
-        <!-- Messages -->
         <div v-if="errorMessage" class="message error-message" role="alert">
           {{ errorMessage }}
         </div>
@@ -273,7 +324,7 @@ onMounted(() => {
           {{ successMessage }}
         </div>
 
-        <!-- Create Program -->
+
         <section class="section-card">
           <div class="section-heading">
             <div>
@@ -284,34 +335,54 @@ onMounted(() => {
             </div>
           </div>
 
-          <form class="program-form" @submit.prevent="createProgram">
+          <form
+            v-if="showCreateForm"
+            class="program-form"
+            @submit.prevent="createProgram"
+          >
             <div class="form-field">
               <label for="program-name">Program Name</label>
-              <input
+
+              <select
                 id="program-name"
-                v-model="programName"
-                type="text"
-                maxlength="255"
-                placeholder="e.g. Computer Engineering"
+                v-model="selectedProgramName"
                 required
-              />
+              >
+                <option value="" disabled>Select a program</option>
+
+                <option
+                  v-for="name in existingProgramNames"
+                  :key="name"
+                  :value="name"
+                >
+                  {{ name }}
+                </option>
+              </select>
             </div>
 
             <div class="form-field">
               <label for="program-institution">Institution</label>
-              <input
+
+              <select
                 id="program-institution"
                 v-model="institutionName"
-                type="text"
-                minlength="2"
-                maxlength="255"
-                placeholder="e.g. York College of Pennsylvania"
                 required
-              />
+              >
+                <option value="" disabled>Select an institution</option>
+
+                <option
+                  v-for="institution in existingInstitutions"
+                  :key="institution"
+                  :value="institution"
+                >
+                  {{ institution }}
+                </option>
+              </select>
             </div>
 
             <div class="form-field full-width">
               <label for="initial-admin">Initial Administrator</label>
+
               <select
                 id="initial-admin"
                 v-model="initialAdminId"
@@ -333,9 +404,11 @@ onMounted(() => {
                   :key="user.id"
                   :value="user.id"
                 >
-                  {{ user.firstName }} {{ user.lastName }} ({{ user.email }})
+                  {{ user.firstName }} {{ user.lastName }}
+                  ({{ user.email }})
                 </option>
               </select>
+
               <small>
                 Choose the user who will administer this program.
               </small>
@@ -353,6 +426,7 @@ onMounted(() => {
           </form>
         </section>
 
+
         <section class="section-card">
           <div class="section-heading programs-heading">
             <div>
@@ -361,6 +435,13 @@ onMounted(() => {
             </div>
 
             <div class="program-list-actions">
+              <button
+                class="primary-button"
+                type="button"
+                @click="startAddingProgram"
+              >
+                + Add Program
+              </button>
               <span class="count-badge">
                 {{ programs.length }} loaded
               </span>
