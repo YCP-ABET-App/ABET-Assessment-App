@@ -23,15 +23,15 @@ const maxPiCount = computed(() =>
 
 const currentDeleteStep = computed(() => DELETE_PI_STEPS[deleteStep.value]);
 
-function addOutcome() {
+async function addOutcome() {
   tableError.value = '';
-  const so = store.addStudentOutcome();
+  const so = await store.addStudentOutcome();
   if (so.pis[0]) openRubricModal(so, so.pis[0]);
 }
 
-function addPi(so: OutcomeMapping) {
+async function addPi(so: OutcomeMapping) {
   tableError.value = '';
-  const pi = store.addPerformanceIndicator(so.id);
+  const pi = await store.addPerformanceIndicator(so.id);
   if (pi) openRubricModal(so, pi);
 }
 
@@ -45,8 +45,8 @@ function requestRemovePi(so: OutcomeMapping, pi: PerformanceIndicatorDetail, eve
   beginDeletePi(so.id, pi.name);
 }
 
-function confirmRemovePi() {
-  tableError.value = continueDeletePi() ?? '';
+async function confirmRemovePi() {
+  tableError.value = (await continueDeletePi()) ?? '';
 }
 
 function openPi(so: OutcomeMapping, pi: PerformanceIndicatorDetail) {
@@ -77,7 +77,7 @@ function openPi(so: OutcomeMapping, pi: PerformanceIndicatorDetail) {
           <tbody>
           <tr v-for="so in store.soPiMap" :key="so.id">
             <td class="so-num-cell">
-              <div>{{ so.id }}</div>
+              <div>{{ so.number }}</div>
               <p class="so-snippet" :class="{ missing: !so.description }">
                 {{ so.description || 'No description yet — open a PI to add one.' }}
               </p>

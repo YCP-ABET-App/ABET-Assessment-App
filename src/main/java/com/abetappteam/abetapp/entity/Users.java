@@ -37,6 +37,10 @@ public class Users extends BaseEntity {
     @Column(name = "is_active", nullable = false)
     private Boolean active = true;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", nullable = false, length = 20)
+    private UserRole role = UserRole.INSTRUCTOR;
+
     //Constructors
     public Users(){
         super();
@@ -49,6 +53,7 @@ public class Users extends BaseEntity {
         this.lastName = lastName;
         this.title = title;
         this.active = active;
+        this.role = UserRole.INSTRUCTOR;
     }
 
     //Getters and Setters
@@ -100,6 +105,14 @@ public class Users extends BaseEntity {
         this.active = active;
     }
 
+    public UserRole getRole() {
+        return role;
+    }
+
+    public void setRole(UserRole role) {
+        this.role = role;
+    }
+
     @Transient
     private Long currentProgramId;
 
@@ -142,6 +155,7 @@ public class Users extends BaseEntity {
                 ", lastName" + lastName + '\'' +
                 ", title" + title + '\'' +
                 ", active=" + active +
+                ", role=" + role +
                 ", createdAt=" + getCreatedAt() +
                 ", updatedAt=" + getUpdatedAt() +
                 '}';

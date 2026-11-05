@@ -86,6 +86,15 @@ public class PerformanceIndicatorController extends BaseController {
         return success(indicators, "Active performance indicators retrieved successfully");
     }
 
+    @GetMapping("/by-program/active")
+    public ResponseEntity<ApiResponse<List<PerformanceIndicator>>> getActiveIndicatorsByProgram(
+            @RequestParam Long programId) {
+        logger.info("Fetching active performance indicators for program ID: {}", programId);
+        validateId(programId);
+        List<PerformanceIndicator> indicators = performanceIndicatorService.getActiveIndicatorsByProgram(programId);
+        return success(indicators, "Active performance indicators retrieved successfully");
+    }
+
     /**
      * Create a new performance indicator
      */

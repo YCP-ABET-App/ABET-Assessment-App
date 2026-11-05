@@ -99,6 +99,11 @@ public class PerformanceIndicatorService
     }
 
     @Transactional(readOnly = true)
+    public List<PerformanceIndicator> getActiveIndicatorsByProgram(Long programId) {
+        return repository.findByProgramIdAndIsActive(programId, true);
+    }
+
+    @Transactional(readOnly = true)
     public boolean existsByIndicatorNumberAndStudentOutcome(Integer indicatorNumber, Long studentOutcomeId) {
         return repository.existsByIndicatorNumberAndStudentOutcomeId(indicatorNumber, studentOutcomeId);
     }

@@ -15,6 +15,7 @@ DROP TABLE IF EXISTS semester;
 DROP TABLE IF EXISTS program_user;
 DROP TABLE IF EXISTS program;
 DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS institution;
 DROP TABLE IF EXISTS course_indicator;
 
 CREATE TABLE users (
@@ -31,8 +32,23 @@ CREATE TABLE users (
     deleted BOOLEAN DEFAULT FALSE NOT NULL,
     deleted_at TIMESTAMP NULL,
     -- Users-specific
-    is_active BOOLEAN DEFAULT TRUE NOT NULL
+    is_active BOOLEAN DEFAULT TRUE NOT NULL,
+    role VARCHAR(20) NOT NULL DEFAULT 'INSTRUCTOR'
     );
+
+-- Institution table
+CREATE TABLE institution (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    institution_name VARCHAR(100) NOT NULL,
+    color INT NULL,
+    logo VARCHAR(20) NULL,
+    -- From BaseEntity
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    version BIGINT DEFAULT 0,
+    deleted BOOLEAN DEFAULT FALSE NOT NULL,
+    deleted_at TIMESTAMP NULL
+);
 
 -- Program table
 CREATE TABLE program (

@@ -14,12 +14,13 @@ function piLimit(outcome: number) {
   return store.piCountForOutcome(outcome);
 }
 
-function commitCell(course: string, outcome: number) {
+async function commitCell(course: string, outcome: number) {
   const raw = store.courseOutcomeMap[course]?.[outcome] ?? '';
   const error = validatePiIndexList(raw, piLimit(outcome));
   cellErrors[cellKey(course, outcome)] = error ?? '';
   if (!error && store.courseOutcomeMap[course]) {
     store.courseOutcomeMap[course][outcome] = normalizePiIndexList(raw);
+    await store.syncCourseOutcomeIndicators(course, outcome);
   }
 }
 

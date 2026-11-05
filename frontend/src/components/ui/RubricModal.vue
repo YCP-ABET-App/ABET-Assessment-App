@@ -55,7 +55,7 @@ function handleCancel() {
 <template>
   <div v-if="selectedPI" class="modal-overlay" @click.self="handleOverlayClick">
     <div class="modal-content">
-      <h3 v-if="saveStep === 'edit'">Outcome {{ selectedPI.outcomeId }} — {{ selectedPI.piName }}</h3>
+      <h3 v-if="saveStep === 'edit'">Outcome {{ selectedPI.outcomeNumber }} — {{ selectedPI.piName }}</h3>
       <h3 v-else-if="saveStep === 'choose'">Choose save method</h3>
       <h3 v-else>Final confirmation</h3>
 

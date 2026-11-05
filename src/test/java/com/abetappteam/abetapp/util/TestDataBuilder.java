@@ -1,8 +1,10 @@
 package com.abetappteam.abetapp.util;
 
+import com.abetappteam.abetapp.entity.Institution;
 import com.abetappteam.abetapp.entity.Program;
 import com.abetappteam.abetapp.entity.ProgramUser;
 import com.abetappteam.abetapp.entity.Users;
+import com.abetappteam.abetapp.dto.InstitutionDTO;
 import com.abetappteam.abetapp.dto.ProgramDTO;
 import com.abetappteam.abetapp.entity.Course;
 import com.abetappteam.abetapp.entity.CourseIndicator;
@@ -222,6 +224,39 @@ public class TestDataBuilder {
                     i % 2 == 0));
         }
         return users;
+    }
+
+    // INSTITUTION TEST DATA
+    public static Institution createInstitution() {
+        return createInstitution("Example University", 0x003366, "ycp");
+    }
+
+    public static Institution createInstitution(String name, Integer color, String logo) {
+        Institution institution = new Institution();
+        institution.setName(name);
+        institution.setColor(color);
+        institution.setLogo(logo);
+        return institution;
+    }
+
+    public static Institution createInstitutionWithId(Long id, String name, Integer color, String logo) {
+        Institution institution = createInstitution(name, color, logo);
+        institution.setId(id);
+        institution.setCreatedAt(LocalDateTime.now());
+        institution.setUpdatedAt(LocalDateTime.now());
+        return institution;
+    }
+
+    public static InstitutionDTO createInstitutionDTO() {
+        return new InstitutionDTO("New Institution", 0x003366, "logo");
+    }
+
+    public static List<Institution> createInstitutionList(int count) {
+        List<Institution> institutions = new ArrayList<>();
+        for (int i = 1; i <= count; i++) {
+            institutions.add(createInstitutionWithId((long) i, "Institution " + i, i, "l" + i));
+        }
+        return institutions;
     }
 
     // PROGRAM TEST DATA

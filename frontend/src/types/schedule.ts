@@ -5,20 +5,27 @@ export interface PiRubric {
 }
 
 export interface PerformanceIndicatorDetail {
+  id: number;
   name: string;
+  indicatorNumber: number;
   definition: string;
   rubric: PiRubric;
+  studentOutcomeId: number;
+  programId: number | null;
 }
 
 export interface OutcomeMapping {
   id: number;
+  number: number;
   description: string;
   pis: PerformanceIndicatorDetail[];
 }
 
 export interface SelectedPI {
   outcomeId: number;
+  outcomeNumber: number;
   outcomeDesc: string;
+  piId: number;
   piName: string;
   piDefinition: string;
 }
@@ -39,23 +46,14 @@ export interface ScheduleEntryPayload {
 export interface CourseEntity {
   id: number;
   courseCode: string;
+  courseName?: string;
 }
 
 export interface SemesterEntity {
   id: number;
+  name?: string;
+  code?: string;
   academicYear: number;
   type: string;
-}
-
-export interface PerformanceIndicator {
-  id: number;
-  indNumber: number;
-  outcomeId: number;
-  description: string;
-}
-
-export interface ScheduledCourse {
-  code: string;
-  semesterType: 'FALL' | 'SPRING' | 'SUMMER' | 'BOTH';
-  indicatorIds: number[];
+  startDate?: string;
 }

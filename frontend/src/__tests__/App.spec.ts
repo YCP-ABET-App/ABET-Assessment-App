@@ -21,7 +21,10 @@ describe('App', () => {
     const wrapper = mount(App, {
       global: {
         plugins: [pinia, router],
-        stubs,
+        stubs: {
+          GlobalSelectors: true,
+          ...stubs,
+        },
       },
     })
 

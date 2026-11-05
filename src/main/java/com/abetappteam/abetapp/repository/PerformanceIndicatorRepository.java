@@ -26,6 +26,7 @@ public interface PerformanceIndicatorRepository extends JpaRepository<Performanc
     // Program Queries
     Page<PerformanceIndicator> findByProgramId(Long programId, Pageable pageable);
     List<PerformanceIndicator> findByProgramId(Long programId);
+    List<PerformanceIndicator> findByProgramIdAndIsActive(Long programId, Boolean isActive);
 
     // Active status queries
     Page<PerformanceIndicator> findByStudentOutcomeIdAndIsActive(Long studentOutcomeId, Boolean isActive, Pageable pageable);

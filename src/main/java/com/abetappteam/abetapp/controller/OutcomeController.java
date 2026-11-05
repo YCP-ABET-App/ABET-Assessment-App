@@ -89,5 +89,12 @@ public class OutcomeController extends BaseController{
         logger.info("Fetching all outcomes from semester: {}, with number: {}", semesterId, number);
         List<Outcome> outcomes = service.findOutcomesBySemesterAndNumber(semesterId, number);
         return success(outcomes, "Outcomes found");
-    } 
+    }
+
+    @GetMapping("/byProgram/{programId}")
+    public ResponseEntity<ApiResponse<List<Outcome>>> getActiveOutcomesByProgramId(@PathVariable Long programId) {
+        logger.info("Fetching active outcomes for program: {}", programId);
+        List<Outcome> outcomes = service.findActiveOutcomesByProgram(programId);
+        return success(outcomes, "Outcomes found");
+    }
 }

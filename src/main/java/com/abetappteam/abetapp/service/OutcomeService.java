@@ -101,4 +101,9 @@ public class OutcomeService extends BaseService<Outcome, Long, OutcomeRepository
     public List<Outcome> findOutcomesBySemesterAndNumber(Long semesterId, Integer number){
         return repository.findBySemesterIdAndOutNum(semesterId, number);
     }
+
+    @Transactional(readOnly = true)
+    public List<Outcome> findActiveOutcomesByProgram(Long programId) {
+        return repository.findByProgramIdAndActive(programId, true);
+    }
 }
