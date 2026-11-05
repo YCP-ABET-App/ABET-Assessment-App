@@ -229,7 +229,7 @@ tasks.register('devDocker', Exec) {
     description = 'Run in Docker with H2 database'
     dependsOn 'composeBuild'
     executable 'docker'
-    args 'compose', '-f', 'docker-compose.deployment-testing.yml', 'up', '-d'
+    args 'compose', '-f', 'dockercompose/docker-compose.deployment-testing.yml', 'up', '-d'
     doFirst {
         println "Docker app: http://localhost:8080"
         println "Stop with: ./gradlew stopDocker -Pcompose=deployment-testing"
@@ -241,7 +241,7 @@ tasks.register('devDockerProd', Exec) {
     description = 'Run in Docker with MariaDB (production-like)'
     dependsOn 'composeBuild'
     executable 'docker'
-    args 'compose', '-f', 'docker-compose.yml', '-f', 'docker-compose.prod-testing.yml', 'up', '-d'
+    args 'compose', '-f', 'dockercompose/docker-compose.yml', '-f', 'dockercompose/docker-compose.prod-testing.yml', 'up', '-d'
     doFirst {
         println "Docker app: http://localhost:8080"
         println "Adminer: http://localhost:8081"
@@ -254,15 +254,17 @@ tasks.register('devDockerProd', Exec) {
 tasks.register('dockerStop', Exec) {
     group = 'abet-dev'
     description = 'Stop Docker environment (use -Pcompose=<env>)'
+    executable 'docker'
     doFirst {
-        def composeEnv = project.findProperty('compose') ?: 'deployment-testing'
+        def composeEnv = project.findProperty('compose')
         if (composeEnv == 'prod-testing') {
-            args 'compose', '-f', 'docker-compose.yml', '-f', 'docker-compose.prod-testing.yml', 'down'
+            args 'compose', '-f', 'dockercompose/docker-compose.yml', '-f', 'dockercompose/docker-compose.prod-testing.yml', 'down'
+        } else if (composeEnv == 'deployment-testing') {
+            args 'compose', '-f', "dockercompose/docker-compose.${composeEnv}.yml", 'down'
         } else {
-            args 'compose', '-f', "docker-compose.${composeEnv}.yml", 'down'
+            args 'compose', '-f', "dockercompose/docker-compose.yml", 'down'
         }
     }
-    executable 'docker'
 }
 
 tasks.register('dockerLogs', Exec) {
@@ -271,9 +273,9 @@ tasks.register('dockerLogs', Exec) {
     doFirst {
         def composeEnv = project.findProperty('compose') ?: 'deployment-testing'
         if (composeEnv == 'prod-testing') {
-            args 'compose', '-f', 'docker-compose.yml', '-f', 'docker-compose.prod-testing.yml', 'logs', '-f'
+            args 'compose', '-f', 'dockercompose/docker-compose.yml', '-f', 'dockercompose/docker-compose.prod-testing.yml', 'logs', '-f'
         } else {
-            args 'compose', '-f', "docker-compose.${composeEnv}.yml", 'logs', '-f'
+            args 'compose', '-f', "dockercompose/docker-compose.${composeEnv}.yml", 'logs', '-f'
         }
     }
     executable 'docker'
@@ -287,9 +289,9 @@ tasks.register('dockerDebug', Exec) {
     executable 'docker'
 
     args 'compose',
-            '-f', 'docker-compose.yml',
-            '-f', 'docker-compose-watch.yml',
-            '-f', 'docker-compose-debug.yml',
+            '-f', 'dockercompose/docker-compose.yml',
+            '-f', 'dockercompose/docker-compose-watch.yml',
+            '-f', 'dockercompose/docker-compose-debug.yml',
             'up', '--watch', '--build'
 
     environment 'COMPOSE_BAKE', 'false'
@@ -297,8 +299,22 @@ tasks.register('dockerDebug', Exec) {
 
 tasks.register('composeBuild', Exec) {
     description = 'Build Docker images'
-    args 'compose', 'build'
     executable 'docker'
+    args 'compose', '-f', 'dockercompose/docker-compose.yml', 'build'
+}
+
+tasks.register('dockerRun', Exec) {
+    description 'Run docker as base'
+    executable 'docker'
+    args 'compose', '-f', 'dockercompose/docker-compose.yml', 'up', '--build'
+    environment 'COMPOSE_BAKE', 'false'
+}
+
+tasks.register('runMariaDB', Exec) {
+    description 'Run MariaDB in docker standalone'
+    executable 'docker'
+    args 'compose', '-f', 'dockercompose/docker-compose.yml', 'up', '-d', 'local-database'
+    environment 'COMPOSE_BAKE', 'false'
 }
 
 tasks.register('installWar', Exec) {

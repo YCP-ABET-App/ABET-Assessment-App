@@ -287,22 +287,22 @@ jobs:
             fi
           
             # Update Docker Compose file with current Tailscale IP
-            if [ "$TAILSCALE_IP" != "unknown" ] && [ -f "docker-compose.staging.yml" ]; then
-                echo "Updating docker-compose.staging.yml with Tailscale IP: $TAILSCALE_IP"
+            if [ "$TAILSCALE_IP" != "unknown" ] && [ -f "dockercompose/docker-compose.staging.yml" ]; then
+                echo "Updating dockercompose/docker-compose.staging.yml with Tailscale IP: $TAILSCALE_IP"
           
                 # Verify the change was made
-                if grep -q "${TAILSCALE_IP}:8081:8080" docker-compose.staging.yml; then
+                if grep -q "${TAILSCALE_IP}:8081:8080" dockercompose/docker-compose.staging.yml; then
                     echo "✓ Successfully updated Tailscale IP in compose file"
                 else
                     echo "WARNING: May not have updated Tailscale IP correctly"
                     echo "Current compose file ports section:"
-                    grep -A 2 -B 2 "8081:8080" docker-compose.staging.yml || true
+                    grep -A 2 -B 2 "8081:8080" dockercompose/docker-compose.staging.yml || true
                 fi
             fi
           
             # Stop existing staging containers
             echo "Stopping existing staging containers..."
-            docker compose -f docker-compose.staging.yml down --remove-orphans || echo "No existing containers to stop"
+            docker compose -f dockercompose/docker-compose.staging.yml down --remove-orphans || echo "No existing containers to stop"
           
             # Clean up any orphaned containers
             docker container prune -f || true
@@ -315,10 +315,10 @@ jobs:
             export DB_ROOT_PASSWORD="${{ secrets.STAGING_DB_ROOT_PASSWORD }}"
             export DB_NAME="${{ secrets.STAGING_DB_NAME }}"
           
-            if ! docker compose -f docker-compose.staging.yml up -d; then
+            if ! docker compose -f dockercompose/docker-compose.staging.yml up -d; then
                 echo "ERROR: Failed to start staging containers"
                 echo "Checking container logs..."
-                docker compose -f docker-compose.staging.yml logs || true
+                docker compose -f dockercompose/docker-compose.staging.yml logs || true
                 exit 1
             fi
           
@@ -339,9 +339,9 @@ jobs:
                     if [ $i -eq 12 ]; then
                         echo "ERROR: Health check failed after 2 minutes"
                         echo "Container status:"
-                        docker compose -f docker-compose.staging.yml ps
+                        docker compose -f dockercompose/docker-compose.staging.yml ps
                         echo "Application logs:"
-                        docker compose -f docker-compose.staging.yml logs app
+                        docker compose -f dockercompose/docker-compose.staging.yml logs app
                         exit 1
                     fi
                     sleep 10
