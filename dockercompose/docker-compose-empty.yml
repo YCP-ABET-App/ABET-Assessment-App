@@ -1,0 +1,9 @@
+# Optional override: MariaDB with schema only (no pre-seeded data)
+# Used by: ./gradlew runMariaDBEmpty
+
+services:
+  local-database:
+    volumes:
+      # Override the normal docker-schema.sql (which includes seed data)
+      - ../src/main/resources/docker-schema-only.sql:/docker-entrypoint-initdb.d/init.sql
+      - mariadb_volume:/var/lib/mysql
