@@ -5,7 +5,7 @@ import { useRouter } from 'vue-router'
 import { useToast } from "@/composables/use-toast.ts"
 import { useUserStore } from '@/stores/user-store.ts'
 import api from "@/api"
-import { markSetupComplete } from '@/router'
+import { markSetupComplete } from '@/router/guards'
 
 const router = useRouter()
 const userStore = useUserStore()

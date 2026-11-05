@@ -32,7 +32,7 @@ const { openCourseSearch } = useScheduleModals();
           <td v-for="year in store.academicYears" :key="year" class="cell-courses">
             <div class="chip-container">
                 <span
-                  v-for="course in store.sixYearSchedule[outcome][year]"
+                  v-for="course in (store.sixYearSchedule[outcome]?.[year] ?? [])"
                   :key="course"
                   class="course-chip"
                   :class="{

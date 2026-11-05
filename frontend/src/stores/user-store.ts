@@ -11,6 +11,7 @@ export interface User {
   role: "ADMIN" | "INSTRUCTOR";
   currentProgramId?: number;
   hasCourses?: boolean;
+  hasSection?: boolean;
 }
 
 export interface ProgramAccess {
@@ -230,6 +231,37 @@ export const useUserStore = defineStore('user', () => {
     router.push("/login");
   }
 
+  // -------------------------
+  // ACTION: SECTION ACCESS
+  // -------------------------
+  async function canAccessSection(sectionId: number): Promise<boolean> {
+    if (!sectionId || !userId.value) return false;
+
+    try {
+      const { data: sectionUserRes } = await api.get("/section-user", {
+        params: { sectionId, userId: userId.value },
+      });
+      if ((sectionUserRes.data ?? []).length > 0) {
+        return true;
+      }
+
+      const { data: sectionProgramRes } = await api.get("/section-program", {
+        params: { sectionId },
+      });
+      const sectionPrograms = sectionProgramRes.data ?? [];
+      const adminProgramIds = new Set(
+        programs.value.filter((p) => p.isAdmin).map((p) => p.programId)
+      );
+
+      return sectionPrograms.some((sp: { programId: number }) =>
+        adminProgramIds.has(sp.programId)
+      );
+    } catch (err) {
+      console.error("Error checking section access:", err);
+      return false;
+    }
+  }
+
   return {
     // State
     user,
@@ -257,5 +289,6 @@ export const useUserStore = defineStore('user', () => {
     saveToStorage,
     setTheme,
     applyThemeToDocument,
+    canAccessSection,
   };
 });

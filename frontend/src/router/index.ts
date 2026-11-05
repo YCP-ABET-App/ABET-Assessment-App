@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { useUserStore } from '@/stores/user-store'
+import { authGuard } from '@/router/guards'
 import ConnectionTest from '@/components/ConnectionTest.vue'
 import HomePage from '@/components/pages/HomePage.vue'
 import SummaryPage from '@/components/pages/SummaryPage.vue'
@@ -46,7 +46,7 @@ const routes = [
     path: '/:program_id/:semester_id/summary/',
     name: 'Summary',
     component: SummaryPage,
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, requiresAdmin: true }
   },
   {
     path: '/fcar/:measure_id',
@@ -58,13 +58,13 @@ const routes = [
     path: '/section/:section_id',
     name: 'Section',
     component: SectionViewPage,
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, requiresSectionAccess: true }
   },
   {
     path: '/instructor/:instructor_id',
     name: 'Instructor',
     component: InstructorViewPage,
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, requiresMatchingInstructorId: true }
   },
   {
     path: '/:program_id/courses',
@@ -120,14 +120,14 @@ const routes = [
     path: '/:program_id/multi-year-summary',
     name: 'Multi-Year Summary',
     component: MultiYearReportPage,
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, requiresAdmin: true }
   },
   {
     // This creates a dedicated URL for schedule entry page
     path: '/:programId/schedule-entry',
     name: 'ScheduleEntry',
     component: SchedulePage,
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true, requiresAdmin: true },
     props: true
   },
   {
@@ -145,104 +145,10 @@ const router = createRouter({
   routes: routes,
 })
 
-let setupChecked = false
-let needsSetup = false
 
-// Navigation guard
-router.beforeEach(async (to, from, next) => {
-if (!setupChecked) {
-    try {
-      const res = await fetch('/api/setup/status')
-      const data = await res.json()
-      needsSetup = data.needsSetup
-    } catch {
-      needsSetup = false
-    }
-    setupChecked = true
-  }
 
-  if (needsSetup && to.name !== 'First Time Setup') {
-    next({ name: 'First Time Setup' })
-    return
-  }
-  if (!needsSetup && to.name === 'First Time Setup') {
-    next({ name: 'Institution Login' }) // 
-    return
-  }
+router.beforeEach(authGuard) // Apply the authGuard to all routes
 
-  const userStore = useUserStore()
-  const institutionId = localStorage.getItem('selectedInstitutionId')
-
-  // Load user data from storage if not already loaded
-  if (!userStore.isLoggedIn && localStorage.getItem('authToken')) {
-    userStore.loadFromStorage()
-  }
-
-  const requiresAuth = to.meta.requiresAuth
-  const requiresAdmin = to.meta.requiresAdmin
-
-  // Allow institution login page for all users
-  if (to.name === 'Institution Login') {
-    next()
-    return
-  }
-
-  // If user is logged in but trying to access login/signup pages, redirect to dashboard
-  if (userStore.isLoggedIn && (to.name === 'Login')) {
-    next({ name: 'Home' })
-    return
-  }
-
-  // If user is not logged in and trying to access login/signup, ensure institution is selected
-  if (!userStore.isLoggedIn && (to.name === 'Login')) {
-    if (!institutionId) {
-      next({
-        name: 'Institution Login',
-        query: { redirect: to.fullPath }
-      })
-      return
-    }
-    // Institution is selected, allow access to login/signup
-    next()
-    return
-  }
-
-  // If user is not logged in and trying to access a protected route
-  if (requiresAuth && !userStore.isLoggedIn) {
-    // If institution not selected, go to institution login
-    if (!institutionId) {
-      next({
-        name: 'Institution Login',
-        query: { redirect: to.fullPath }
-      })
-      return
-    }
-    // If institution selected but not logged in, go to login page
-    next({
-      name: 'Login',
-      query: { redirect: to.fullPath }
-    })
-    return
-  }
-
-  // If user is logged in but trying to access institution login, redirect to dashboard
-  if (userStore.isLoggedIn && to.name === 'Institution Login') {
-    next({ name: 'Home' })
-    return
-  }
-
-  // Handle admin routes
-  if (requiresAdmin && !userStore.isAdmin) {
-    next({ name: 'Home' })
-    return
-  }
-
-  next()
-})
 
 export default router
 
-export function markSetupComplete() {
-  needsSetup = false
-  setupChecked = true
-}
