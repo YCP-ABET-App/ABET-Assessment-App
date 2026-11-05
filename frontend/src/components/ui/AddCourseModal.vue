@@ -5,8 +5,14 @@ const {
   activeTargetCell,
   searchQuery,
   isCreatingCourse,
-  newCourseName,
+  newCoursePrefix,
+  newCourseNumber,
+  composedNewCourse,
+  composedCourseExists,
+  courseFormError,
   filteredCourses,
+  exactCourseMatch,
+  alreadyInActiveCell,
   canCreateFromQuery,
   closeCourseSearch,
   addCourseToActiveCell,
@@ -33,7 +39,15 @@ const {
         />
       </div>
 
-      <p v-if="!searchQuery.trim()" class="hint">Start typing to filter available courses.</p>
+      <p v-if="!searchQuery.trim()" class="hint">Start typing a prefix and number, such as CS 400.</p>
+
+      <p v-if="alreadyInActiveCell" class="field-error">
+        {{ exactCourseMatch }} is already scheduled in this outcome/year.
+      </p>
+
+      <p v-else-if="exactCourseMatch && !isCreatingCourse" class="exists-note">
+        {{ exactCourseMatch }} already exists. Select it from the list below instead of creating it again.
+      </p>
 
       <ul v-if="filteredCourses.length > 0" class="autocomplete-list">
         <li
@@ -45,19 +59,17 @@ const {
         </li>
       </ul>
 
-      <!-- No matches: offer to add the typed name as a new course -->
-      <div v-if="searchQuery.trim() && filteredCourses.length === 0" class="create-course-prompt">
+      <div v-if="searchQuery.trim() && filteredCourses.length === 0 && !alreadyInActiveCell" class="create-course-prompt">
         <p>No matching courses.</p>
         <button
           v-if="!isCreatingCourse"
           class="btn-save btn-small"
           @click="addTypedAsNewCourse"
         >
-          Add new course “{{ searchQuery.trim().toUpperCase() }}”
+          Add new course
         </button>
       </div>
 
-      <!-- Single (or any) match still allows creating a different new course -->
       <div
         v-if="canCreateFromQuery && filteredCourses.length > 0 && !isCreatingCourse"
         class="create-course-prompt secondary"
@@ -69,18 +81,34 @@ const {
       </div>
 
       <div v-if="isCreatingCourse" class="create-course-prompt">
-        <p>Create and add a new course</p>
+        <p>Prefix and number are saved together as one course.</p>
         <div class="create-inline">
           <input
-            v-model="newCourseName"
-            placeholder="e.g. CS 500"
-            autofocus
+            v-model="newCoursePrefix"
+            class="prefix-input"
+            placeholder="CS"
+            maxlength="8"
+            aria-label="Course prefix"
             @keydown.enter.prevent="createAndAddNewCourse"
           />
-          <button class="btn-save btn-small" @click="createAndAddNewCourse">Save &amp; Add</button>
+          <input
+            v-model="newCourseNumber"
+            class="number-input"
+            placeholder="400"
+            maxlength="5"
+            aria-label="Course number"
+            @keydown.enter.prevent="createAndAddNewCourse"
+          />
+          <button class="btn-save btn-small" :disabled="!!composedCourseExists" @click="createAndAddNewCourse">Save &amp; Add</button>
           <button class="btn-cancel btn-small" @click="isCreatingCourse = false">Cancel</button>
         </div>
+        <p v-if="composedCourseExists" class="field-error">
+          {{ composedCourseExists }} already exists. Choose it from the list instead of creating a duplicate.
+        </p>
+        <p v-else-if="composedNewCourse" class="preview">Will add <strong>{{ composedNewCourse }}</strong></p>
       </div>
+
+      <p v-if="courseFormError" class="field-error">{{ courseFormError }}</p>
 
       <div class="modal-actions">
         <button class="btn-cancel" @click="closeCourseSearch">Close</button>
@@ -149,6 +177,26 @@ const {
   text-align: center;
 }
 
+.field-error {
+  margin: 0.75rem 0 0;
+  color: #f87171;
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.exists-note {
+  margin: 0.5rem 0 0;
+  color: #fbbf24;
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.preview {
+  margin: 0.75rem 0 0;
+  color: #86efac;
+  font-size: 0.85rem;
+}
+
 .autocomplete-list {
   background: #333333;
   border: 1px solid #444444;
@@ -201,6 +249,7 @@ const {
   margin-top: 0.25rem;
   justify-content: center;
   flex-wrap: wrap;
+  align-items: center;
 }
 
 .create-inline input {
@@ -209,8 +258,10 @@ const {
   background: #1c1c1c;
   color: #ffffff;
   border-radius: 4px;
-  min-width: 120px;
 }
+
+.prefix-input { width: 4.5rem; text-transform: uppercase; }
+.number-input { width: 4.5rem; }
 
 .modal-actions {
   display: flex;
@@ -242,6 +293,11 @@ const {
 }
 
 .btn-save:hover { background: #16a34a; }
+
+.btn-save:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
 
 .btn-small { padding: 0.4rem 0.8rem; font-size: 0.85rem; }
 </style>
