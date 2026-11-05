@@ -8,6 +8,7 @@ import com.abetappteam.abetapp.entity.Users;
 import com.abetappteam.abetapp.exception.BadRequestException;
 import com.abetappteam.abetapp.dto.UsersDTO;
 import com.abetappteam.abetapp.dto.UpdateUsersDTO;
+import com.abetappteam.abetapp.exception.ResourceNotFoundException;
 import com.abetappteam.abetapp.security.JwtUtil;
 import com.abetappteam.abetapp.service.CourseService;
 import com.abetappteam.abetapp.service.ProgramService;
@@ -66,7 +67,7 @@ public class UsersController extends BaseController {
         List<ProgramUser> userPrograms = programService.getActiveProgramsForUser(user.getId());
 
         if (userPrograms.isEmpty()) {
-            throw new BadRequestException("User is not assigned to any programs");
+            throw new ResourceNotFoundException("User is not assigned to any programs");
         }
 
         // Get default program (first admin program or just first program)
