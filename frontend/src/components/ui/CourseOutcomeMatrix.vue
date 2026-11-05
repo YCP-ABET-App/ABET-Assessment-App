@@ -56,7 +56,7 @@ function placeholder(outcome: number) {
           <th class="col-header">Course</th>
           <th class="col-header" v-for="outcome in store.outcomes" :key="outcome">
             {{ outcome }}
-            <span class="pi-range">PIs 1, ..., {{ piLimit(outcome) }}</span>
+            <span class="pi-range">PIs 1-{{ piLimit(outcome) }}</span>
           </th>
         </tr>
         </thead>
