@@ -55,13 +55,13 @@ const routes = [
     path: '/section/:section_id',
     name: 'Section',
     component: SectionViewPage,
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, requiresSectionAccess: true }
   },
   {
     path: '/instructor/:instructor_id',
     name: 'Instructor',
     component: InstructorViewPage,
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, requiresMatchingInstructorId: true }
   },
   {
     path: '/:program_id/courses',
@@ -143,7 +143,7 @@ const router = createRouter({
 })
 
 // Navigation guard
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   const userStore = useUserStore()
   const institutionId = localStorage.getItem('selectedInstitutionId')
 
@@ -154,6 +154,8 @@ router.beforeEach((to, from, next) => {
 
   const requiresAuth = to.meta.requiresAuth
   const requiresAdmin = to.meta.requiresAdmin
+  const requiresMatchingInstructorId = to.meta.requiresMatchingInstructorId
+  const requiresSectionAccess = to.meta.requiresSectionAccess
 
   // Allow institution login page for all users
   if (to.name === 'Institution Log In') {
@@ -180,7 +182,7 @@ router.beforeEach((to, from, next) => {
     next()
     return
   }
-
+  userStore.user?.hasCourses
   // If user is not logged in and trying to access a protected route
   if (requiresAuth && !userStore.isLoggedIn) {
     // If institution not selected, go to institution login
@@ -199,6 +201,15 @@ router.beforeEach((to, from, next) => {
     return
   }
 
+  if (requiresMatchingInstructorId && !userStore.isAdmin) {
+    const instructorId = userStore.userId;
+    const routeId = Number(to.params.instructorId)
+    if (instructorId != routeId) {
+      next({ name: 'Home' })
+      return
+    }
+  }
+
   // If user is logged in but trying to access institution login, redirect to dashboard
   if (userStore.isLoggedIn && to.name === 'Institution Log In') {
     next({ name: 'Home' })
@@ -209,6 +220,14 @@ router.beforeEach((to, from, next) => {
   if (requiresAdmin && !userStore.isAdmin) {
     next({ name: 'Home' })
     return
+  }
+
+  if (requiresSectionAccess) {
+    const sectionId = Number(to.params.section_id)
+    if (!sectionId || !(await userStore.canAccessSection(sectionId))) {
+      next({ name: 'Home' })
+      return
+    }
   }
 
   next()
