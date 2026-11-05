@@ -43,7 +43,7 @@ const routes = [
     path: '/:program_id/:semester_id/summary/',
     name: 'Summary',
     component: SummaryPage,
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, requiresAdmin: true }
   },
   {
     path: '/fcar/:measure_id',
@@ -117,14 +117,14 @@ const routes = [
     path: '/:program_id/multi-year-summary',
     name: 'Multi-Year Summary',
     component: MultiYearReportPage,
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, requiresAdmin: true }
   },
   {
     // This creates a dedicated URL for schedule entry page
     path: '/:programId/schedule-entry',
     name: 'ScheduleEntry',
     component: SchedulePage,
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true, requiresAdmin: true },
     props: true
   },
   {
