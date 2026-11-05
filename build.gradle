@@ -306,7 +306,7 @@ tasks.register('composeBuild', Exec) {
 tasks.register('dockerRun', Exec) {
     description 'Run docker as base'
     executable 'docker'
-    args 'compose', '-f', 'dockercompose/docker-compose.yml', 'up'
+    args 'compose', '-f', 'dockercompose/docker-compose.yml', 'up', '--build'
     environment 'COMPOSE_BAKE', 'false'
 }
 
