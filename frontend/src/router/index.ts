@@ -14,8 +14,11 @@ import InstitutionLoginPage from "@/components/pages/InstitutionLoginPage.vue";
 import MultiYearReportPage from "@/components/pages/MultiYearReportPage.vue";
 import SchedulePage from '@/components/pages/SchedulePage.vue';
 import AccountRecoveryPage from '@/components/pages/AccountRecoveryPage.vue'
-import InstitutionSignup from '@/components/pages/InstitutionSignup.vue'
+import FirstTimeSetup from '@/components/pages/SetupPage.vue'
 import SuperAdminPage from "@/components/pages/SuperAdminPage.vue";
+
+
+
 
 const routes = [
   {
@@ -86,9 +89,9 @@ const routes = [
     component: AccountRecoveryPage
   },
   {
-    path: "/institution-signup",
-    name: "Institution Signup",
-    component: InstitutionSignup
+    path: "/first-setup",
+    name: "First Time Setup",
+    component: FirstTimeSetup
   },
   {
     path: '/institution-login',
@@ -142,8 +145,31 @@ const router = createRouter({
   routes: routes,
 })
 
+let setupChecked = false
+let needsSetup = false
+
 // Navigation guard
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
+if (!setupChecked) {
+    try {
+      const res = await fetch('/api/setup/status')
+      const data = await res.json()
+      needsSetup = data.needsSetup
+    } catch {
+      needsSetup = false
+    }
+    setupChecked = true
+  }
+
+  if (needsSetup && to.name !== 'First Time Setup') {
+    next({ name: 'First Time Setup' })
+    return
+  }
+  if (!needsSetup && to.name === 'First Time Setup') {
+    next({ name: 'Institution Login' }) // 
+    return
+  }
+
   const userStore = useUserStore()
   const institutionId = localStorage.getItem('selectedInstitutionId')
 
@@ -156,22 +182,22 @@ router.beforeEach((to, from, next) => {
   const requiresAdmin = to.meta.requiresAdmin
 
   // Allow institution login page for all users
-  if (to.name === 'Institution Log In') {
+  if (to.name === 'Institution Login') {
     next()
     return
   }
 
   // If user is logged in but trying to access login/signup pages, redirect to dashboard
-  if (userStore.isLoggedIn && (to.name === 'Log In')) {
+  if (userStore.isLoggedIn && (to.name === 'Login')) {
     next({ name: 'Home' })
     return
   }
 
   // If user is not logged in and trying to access login/signup, ensure institution is selected
-  if (!userStore.isLoggedIn && (to.name === 'Log In')) {
+  if (!userStore.isLoggedIn && (to.name === 'Login')) {
     if (!institutionId) {
       next({
-        name: 'Institution Log In',
+        name: 'Institution Login',
         query: { redirect: to.fullPath }
       })
       return
@@ -186,21 +212,21 @@ router.beforeEach((to, from, next) => {
     // If institution not selected, go to institution login
     if (!institutionId) {
       next({
-        name: 'Institution Log In',
+        name: 'Institution Login',
         query: { redirect: to.fullPath }
       })
       return
     }
     // If institution selected but not logged in, go to login page
     next({
-      name: 'Log In',
+      name: 'Login',
       query: { redirect: to.fullPath }
     })
     return
   }
 
   // If user is logged in but trying to access institution login, redirect to dashboard
-  if (userStore.isLoggedIn && to.name === 'Institution Log In') {
+  if (userStore.isLoggedIn && to.name === 'Institution Login') {
     next({ name: 'Home' })
     return
   }
@@ -215,3 +241,8 @@ router.beforeEach((to, from, next) => {
 })
 
 export default router
+
+export function markSetupComplete() {
+  needsSetup = false
+  setupChecked = true
+}
