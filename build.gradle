@@ -317,6 +317,13 @@ tasks.register('runMariaDB', Exec) {
     environment 'COMPOSE_BAKE', 'false'
 }
 
+tasks.register('runMariaDBEmpty', Exec) {
+    description 'Run MariaDB in docker standalone with empty database (schema only, no seed data)'
+    executable 'docker'
+    args 'compose', '-f', 'dockercompose/docker-compose.yml', '-f', 'dockercompose/docker-compose-empty.yml', 'up', '-d', 'local-database'
+    environment 'COMPOSE_BAKE', 'false'
+}
+
 tasks.register('installWar', Exec) {
     description = 'Generates the WAR file for deployment'
     dependsOn 'war'
