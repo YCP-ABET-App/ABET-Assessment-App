@@ -48,7 +48,7 @@ export default defineConfig({
   plugins: [
     vue(),
     vueJsx(),
-    ...(process.env.VITEST ? [] : [vueDevTools()]),
+    vueDevTools(),
   ],
   resolve: {
     alias: {

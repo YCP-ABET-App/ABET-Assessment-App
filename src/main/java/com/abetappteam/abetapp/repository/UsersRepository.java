@@ -1,6 +1,5 @@
 package com.abetappteam.abetapp.repository;
 
-import com.abetappteam.abetapp.entity.UserRole;
 import com.abetappteam.abetapp.entity.Users;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -34,6 +33,4 @@ public interface UsersRepository extends JpaRepository<Users, Long>{
 
     //List users by last name containing (case insensitive search)
     List<Users> findByLastNameContainingIgnoreCase(String lastNameFragment);
-
-    List<Users> findByRole(UserRole role);
 }

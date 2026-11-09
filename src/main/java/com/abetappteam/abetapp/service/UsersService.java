@@ -2,7 +2,6 @@ package com.abetappteam.abetapp.service;
 
 import com.abetappteam.abetapp.dto.UsersDTO;
 import com.abetappteam.abetapp.dto.UpdateUsersDTO;
-import com.abetappteam.abetapp.entity.UserRole;
 import com.abetappteam.abetapp.entity.Users;
 import com.abetappteam.abetapp.exception.ConflictException;
 import com.abetappteam.abetapp.exception.ResourceNotFoundException;
@@ -50,7 +49,6 @@ public class UsersService extends BaseService<Users, Long, UsersRepository> {
         user.setLastName(dto.getLastName());
         user.setTitle(dto.getTitle());
         user.setActive(dto.getActive() != null ? dto.getActive() : true);
-        user.setRole(dto.getRole() != null ? dto.getRole() : UserRole.INSTRUCTOR);
 
         logger.info("Creating new user : {}", dto.getFullName());
         return repository.save(user);
@@ -81,10 +79,6 @@ public class UsersService extends BaseService<Users, Long, UsersRepository> {
             user.setActive(dto.getActive());
         }
 
-        if (dto.getRole() != null) {
-            user.setRole(dto.getRole());
-        }
-
         logger.info("Updating user: {}", id);
         return repository.save(user);
     }
@@ -112,10 +106,6 @@ public class UsersService extends BaseService<Users, Long, UsersRepository> {
 
         if (dto.getActive() != null) {
             user.setActive(dto.getActive());
-        }
-
-        if (dto.getRole() != null) {
-            user.setRole(dto.getRole());
         }
 
         logger.info("Updating user (DTO): {}", id);

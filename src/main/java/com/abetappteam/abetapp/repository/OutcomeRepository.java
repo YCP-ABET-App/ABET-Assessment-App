@@ -30,8 +30,4 @@ public interface OutcomeRepository extends JpaRepository<Outcome, Long>{
     //Find Active Outcomes by Semester Id
     @Query("SELECT o FROM Outcome o WHERE o.active = :active AND o.semesterId = :semesterId")
     List<Outcome> findBySemesterIdAndActive(@Param("semesterId") Long semesterId, @Param("active") Boolean active);
-
-    List<Outcome> findByProgramId(Long programId);
-
-    List<Outcome> findByProgramIdAndActive(Long programId, Boolean active);
 }

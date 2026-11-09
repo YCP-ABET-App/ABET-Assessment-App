@@ -117,10 +117,13 @@ export function useScheduleModals() {
     courseFormError.value = '';
   }
 
-  async function addCourseToActiveCell(courseName: string) {
+  function addCourseToActiveCell(courseName: string) {
     if (!activeTargetCell.value || !courseName.trim()) return;
-    const cell = activeTargetCell.value;
-    const error = await store.addCourseToCell(cell.outcome, cell.year, courseName);
+    const error = store.addCourseToCell(
+      activeTargetCell.value.outcome,
+      activeTargetCell.value.year,
+      courseName,
+    );
     if (error) {
       courseFormError.value = error;
       return;
@@ -128,7 +131,7 @@ export function useScheduleModals() {
     closeCourseSearch();
   }
 
-  async function applyParsedCourse(raw: string, asNew = false) {
+  function applyParsedCourse(raw: string, asNew = false) {
     const parsed = parseCourseCode(raw);
     if (!parsed.ok) {
       courseFormError.value = parsed.error;
@@ -141,16 +144,16 @@ export function useScheduleModals() {
         courseFormError.value = `${existing} already exists. Choose it from the list instead of creating a duplicate.`;
         return;
       }
-      await addCourseToActiveCell(existing);
+      addCourseToActiveCell(existing);
       return;
     }
 
-    const created = await store.registerNewCourse(parsed.course.code);
+    const created = store.registerNewCourse(parsed.course.code);
     if (!created.ok) {
       courseFormError.value = created.error;
       return;
     }
-    await addCourseToActiveCell(created.code);
+    addCourseToActiveCell(created.code);
   }
 
   function beginCreateCourse() {
@@ -167,25 +170,23 @@ export function useScheduleModals() {
     }
   }
 
-  async function createAndAddNewCourse() {
+  function createAndAddNewCourse() {
     const parsed = parseCourseParts(newCoursePrefix.value, newCourseNumber.value);
     if (!parsed.ok) {
       courseFormError.value = parsed.error;
       return;
     }
-    await applyParsedCourse(parsed.course.code, true);
+    applyParsedCourse(parsed.course.code, true);
   }
 
-  async function addTypedAsNewCourse() {
-    await applyParsedCourse(searchQuery.value, true);
+  function addTypedAsNewCourse() {
+    applyParsedCourse(searchQuery.value, true);
   }
 
   function openRubricModal(so: OutcomeMapping, pi: PerformanceIndicatorDetail) {
     selectedPI.value = {
       outcomeId: so.id,
-      outcomeNumber: so.number,
       outcomeDesc: so.description,
-      piId: pi.id,
       piName: pi.name,
       piDefinition: pi.definition,
     };
@@ -235,7 +236,7 @@ export function useScheduleModals() {
     }
   }
 
-  async function applyPiUpdates(piName: string) {
+  function applyPiUpdates(piName: string) {
     if (!selectedPI.value) return 'Performance indicator was not found.';
     return store.updatePiDetails(selectedPI.value.outcomeId, piName, {
       definition: piDefinitionForm.value,
@@ -247,16 +248,16 @@ export function useScheduleModals() {
     });
   }
 
-  async function saveRubric() {
+  function saveRubric() {
     if (!selectedPI.value) return;
 
     if (pendingCreateAsNew.value) {
-      const created = await store.addPerformanceIndicator(selectedPI.value.outcomeId);
+      const created = store.addPerformanceIndicator(selectedPI.value.outcomeId);
       if (!created) {
         showRubricErrors.value = true;
         return;
       }
-      const error = await applyPiUpdates(created.name);
+      const error = applyPiUpdates(created.name);
       if (error) {
         showRubricErrors.value = true;
         return;
@@ -265,11 +266,11 @@ export function useScheduleModals() {
       return;
     }
 
-    const outcomeError = await store.updateOutcomeDescription(
+    const outcomeError = store.updateOutcomeDescription(
       selectedPI.value.outcomeId,
       outcomeDescriptionForm.value,
     );
-    const piError = await applyPiUpdates(selectedPI.value.piName);
+    const piError = applyPiUpdates(selectedPI.value.piName);
     if (outcomeError || piError) {
       showRubricErrors.value = true;
       saveStep.value = 'edit';
@@ -296,13 +297,13 @@ export function useScheduleModals() {
     deleteStep.value -= 1;
   }
 
-  async function continueDeletePi(): Promise<string | null> {
+  function continueDeletePi(): string | null {
     if (!pendingDelete.value) return 'Performance indicator was not found.';
     if (deleteStep.value < DELETE_PI_STEPS.length - 1) {
       deleteStep.value += 1;
       return null;
     }
-    const error = await store.removePerformanceIndicator(
+    const error = store.removePerformanceIndicator(
       pendingDelete.value.outcomeId,
       pendingDelete.value.piName,
     );

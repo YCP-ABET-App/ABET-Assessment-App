@@ -1,8 +1,7 @@
 package com.abetappteam.abetapp.controller;
 
 import com.abetappteam.abetapp.dto.ApiResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -13,9 +12,7 @@ import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/institution")
-public class InstitutionLoginController {
-
-    private static final Logger logger = LoggerFactory.getLogger(InstitutionLoginController.class);
+public class InstitutionLoginController extends BaseController {
 
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<Boolean>> institutionLogin(@RequestParam String institutionId) {
@@ -24,8 +21,6 @@ public class InstitutionLoginController {
 
         boolean successfulLogin = Objects.equals(institutionId, "ycp123");
 
-        return ResponseEntity.ok(ApiResponse.success(
-                successfulLogin,
-                "Institution login " + (successfulLogin ? "successful" : "failed")));
+        return success(successfulLogin, "Institution login " + (successfulLogin ? "successful" : "failed"));
     }
 }

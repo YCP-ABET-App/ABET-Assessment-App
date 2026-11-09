@@ -1,40 +1,23 @@
 <script setup lang="ts">
-import { onMounted, watch } from 'vue';
-import { storeToRefs } from 'pinia';
 import SoPiMappingTable from '@/components/ui/SoPiMappingTable.vue';
 import SixYearScheduleGrid from '@/components/ui/SixYearScheduleGrid.vue';
 import CourseOutcomeMatrix from '@/components/ui/CourseOutcomeMatrix.vue';
 import AddCourseModal from '@/components/ui/AddCourseModal.vue';
 import RubricModal from '@/components/ui/RubricModal.vue';
-import { useScheduleStore } from '@/stores/scheduleStore';
-import { useUserStore } from '@/stores/user-store';
-
-const scheduleStore = useScheduleStore();
-const userStore = useUserStore();
-const { currentProgramId, currentSemesterId } = storeToRefs(userStore);
-
-onMounted(() => {
-  scheduleStore.loadData();
-});
-
-watch([currentProgramId, currentSemesterId], () => {
-  scheduleStore.loadData();
-});
 </script>
 
 <template>
   <div class="schedule-page">
     <header>
       <h1>Schedule Entry</h1>
-      <p v-if="scheduleStore.loading" class="status-text">Loading assessment plan…</p>
-      <p v-else-if="scheduleStore.error" class="status-text error">{{ scheduleStore.error }}</p>
-      <p v-else-if="scheduleStore.saving" class="status-text">Saving…</p>
     </header>
 
+    <!-- Refactored Sub-Components -->
     <SoPiMappingTable />
     <SixYearScheduleGrid />
     <CourseOutcomeMatrix />
 
+    <!-- Modals -->
     <AddCourseModal />
     <RubricModal />
   </div>
@@ -58,15 +41,5 @@ header h1 {
   font-weight: 700;
   color: #ffffff;
   margin: 0;
-}
-
-.status-text {
-  margin-top: 0.75rem;
-  color: #cbd5e1;
-  font-size: 0.95rem;
-}
-
-.status-text.error {
-  color: #f87171;
 }
 </style>

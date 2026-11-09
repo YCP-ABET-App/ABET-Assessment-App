@@ -1,6 +1,5 @@
 package com.abetappteam.abetapp.dto;
 
-import com.abetappteam.abetapp.entity.UserRole;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import jakarta.validation.constraints.Email;
@@ -32,8 +31,6 @@ public class UpdateUsersDTO {
     private String title;
 
     private Boolean active;
-
-    private UserRole role;
 
     //Constructors
     public UpdateUsersDTO(){}
@@ -95,14 +92,6 @@ public class UpdateUsersDTO {
 
     public void setActive(Boolean active) {
         this.active = active;
-    }
-
-    public UserRole getRole() {
-        return role;
-    }
-
-    public void setRole(UserRole role) {
-        this.role = role;
     }
 
     public String getFullName(){
