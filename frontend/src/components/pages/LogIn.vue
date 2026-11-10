@@ -22,11 +22,26 @@ async function login() {
     } else {
       await router.push('/')
     }
-  } catch (err) {
-    showError(
-      "Email or password is incorrect try again.",
-      "Login Failed"
-    )
+  } catch (err: any) {
+    // Backend exceptions become HTTP responses, not Java class names.
+    // BadRequestException  -> 400 + message ("User not found" | "Incorrect password")
+    // ResourceNotFoundException -> 404 + message ("User is not assigned to any programs")
+    const status = err?.response?.status
+
+    if (status === 400) {
+      // credentials: user missing or wrong password
+      showError(
+        'The login credentials provided do not match.',
+        'Login Failed'
+      )
+    } else if (status === 404) {
+      showError(
+        'Your account is not assigned to any programs. Contact an administrator.',
+        'Login Failed'
+      )
+    } else {
+      showError('Login failed. Please try again.', 'Login Failed')
+    }
   }
 }
 </script>

@@ -1,7 +1,7 @@
 services:
   frontend:
     build:
-      context: ./frontend
+      context: ../frontend
       dockerfile: Dockerfile.dev
     ports: !override
       - "3000:5173"
@@ -9,12 +9,12 @@ services:
     develop:
       watch:
         - action: sync
-          path: ./frontend/src
+          path: ../frontend/src
           target: /app/src
           initial_sync: true
         - action: sync
-          path: ./frontend/public
+          path: ../frontend/public
           target: /app/public
           initial_sync: true
         - action: rebuild
-          path: ./frontend/package.json
+          path: ../frontend/package.json

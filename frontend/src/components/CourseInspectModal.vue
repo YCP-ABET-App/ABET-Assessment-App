@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from "vue";
+import { useRouter } from "vue-router";
 import api from "@/api";
 import BaseModal from "@/components/ui/BaseModal.vue";
 import BaseCard from "@/components/ui/BaseCard.vue";
@@ -58,6 +59,8 @@ interface IndicatorWithMeasures {
   outcomeNumber: number | null;
   measures: Measure[];
 }
+
+const router = useRouter();
 
 const props = defineProps<{
   course: Course;
@@ -426,7 +429,7 @@ async function submitNewSection() {
 }
 
 function openSectionDetails(sectionId: number) {
-  window.open(`/section/${sectionId}`, "_blank");
+  router.push(`/section/${sectionId}`);
 }
 </script>
 

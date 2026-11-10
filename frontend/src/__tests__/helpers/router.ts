@@ -4,14 +4,24 @@ import { createRouter, createMemoryHistory } from 'vue-router'
  * Creates a router instance for testing
  * Uses memory history to avoid browser dependencies
  */
-export function createTestRouter() {
-  return createRouter({
+export function createTestRouter(initialPath = '/dashboard') {
+  const router = createRouter({
     history: createMemoryHistory(),
     routes: [
       {
-        path: '/',
+        path: '/dashboard',
         name: 'Home',
         component: { template: '<div>Home</div>' },
+      },
+      {
+        path: '/admin-dashboard',
+        name: 'Admin Dashboard',
+        component: { template: '<div>Admin</div>' },
+      },
+      {
+        path: '/institution-login',
+        name: 'Institution Log In',
+        component: { template: '<div>Institution Login</div>' },
       },
       {
         path: '/test-connection',
@@ -23,9 +33,11 @@ export function createTestRouter() {
         name: 'Login',
         component: { template: '<div>Login</div>' },
       },
-      // Add minimal routes as needed
     ],
   })
+
+  router.push(initialPath)
+  return router
 }
 
 /**

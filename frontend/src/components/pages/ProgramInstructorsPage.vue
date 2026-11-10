@@ -407,6 +407,7 @@
 
 <script setup lang="ts">
 import { ref, watch, onMounted, reactive, computed } from "vue";
+import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import api from "@/api";
 import { useUserStore } from "@/stores/user-store";
@@ -416,6 +417,8 @@ import BaseInput from "@/components/ui/BaseInput.vue";
 import BaseSelect from "@/components/ui/BaseSelect.vue";
 import { useToast } from "@/composables/use-toast";
 import InstructorCreation from "@/components/InstructorCreation.vue";
+
+const router = useRouter();
 
 const toast = useToast() as {
   success: (msg: string) => void;
@@ -561,7 +564,7 @@ const currentSemesterSections = computed(() => {
 });
 
 function openSectionDetails(sectionId: number) {
-  window.open(`/section/${sectionId}`, "_blank");
+  router.push(`/section/${sectionId}`);
 }
 
 /* -----------------------------
