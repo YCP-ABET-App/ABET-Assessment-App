@@ -10,10 +10,10 @@ services:
       - SERVER_FORWARD_HEADERS_STRATEGY=framework
       - SPRING_DATASOURCE_URL=jdbc:mariadb://database:3306/abet_staging
       - SPRING_DATASOURCE_USERNAME=abet_user
-      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD:-staging_password}
     ports:
-      # Staging on port 8081, bound to Tailscale IP only
-      - "100.79.13.76:8081:8080"
+      # Staging on port 8081 (same DigitalOcean droplet as production)
+      - "8081:8080"
     networks:
       - abet-network-staging
     depends_on:
@@ -31,15 +31,15 @@ services:
     container_name: abet-db-staging
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-staging_root_password}
       MYSQL_DATABASE: abet_staging
       MYSQL_USER: abet_user
-      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-staging_password}
     volumes:
       - db_data_staging:/var/lib/mysql
       - ../database/init:/docker-entrypoint-initdb.d:ro
-    ports:
-      - "100.79.13.76:3307:3306"
+    # No host port — 3307 is already used by mariadb-local-abet on this droplet.
+    # Staging app reaches this DB via the compose network hostname "database".
     networks:
       - abet-network-staging
     healthcheck:
