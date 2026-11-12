@@ -1,0 +1,16 @@
+class EmailServiceTest extends BaseServiceTest {
+    @Mock RestTemplate restTemplate;
+    @InjectMocks EmailService emailService;
+
+    @Test
+    void sendRecoveryCode_callsResend() {
+        // set apiKey / from via ReflectionTestUtils or constructor if you prefer
+        emailService.sendRecoveryCode("to@example.com", "123456");
+
+        verify(restTemplate).postForEntity(
+                eq("https://api.resend.com/emails"),
+                any(),
+                eq(String.class)
+        );
+    }
+}

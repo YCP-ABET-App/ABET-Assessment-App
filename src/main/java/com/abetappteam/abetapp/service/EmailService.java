@@ -18,7 +18,8 @@ public class EmailService {
     @Value("${resend.from:ABET App <no-reply@ycpabet.email>}")
     private String from;
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
+    public EmailService(RestTemplate restTemplate) { this.restTemplate = restTemplate; }
 
     public void sendRecoveryCode(String to, String code) {
         String url = "https://api.resend.com/emails";
