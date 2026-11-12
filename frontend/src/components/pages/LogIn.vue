@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { ref } from 'vue'
+import { ref} from 'vue'
 import { BaseButton, BaseCard, BaseInput } from "@/components/ui"
 import { useRouter } from 'vue-router'
 import { useToast } from "@/composables/use-toast.ts"
@@ -22,18 +22,33 @@ async function login() {
     } else {
       await router.push('/')
     }
-  } catch (err) {
-    showError(
-      userStore.error || "Email or password is incorrect.",
-      "Login Failed"
-    )
+  } catch (err: any) {
+    // Backend exceptions become HTTP responses, not Java class names.
+    // BadRequestException  -> 400 + message ("User not found" | "Incorrect password")
+    // ResourceNotFoundException -> 404 + message ("User is not assigned to any programs")
+    const status = err?.response?.status
+
+    if (status === 400) {
+      // credentials: user missing or wrong password
+      showError(
+        'The login credentials provided do not match.',
+        'Login Failed'
+      )
+    } else if (status === 404) {
+      showError(
+        'Your account is not assigned to any programs. Contact an administrator.',
+        'Login Failed'
+      )
+    } else {
+      showError('Login failed. Please try again.', 'Login Failed')
+    }
   }
 }
 </script>
 
 <template>
   <div class="login">
-    <BaseCard class="login-card" title="Log In">
+    <BaseCard class="login-card" title="Login">
       <div>
         <BaseInput
           id="email"
@@ -65,8 +80,8 @@ async function login() {
       </div>
 
       <p class="tooltip">
-        Don't have an account? Sign up
-        <router-link to="/signup">here</router-link>.
+        Forgot your password?
+        <router-link to="/reset-password">Reset Password</router-link>.
       </p>
     </BaseCard>
   </div>

@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from "vue";
+import { useRouter } from "vue-router";
 import { useUserStore } from "@/stores/user-store";
 import { storeToRefs } from "pinia";
 import api from "@/api";
 import MeasureListing from "@/components/MeasureListing.vue";
 import { BaseCard, BaseButton } from "@/components/ui";
+
+const router = useRouter();
 
 // ------------------------------
 // TYPES
@@ -95,7 +98,8 @@ async function loadInstructorSections() {
   const sectionRes = await api.get("/section", {
     params: {
       ids: sectionIds,
-      semesterId: semesterId.value
+      semesterId: semesterId.value,
+      programId: programId.value
     },
   });
 
@@ -157,7 +161,7 @@ async function loadInstructorIndicatorData(sectionIds : any[] = []) : Promise<Se
 }
 
 function openSectionDetails(sectionId: number) {
-  window.open(`/section/${sectionId}`, "_blank");
+  router.push(`/section/${sectionId}`);
 }
 
 // ------------------------------

@@ -12,6 +12,8 @@ public final class SectionDTO {
     @NotBlank(message = "Semester ID is required")
     private final int semesterId;
 
+    private Integer programId;
+
 
     public SectionDTO(
 
@@ -33,6 +35,9 @@ public final class SectionDTO {
 
     public int getCourseId() {return courseId;}
     public int getSemesterId() {return semesterId;}
+
+    public Integer getProgramId() {return programId;}
+    public void setProgramId(Integer programId) {this.programId = programId;}
 
 
     @Override

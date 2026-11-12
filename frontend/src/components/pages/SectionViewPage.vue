@@ -1,18 +1,25 @@
 <script lang="ts" setup>
-import type { Ref } from 'vue';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useRoute } from 'vue-router';
 import api from '@/api';
 import IndicatorListing from '@/components/IndicatorListing.vue';
 import { BaseCard, BaseModal } from "@/components/ui";
+import { useUserStore } from '@/stores/user-store';
 
 const route = useRoute()
+const userStore = useUserStore();
 
 interface Instructor {
   id: number;
   firstName: string;
   lastName: string;
   email: string;
+}
+
+interface ProgramColumn {
+  programId: number;
+  programName: string;
+  entries: { indicatorId: number; scheduleEntryId: number }[];
 }
 
 const section_id = ref(NaN);
@@ -27,9 +34,14 @@ const section_obj = ref({
 })
 const semester_name = ref('');
 const instructors = ref<Instructor[]>([]);
-const indicator_ids: Ref<number[]> = ref([]);
-const program_ids: Ref<number[]> = ref([]);
-const schedule_entry_ids: Ref<number[]> = ref([]);
+const programColumns = ref<ProgramColumn[]>([]);
+const addablePrograms = ref<{ id: number; name: string }[]>([]);
+const selectedAddProgramId = ref<number | null>(null);
+const addingProgram = ref(false);
+
+const canAddProgram = computed(() =>
+  instructors.value.some((instructor) => instructor.id === userStore.userId)
+);
 
 // Modal state
 const selectedInstructor = ref<Instructor | null>(null);
@@ -97,15 +109,80 @@ async function fetch_instructor_ids() {
 }
 
 async function fetch_indicator_ids() {
+  programColumns.value = [];
   try {
-    const { data } = await api.get(`/schedule-entry`, {params:{"semesterId": section_obj.value.semester_id, "courseId": section_obj.value.course_id}});
-    for (const entry of data.data){
-      indicator_ids.value.push(entry.indicatorId);
-      program_ids.value.push(entry.programId);
-      schedule_entry_ids.value.push(entry.id);
+    const { data } = await api.get(`/section-program`, { params: { sectionId: section_id.value } });
+    const sectionPrograms = data.data ?? [];
+
+    for (const sp of sectionPrograms) {
+      const seRes = await api.get(`/schedule-entry`, {
+        params: {
+          semesterId: section_obj.value.semester_id,
+          courseId: section_obj.value.course_id,
+          programId: sp.programId
+        }
+      });
+      const entries = seRes.data?.data ?? [];
+      if (entries.length === 0) continue;
+
+      let programName = `Program ${sp.programId}`;
+      try {
+        const programRes = await api.get(`/program/${sp.programId}`);
+        programName = programRes.data?.data?.name ?? programName;
+      } catch (error) {
+        console.error(`Error fetching program ${sp.programId}:`, error);
+      }
+
+      programColumns.value.push({
+        programId: sp.programId,
+        programName,
+        entries: entries.map((entry: { id: number; indicatorId: number }) => ({
+          indicatorId: entry.indicatorId,
+          scheduleEntryId: entry.id
+        }))
+      });
     }
   } catch (error) {
     console.error('Error fetching or parsing course data:', error);
+  }
+}
+
+async function loadAddablePrograms() {
+  addablePrograms.value = [];
+  try {
+    const seRes = await api.get(`/schedule-entry`, {
+      params: {
+        semesterId: section_obj.value.semester_id,
+        courseId: section_obj.value.course_id
+      }
+    });
+    const scheduledIds = [...new Set((seRes.data?.data ?? []).map((e: { programId: number }) => e.programId))];
+    const existing = new Set(programColumns.value.map((column) => column.programId));
+    const programRes = await api.get(`/program`, { params: { page: 0, size: 100 } });
+    const programs = programRes.data?.content ?? [];
+    addablePrograms.value = programs.filter(
+      (program: { id: number; name: string }) => scheduledIds.includes(program.id) && !existing.has(program.id)
+    );
+  } catch (error) {
+    console.error('Error loading programs that can be added:', error);
+  }
+}
+
+async function addProgramToSection() {
+  if (!selectedAddProgramId.value) return;
+  addingProgram.value = true;
+  try {
+    await api.post(`/section-program`, {
+      sectionId: section_id.value,
+      programId: selectedAddProgramId.value
+    });
+    selectedAddProgramId.value = null;
+    await fetch_indicator_ids();
+    await loadAddablePrograms();
+  } catch (error) {
+    console.error('Error adding program to section:', error);
+  } finally {
+    addingProgram.value = false;
   }
 }
 
@@ -143,6 +220,7 @@ async function initialize() {
 
   //Fetch Indicator IDs
   await fetch_indicator_ids();
+  await loadAddablePrograms();
 }
 
 initialize();
@@ -208,10 +286,51 @@ initialize();
     <section class="detail-section">
       <h3>Performance Indicators</h3>
 
-      <div class="indicator-list" v-if="indicator_ids.length > 0">
-        <BaseCard v-for="i in indicator_ids.length" :key="i" variant="default" class="indicator-card">
-          <IndicatorListing :piid="indicator_ids[i - 1]" :section_id="section_id" :instructor_id="instructors[0].id" :program_id="program_ids[i - 1]" :schedule_entry_id="schedule_entry_ids[i - 1]" :semester_id="section_obj.semester_id"/>
-        </BaseCard>
+      <div v-if="canAddProgram && addablePrograms.length > 0" class="add-program-row">
+        <select v-model.number="selectedAddProgramId" class="program-select">
+          <option :value="null">Add program with students in this section</option>
+          <option
+            v-for="program in addablePrograms"
+            :key="program.id"
+            :value="program.id"
+          >
+            {{ program.name }}
+          </option>
+        </select>
+        <button
+          class="btn-primary"
+          :disabled="!selectedAddProgramId || addingProgram"
+          @click="addProgramToSection"
+        >
+          {{ addingProgram ? 'Adding...' : 'Add program' }}
+        </button>
+      </div>
+
+      <div class="program-columns" v-if="programColumns.length > 0">
+        <div
+          v-for="column in programColumns"
+          :key="column.programId"
+          class="program-column"
+        >
+          <h4>{{ column.programName }}</h4>
+          <div class="indicator-list">
+            <BaseCard
+              v-for="entry in column.entries"
+              :key="entry.scheduleEntryId"
+              variant="default"
+              class="indicator-card"
+            >
+              <IndicatorListing
+                :piid="entry.indicatorId"
+                :section_id="section_id"
+                :instructor_id="instructors[0]?.id"
+                :program_id="column.programId"
+                :schedule_entry_id="entry.scheduleEntryId"
+                :semester_id="section_obj.semester_id"
+              />
+            </BaseCard>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -399,6 +518,35 @@ initialize();
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.add-program-row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.program-select {
+  padding: 0.5rem;
+  min-width: 16rem;
+}
+
+.program-columns {
+  display: flex;
+  gap: 1.5rem;
+  align-items: flex-start;
+  overflow-x: auto;
+}
+
+.program-column {
+  flex: 1;
+  min-width: 18rem;
+}
+
+.program-column h4 {
+  margin: 0 0 0.75rem 0;
+  color: var(--color-text-primary);
 }
 
 /* Indicator cards */

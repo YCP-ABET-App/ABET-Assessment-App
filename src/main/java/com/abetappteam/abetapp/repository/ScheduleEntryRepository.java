@@ -61,6 +61,12 @@ public interface ScheduleEntryRepository extends JpaRepository<ScheduleEntry, Lo
     Boolean existsBySemesterIdAndProgramId(@Param("semesterId") int semesterId,
                                        @Param("programId") int programId);
 
+    @Query("SELECT COUNT(se) > 0 FROM ScheduleEntry se " +
+            "WHERE se.semesterId = :semesterId AND se.courseId = :courseId AND se.programId = :programId")
+    Boolean existsBySemesterIdAndCourseIdAndProgramId(@Param("semesterId") int semesterId,
+                                           @Param("courseId") int courseId,
+                                           @Param("programId") int programId);
+
     // Exists by all fields
     @Query("SELECT COUNT(se) > 0 FROM ScheduleEntry se " +
             "WHERE (se.semesterId = :semesterId) " +

@@ -26,6 +26,15 @@ public class PerformanceIndicator extends BaseEntity {
     @Column(name = "evaluation", columnDefinition = "TEXT")
     private String evaluation;
 
+    @Column(name = "met_rubric", columnDefinition = "TEXT")
+    private String metRubric;
+
+    @Column(name = "below_rubric", columnDefinition = "TEXT")
+    private String belowRubric;
+
+    @Column(name = "exceeds_rubric", columnDefinition = "TEXT")
+    private String exceedsRubric;
+
     @NotNull(message = "Student outcome ID is required")
     @Column(name = "student_outcome_id", nullable = false)
     private Long studentOutcomeId;
@@ -98,6 +107,27 @@ public class PerformanceIndicator extends BaseEntity {
         this.evaluation = evaluation;
     }
 
+    public String getMetRubric() {
+        return metRubric;
+    }
+    public void setMetRubric(String metRubric) {
+        this.metRubric = metRubric;
+    }
+
+    public String getBelowRubric() {
+        return belowRubric;
+    }
+    public void setBelowRubric(String belowRubric) {
+        this.belowRubric = belowRubric;
+    }
+
+    public String getExceedsRubric() {
+        return exceedsRubric;
+    }
+    public void setExceedsRubric(String exceedsRubric) {
+        this.exceedsRubric = exceedsRubric;
+    }
+
     public Double getThresholdPercentage() {
         return thresholdPercentage;
     }
@@ -113,6 +143,9 @@ public class PerformanceIndicator extends BaseEntity {
                 ", indicatorNumber=" + indicatorNumber +
                 ", indicatorValue=" + indicatorValue +
                 ", evaluation='" + evaluation + '\'' +
+                ", metRubric='" + metRubric + '\'' +
+                ", belowRubric='" + belowRubric + '\'' +
+                ", exceedsRubric='" + exceedsRubric + '\'' +
                 ", studentOutcomeId=" + studentOutcomeId +
                 ", programId=" + programId +
                 ", thresholdPercentage=" + thresholdPercentage +

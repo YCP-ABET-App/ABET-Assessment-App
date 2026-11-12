@@ -75,7 +75,8 @@ public class SectionController extends BaseController {
         Section createdSection = sectionService.createSection(
                 section.getSectionNumber(),
                 section.getCourseId(),
-                section.getSemesterId()
+                section.getSemesterId(),
+                section.getProgramId()
         );
         return success(createdSection, "Section created successfully");
     }

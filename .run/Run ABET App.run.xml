@@ -13,7 +13,6 @@
     <option name="EXECUTE_SCRIPT_FILE" value="false" />
     <envs />
     <method v="2">
-      <option name="RunConfigurationTask" enabled="true" run_configuration_name="AbetAssessmentApplication" run_configuration_type="SpringBootApplicationConfigurationType" />
       <option name="LaunchBrowser.Before.Run" url="http://127.0.0.1:5173/login" />
     </method>
   </configuration>

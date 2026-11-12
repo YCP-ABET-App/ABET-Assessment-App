@@ -3,26 +3,25 @@ package com.abetappteam.abetapp.entity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.NotBlank;
-import org.aspectj.asm.IProgramElement;
+import jakarta.validation.constraints.Positive;
 
 @Entity
 @Table(name = "schedule_entry")
 public class ScheduleEntry extends BaseEntity {
 
-    @NotBlank(message = "Semester is required")
+    @Positive(message = "Semester is required")
     @Column(name = "semester_id", nullable = false)
     private int semesterId;
 
-    @NotBlank(message = "Course is required")
+    @Positive(message = "Course is required")
     @Column(name = "course_id", nullable = false)
     private int courseId;
 
-    @NotBlank(message = "Program is required")
+    @Positive(message = "Program is required")
     @Column(name = "program_id", nullable = false)
     private int programId;
 
-    @NotBlank(message = "Performance Indicator is required")
+    @Positive(message = "Performance Indicator is required")
     @Column(name = "indicator_id", nullable = false)
     private int indicatorId;
 

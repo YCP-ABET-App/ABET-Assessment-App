@@ -56,10 +56,18 @@ async function loadCourses() {
   loading.value = true;
   error.value = null;
   try {
-    const res = await api.get(`/courses/searchCourse`, {
-      params: { isActive: true }
+    const seRes = await api.get(`/schedule-entry`, {
+      params: { programId: props.programId, semesterId: props.semesterId }
     });
-    courses.value = res.data?.data ?? [];
+    const entries = seRes.data?.data ?? [];
+    const courseIds = [...new Set(entries.map((e: { courseId: number }) => e.courseId))];
+    const loaded = await Promise.all(
+      courseIds.map(async (id) => {
+        const res = await api.get(`/courses/${id}`);
+        return res.data?.data ?? null;
+      })
+    );
+    courses.value = loaded.filter((c): c is Course => c !== null);
   } catch (err) {
     error.value = "Failed to load courses";
   } finally {
@@ -88,7 +96,7 @@ function selectCourse(course: Course) {
     </div>
 
     <div v-else-if="courses.length === 0" class="empty-state">
-      <p>No active courses found.</p>
+      <p>No courses scheduled for evaluation this semester.</p>
     </div>
 
     <div v-else class="course-grid">
