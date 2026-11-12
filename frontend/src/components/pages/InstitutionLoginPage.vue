@@ -90,11 +90,6 @@ function handleKeyUp(event: KeyboardEvent) {
       <p class="tooltip">
         Don't have an institution ID? Contact your administrator.
       </p>
-      <p class="tooltip">
-        Setting up and institution?
-        <router-link to="/institution-signup">Setup here</router-link>.
-      </p>
-
       
     </BaseCard>
   </div>

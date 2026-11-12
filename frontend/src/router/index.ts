@@ -14,8 +14,11 @@ import InstitutionLoginPage from "@/components/pages/InstitutionLoginPage.vue";
 import MultiYearReportPage from "@/components/pages/MultiYearReportPage.vue";
 import SchedulePage from '@/components/pages/SchedulePage.vue';
 import AccountRecoveryPage from '@/components/pages/AccountRecoveryPage.vue'
-import InstitutionSignup from '@/components/pages/InstitutionSignup.vue'
+import FirstTimeSetup from '@/components/pages/SetupPage.vue'
 import SuperAdminPage from "@/components/pages/SuperAdminPage.vue";
+
+
+
 
 const routes = [
   {
@@ -86,9 +89,9 @@ const routes = [
     component: AccountRecoveryPage
   },
   {
-    path: "/institution-signup",
-    name: "Institution Signup",
-    component: InstitutionSignup
+    path: "/first-setup",
+    name: "First Time Setup",
+    component: FirstTimeSetup
   },
   {
     path: '/institution-login',
@@ -142,6 +145,10 @@ const router = createRouter({
   routes: routes,
 })
 
-router.beforeEach(authGuard)
+
+
+router.beforeEach(authGuard) // Apply the authGuard to all routes
+
 
 export default router
+
