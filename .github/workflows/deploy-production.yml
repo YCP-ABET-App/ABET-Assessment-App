@@ -143,21 +143,36 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Start SSH agent
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.DROPLET_SSH_KEY }}
-          ssh-passphrase: ${{ secrets.DROPLET_SSH_PASSPHRASE }}
-
       - name: Configure SSH for droplet
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.DROPLET_SSH_KEY }}
+          SSH_PASSPHRASE: ${{ secrets.DROPLET_SSH_PASSPHRASE }}
         run: |
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
+
+          eval "$(ssh-agent -s)"
+          echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK" >> "$GITHUB_ENV"
+          echo "SSH_AGENT_PID=$SSH_AGENT_PID" >> "$GITHUB_ENV"
+
+          printf '%s\n' "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/droplet_key
+          chmod 600 ~/.ssh/droplet_key
+
+          # webfactory/ssh-agent does not support passphrases; load key ourselves
+          if [ -n "$SSH_PASSPHRASE" ]; then
+            printf '%s\n' '#!/bin/sh' "printf '%s\\n' \"$SSH_PASSPHRASE\"" > ~/.ssh_askpass
+            chmod +x ~/.ssh_askpass
+            DISPLAY=None SSH_ASKPASS=~/.ssh_askpass SSH_ASKPASS_REQUIRE=force ssh-add ~/.ssh/droplet_key
+          else
+            ssh-add ~/.ssh/droplet_key
+          fi
 
           cat > ~/.ssh/config << EOF
           Host droplet
             HostName ${{ secrets.DROPLET_IP }}
             User ${{ secrets.DROPLET_USER }}
+            IdentityFile ~/.ssh/droplet_key
+            IdentitiesOnly yes
             StrictHostKeyChecking no
             UserKnownHostsFile /dev/null
             ServerAliveInterval 60
@@ -249,7 +264,7 @@ jobs:
       - name: Cleanup SSH configuration
         if: always()
         run: |
-          rm -f ~/.ssh/config
+          rm -f ~/.ssh/droplet_key ~/.ssh_askpass ~/.ssh/config
 
   deploy-production:
     needs: [build-and-push, deploy-staging]
@@ -260,21 +275,35 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Start SSH agent
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.DROPLET_SSH_KEY }}
-          ssh-passphrase: ${{ secrets.DROPLET_SSH_PASSPHRASE }}
-
       - name: Configure SSH for production
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.DROPLET_SSH_KEY }}
+          SSH_PASSPHRASE: ${{ secrets.DROPLET_SSH_PASSPHRASE }}
         run: |
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
+
+          eval "$(ssh-agent -s)"
+          echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK" >> "$GITHUB_ENV"
+          echo "SSH_AGENT_PID=$SSH_AGENT_PID" >> "$GITHUB_ENV"
+
+          printf '%s\n' "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/production_key
+          chmod 600 ~/.ssh/production_key
+
+          if [ -n "$SSH_PASSPHRASE" ]; then
+            printf '%s\n' '#!/bin/sh' "printf '%s\\n' \"$SSH_PASSPHRASE\"" > ~/.ssh_askpass
+            chmod +x ~/.ssh_askpass
+            DISPLAY=None SSH_ASKPASS=~/.ssh_askpass SSH_ASKPASS_REQUIRE=force ssh-add ~/.ssh/production_key
+          else
+            ssh-add ~/.ssh/production_key
+          fi
 
           cat > ~/.ssh/config << EOF
           Host production-server
             HostName ${{ secrets.DROPLET_IP }}
             User ${{ secrets.DROPLET_USER }}
+            IdentityFile ~/.ssh/production_key
+            IdentitiesOnly yes
             StrictHostKeyChecking no
             UserKnownHostsFile /dev/null
             ServerAliveInterval 60
@@ -395,4 +424,4 @@ jobs:
       - name: Cleanup production SSH configuration
         if: always()
         run: |
-          rm -f ~/.ssh/config
+          rm -f ~/.ssh/production_key ~/.ssh_askpass ~/.ssh/config
