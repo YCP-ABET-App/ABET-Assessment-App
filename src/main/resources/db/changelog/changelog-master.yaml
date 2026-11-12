@@ -34,8 +34,10 @@ databaseChangeLog:
 #      file: db/changelog/03232026AddSemesterToMeasure.yaml
 #  - include:
 #      file: db/changelog/03282026AddCascadeDeleteToCourse.yaml
+#  - include:
+#      file: db/changelog/040526AddSectionIndicatorToMeasure.yaml
   - include:
-      file: db/changelog/040526AddSectionIndicatorToMeasure.yaml
+      file: db/changelog/10192026DropSectionIndicatorFromMeasure.yaml
   - include:
       file: db/changelog/040526AddScheduleEntryTable.yaml
   - include:
