@@ -10,6 +10,8 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.util.Map;
 
@@ -20,6 +22,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(AuthRecoveryController.class)
 @Import(TestSecurityConfig.class)
+@Execution(ExecutionMode.SAME_THREAD)
 class AuthRecoveryControllerUnitTest {
 
     @Autowired MockMvc mockMvc;
@@ -74,4 +77,4 @@ class AuthRecoveryControllerUnitTest {
 
         verify(recoveryService).resetPassword("user@example.com", "123456", "newPass123");
     }
-}
+}   
