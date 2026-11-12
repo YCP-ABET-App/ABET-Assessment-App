@@ -1,8 +1,12 @@
 package com.abetappteam.abetapp.dto;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import jakarta.validation.constraints.Email;
+import com.abetappteam.abetapp.entity.UserRole;
 
 //Data Transfer Object for Users
 public class UsersDTO {
@@ -27,17 +31,21 @@ public class UsersDTO {
     @Size(min = 1, max = 50, message = "Title must be 1 to 50 characters long")
     private String title;
 
+    @Enumerated(EnumType.STRING)
+    private UserRole role;
+
     private Boolean active;
 
 
     //Constructor
-    public UsersDTO(String email, String passwordHash, String firstName, String lastName, String title, Boolean active) {
+    public UsersDTO(String email, String passwordHash, String firstName, String lastName, String title, UserRole role, Boolean active) {
 
         this.email = email;
         this.passwordHash = passwordHash;
         this.firstName = firstName;
         this.lastName = lastName;
         this.title = title;
+        this.role = role;
         this.active = active;
     }
 
@@ -58,6 +66,9 @@ public class UsersDTO {
 
     public String getTitle(){return title;}
     public void setTitle(String title){this.title = title;}
+
+    public UserRole getRole(){return role;}
+    public void setRole(UserRole role){this.role = role;}
 
     public Boolean getActive(){return active;}
     public void setActive(Boolean active) {this.active = active;}

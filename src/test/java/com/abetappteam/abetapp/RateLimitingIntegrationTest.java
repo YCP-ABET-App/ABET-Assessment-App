@@ -6,8 +6,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
+
+import com.abetappteam.abetapp.config.ExcludeInstitutionLoginControllerConfig;
 
 import com.abetappteam.abetapp.config.RateLimitingConfig;
 
@@ -16,6 +19,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@Import(ExcludeInstitutionLoginControllerConfig.class)
 @TestPropertySource(properties = {
         "app.rate-limit.enabled=true",
         "app.rate-limit.capacity=5",
@@ -24,6 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "app.rate-limit.strict-refill-minutes=1"
 })
 public class RateLimitingIntegrationTest {
+
 // TODO: Revisit after milestone 3
 //
 //    @Autowired

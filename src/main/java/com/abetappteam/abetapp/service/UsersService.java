@@ -3,6 +3,7 @@ package com.abetappteam.abetapp.service;
 import com.abetappteam.abetapp.dto.UsersDTO;
 import com.abetappteam.abetapp.dto.UpdateUsersDTO;
 import com.abetappteam.abetapp.entity.Users;
+import com.abetappteam.abetapp.entity.UserRole;
 import com.abetappteam.abetapp.exception.ConflictException;
 import com.abetappteam.abetapp.exception.ResourceNotFoundException;
 import com.abetappteam.abetapp.repository.UsersRepository;
@@ -48,6 +49,7 @@ public class UsersService extends BaseService<Users, Long, UsersRepository> {
         user.setFirstName(dto.getFirstName());
         user.setLastName(dto.getLastName());
         user.setTitle(dto.getTitle());
+        user.setRole(dto.getRole());
         user.setActive(dto.getActive() != null ? dto.getActive() : true);
 
         logger.info("Creating new user : {}", dto.getFullName());
@@ -74,6 +76,7 @@ public class UsersService extends BaseService<Users, Long, UsersRepository> {
         user.setFirstName(dto.getFirstName());
         user.setLastName(dto.getLastName());
         user.setTitle(dto.getTitle());
+        user.setRole(dto.getRole());
 
         if (dto.getActive() != null) {
             user.setActive(dto.getActive());
@@ -129,6 +132,12 @@ public class UsersService extends BaseService<Users, Long, UsersRepository> {
     @Transactional(readOnly = true)
     public List<Users> searchByLastName(String searchTerm) {
         return repository.findByLastNameContainingIgnoreCase(searchTerm);
+    }
+
+    // Find user by role
+    @Transactional(readOnly = true)
+    public List<Users> searchByRole(String role) {
+        return repository.findByRole(UserRole.valueOf(role));
     }
 
     // Find all active users

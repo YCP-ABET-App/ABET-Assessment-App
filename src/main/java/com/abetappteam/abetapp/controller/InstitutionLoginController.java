@@ -1,7 +1,6 @@
 package com.abetappteam.abetapp.controller;
 
 import com.abetappteam.abetapp.dto.ApiResponse;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,15 +11,13 @@ import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/institution")
-public class InstitutionLoginController extends BaseController {
+public class InstitutionLoginController {
 
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<Boolean>> institutionLogin(@RequestParam String institutionId) {
-        // Mockup: validate against hardcoded institution code
-        logger.info("Institution login attempt with code: {}", institutionId);
-
         boolean successfulLogin = Objects.equals(institutionId, "ycp123");
-
-        return success(successfulLogin, "Institution login " + (successfulLogin ? "successful" : "failed"));
+        return ResponseEntity.ok(ApiResponse.success(
+                successfulLogin,
+                "Institution login " + (successfulLogin ? "successful" : "failed")));
     }
 }

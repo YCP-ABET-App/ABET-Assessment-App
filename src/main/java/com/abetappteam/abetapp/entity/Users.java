@@ -9,6 +9,7 @@ import jakarta.validation.constraints.Email;
 @Table(name = "users")
 public class Users extends BaseEntity {
 
+
     @NotBlank(message = "Email address is required")
     @Email()
     @Size(min = 3, max = 255, message = "Email address must be 3 to 255 characters long")
@@ -34,28 +35,42 @@ public class Users extends BaseEntity {
     @Column(name = "name_title", nullable = true, length = 50)
     private String title;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", nullable = false, length = 20)
+    private UserRole role;
+
     @Column(name = "is_active", nullable = false)
     private Boolean active = true;
 
-    //Constructors
+
+    // Constructors
     public Users(){
         super();
     }
 
-    public Users(String email, String passwordHash, String firstName, String lastName, String title, Boolean active) { 
+    public Users(
+            String email,
+            String passwordHash,
+            String firstName,
+            String lastName,
+            String title,
+            UserRole role,
+            Boolean active)
+    {
         this.email = email;
         this.passwordHash = passwordHash;
         this.firstName = firstName;
         this.lastName = lastName;
         this.title = title;
+        this.role = role;
         this.active = active;
     }
 
-    //Getters and Setters
+
+    // Getters and Setters
     public String getEmail(){
         return email;
     }
-
     public void setEmail(String email){
         this.email = email;
     }
@@ -63,7 +78,6 @@ public class Users extends BaseEntity {
     public String getPasswordHash(){
         return passwordHash;
     }
-    
     public void setPasswordHash(String passwordHash){
         this.passwordHash = passwordHash;
     }
@@ -71,7 +85,6 @@ public class Users extends BaseEntity {
     public String getFirstName(){
         return firstName;
     }
-
     public void setFirstName(String firstName){
         this.firstName = firstName;
     }
@@ -79,7 +92,6 @@ public class Users extends BaseEntity {
     public String getLastName(){
         return lastName;
     }
-
     public void setLastName(String lastName){
         this.lastName = lastName;
     }
@@ -87,7 +99,6 @@ public class Users extends BaseEntity {
     public String getTitle(){
         return title;
     }
-
     public void setTitle(String title){
         this.title = title;
     }
@@ -95,33 +106,13 @@ public class Users extends BaseEntity {
     public Boolean getActive(){
         return active;
     }
-
     public void setActive(Boolean active) {
         this.active = active;
     }
 
-    @Transient
-    private Long currentProgramId;
+    public UserRole getRole() { return role; }
+    public void setRole(UserRole role) { this.role = role; }
 
-    @Transient
-    private String currentRole; // "ADMIN" or "INSTRUCTOR" for current program
-
-    // Getters and setters
-    public Long getCurrentProgramId() {
-        return currentProgramId;
-    }
-
-    public void setCurrentProgramId(Long currentProgramId) {
-        this.currentProgramId = currentProgramId;
-    }
-
-    public String getCurrentRole() {
-        return currentRole;
-    }
-
-    public void setCurrentRole(String currentRole) {
-        this.currentRole = currentRole;
-    }
 
     public String getFullName(){
         if(title == null){
@@ -141,6 +132,7 @@ public class Users extends BaseEntity {
                 ", firstName" + firstName + '\'' +
                 ", lastName" + lastName + '\'' +
                 ", title" + title + '\'' +
+                ", role=" + role +
                 ", active=" + active +
                 ", createdAt=" + getCreatedAt() +
                 ", updatedAt=" + getUpdatedAt() +

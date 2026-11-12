@@ -1,6 +1,7 @@
 package com.abetappteam.abetapp.repository;
 
 import com.abetappteam.abetapp.entity.Users;
+import com.abetappteam.abetapp.entity.UserRole;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -10,27 +11,30 @@ import java.util.Optional;
 @Repository
 public interface UsersRepository extends JpaRepository<Users, Long>{
 
-    //List all active Users
+    // List all active Users
     List<Users> findByActiveTrue();
 
-    //List all inactive Users
+    // List all inactive Users
     List<Users> findByActiveFalse();
 
-    //Checks if user exists by email address (case insensitive)
+    // Checks if user exists by email address (case insensitive)
     boolean existsByEmailIgnoreCase(String email);
 
-    //Find user by email (case insensitive)
+    // Find user by email (case insensitive)
     Optional<Users> findByEmailIgnoreCase(String email);
     
-    //Checks if users exists by first name (case insensitive)
+    // Checks if users exists by first name (case insensitive)
     boolean existsByFirstNameIgnoreCase(String firstNameFragment);
 
-    //Checks if users exists by last name (cases insensitive)
+    // Checks if users exists by last name (cases insensitive)
     boolean existsByLastNameIgnoreCase(String lastNameFragment);
 
-    //List users by first name containing (case insensitive search)
+    // List users by first name containing (case insensitive search)
     List<Users> findByFirstNameContainingIgnoreCase(String firstNameFragment);
 
-    //List users by last name containing (case insensitive search)
+    // List users by last name containing (case insensitive search)
     List<Users> findByLastNameContainingIgnoreCase(String lastNameFragment);
+
+    // List users by role
+    List<Users> findByRole(UserRole role);
 }

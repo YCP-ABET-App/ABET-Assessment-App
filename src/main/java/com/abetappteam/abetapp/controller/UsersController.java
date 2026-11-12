@@ -35,16 +35,12 @@ public class UsersController extends BaseController {
 
     @Autowired
     private UsersService usersService;
-
     @Autowired
     private CourseService courseService;
-
     @Autowired
     private JwtUtil jwtUtil;
-
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
-
     @Autowired
     private ProgramService programService;
 
