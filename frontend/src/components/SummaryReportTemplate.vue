@@ -70,7 +70,7 @@ async function generateSummaryReportPDF(): Promise<{ pdf: jsPDF, filename: strin
   const margin = 14;
 
   // ===== TITLE PAGE =====
-  let yPosition = pageHeight / 3; // Start 1/3 down the page
+  let yPosition = pageHeight / 3; 
 
   // Main title - centered and large
   pdf.setFontSize(24);

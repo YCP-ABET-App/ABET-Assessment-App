@@ -226,14 +226,17 @@ export function useSummaryReportData(props: SummaryReportProps) {
         for (const indicator of indicators) {
           // find courses assessing this indicator
           for (const course of allCourses) {
-            // Get sections for this course
+          // Get sections for this course
             const sectionsRes = await api.get(`/section`, {
               params: { courseId: course.id }
             });
+
             const sections = sectionsRes.data.data.sections ?? [];
 
-
-            if (sections.length === 0) break;
+            if (sections.length === 0) {
+              console.log(`No sections found for course ${course.courseCode}`);
+              continue;
+            }
 
             // Get section IDs
             const sectionIds = sections.map((s: any) => s.id);
@@ -251,34 +254,51 @@ export function useSummaryReportData(props: SummaryReportProps) {
 
             if (sectionIndicators.length === 0) continue;
 
-            // Get section-program relationships for these sections
-            const sectionProgramRes = await api.get(`/section-program`, {
-              params: {
-                sectionId: sections[0].id, // Query by first section (all should have same program)
-                programId: programId.value
-              }
-            });
-            const sectionPrograms = sectionProgramRes.data.data ?? [];
+            // Get section-program relationships for ALL sections
+            const sectionPrograms: any[] = [];
 
-            if (sectionPrograms.length === 0) continue;
+            for (const section of sections) {
+              const sectionProgramRes = await api.get('/section-program', {
+                params: {
+                  sectionId: section.id,
+                  programId: programId.value
+                }
+              });
 
-            // Get section-program IDs
-            const sectionProgramIds = sectionPrograms.map((sp: any) => sp.id);
+              const results = sectionProgramRes.data.data ?? [];
+              sectionPrograms.push(...results);
+            }
 
-            // Get measure results for these section-programs
-            const measureResultsRes = await api.get(`/measure-result`, {
-              params: {
-                sectionProgramId: sectionProgramIds[0] // Use first section-program ID
-              }
-            });
-            const measureResults = measureResultsRes.data.data ?? [];
+            if (sectionPrograms.length === 0) {
+              continue;
+            }
 
+            console.log('Section programs for course:', course.courseCode, sectionPrograms);
 
-            const matched = measureResults;
+      // Get measure results for ALL section-programs
+            const measureResults: any[] = [];
+
+            for (const sectionProgram of sectionPrograms) {
+              const measureResultsRes = await api.get('/measure-result', {
+                params: {
+                  sectionProgramId: sectionProgram.id
+                }
+              });
+
+              const results = measureResultsRes.data.data ?? [];
+
+              measureResults.push(...results);
+            }
+
+            console.log(
+              'Measure results for course:',
+              course.courseCode,
+              measureResults
+            );
 
             const formattedMeasures: IndicatorMeasure[] = [];
 
-            for (const measureResult of matched) {
+            for (const measureResult of measureResults) {
               const met = measureResult.studentsMet;
               const exceeded = measureResult.studentsExceeded;
               const below = measureResult.studentsBelow;
@@ -293,7 +313,7 @@ export function useSummaryReportData(props: SummaryReportProps) {
                 'No description';
 
               formattedMeasures.push({
-                measureId: measureResult.id,
+                measureId: measureResult.measureId,
                 courseIndicatorId: measureResult.sectionProgramId,
                 courseCode: course.courseCode,
                 description: desc,
@@ -347,10 +367,11 @@ export function useSummaryReportData(props: SummaryReportProps) {
       // FINAL REPORT OBJECT
       // ==============================
 
-      const academicYear =
-        semester.academicYear
-          ? `${semester.academicYear}-${(semester.academicYear + 1) % 100}`
-          : new Date().getFullYear().toString();
+      const startYear = Number(semester.academicYear);
+
+      const academicYear = Number.isFinite(startYear)
+        ? `${startYear}-${String((startYear + 1) % 100).padStart(2, '0')}`
+        : new Date().getFullYear().toString();
 
       reportData.value = {
         semesterId: semesterId.value!,
