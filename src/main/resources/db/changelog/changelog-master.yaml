@@ -54,4 +54,3 @@ databaseChangeLog:
       file: db/changelog/11042026AddInstitutionTable.yaml
   - include:
       file: db/changelog/11042026AddRoleToUsers.yaml
-      
