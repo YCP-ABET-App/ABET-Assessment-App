@@ -16,6 +16,8 @@ public class Course extends BaseEntity {
     @Column(name = "course_code", nullable = false, length = 20)
     private String courseCode;
 
+    // failing tests check
+
     @NotBlank(message = "Course name is required")
     @Column(name = "course_name", nullable = false)
     private String courseName;
