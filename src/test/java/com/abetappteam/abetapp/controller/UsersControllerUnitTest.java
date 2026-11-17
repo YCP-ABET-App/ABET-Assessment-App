@@ -4,6 +4,7 @@ import com.abetappteam.abetapp.config.TestSecurityConfig;
 import com.abetappteam.abetapp.dto.UpdateUsersDTO;
 import com.abetappteam.abetapp.entity.Program;
 import com.abetappteam.abetapp.entity.ProgramUser;
+import com.abetappteam.abetapp.entity.UserRole;
 import com.abetappteam.abetapp.entity.Users;
 import com.abetappteam.abetapp.dto.UsersDTO;
 import com.abetappteam.abetapp.security.JwtUtil;
@@ -75,9 +76,11 @@ public class UsersControllerUnitTest {
                 testUser.setFirstName("Test");
                 testUser.setLastName("User");
                 testUser.setTitle("Dr.");
+                testUser.setRole(UserRole.INSTRUCTOR);
                 testUser.setActive(true);
 
-                testDTO = new UsersDTO("NewEmail@gmail.com", "NewPassword", "NewFirstName", "NewLastName", "NewTitle", true);
+                testDTO = new UsersDTO("NewEmail@gmail.com", "NewPassword", "NewFirstName", "NewLastName", "NewTitle",
+                                UserRole.INSTRUCTOR, true);
                 testDTO.setEmail("NewEmail@gmail.com");
                 testDTO.setPasswordHash("NewPassword");
                 testDTO.setFirstName("NewFirstName");
@@ -160,7 +163,8 @@ public class UsersControllerUnitTest {
         @Test
         void shouldReturnBadRequestForInvalidUser() throws Exception {
                 // Given - DTO with missing required fields and invalid fields
-                UsersDTO invalidDTO = new UsersDTO("email", null, null, null, "V;vmiiQ94S$npW0g+6A2UpEB3bW.nvm)F&$#S2dfrK?pC!P]xuU", true);
+                UsersDTO invalidDTO = new UsersDTO("email", null, null, null,
+                                "V;vmiiQ94S$npW0g+6A2UpEB3bW.nvm)F&$#S2dfrK?pC!P]xuU", UserRole.INSTRUCTOR, true);
                 invalidDTO.setFirstName(null); // Invalid - first name is required
                 invalidDTO.setLastName(null); // Invalid - last name is required
                 invalidDTO.setTitle("V;vmiiQ94S$npW0g+6A2UpEB3bW.nvm)F&$#S2dfrK?pC!P]xuU"); // Invalid - title cannot be
@@ -190,6 +194,7 @@ public class UsersControllerUnitTest {
                 existingUser.setEmail("old@example.com");
                 existingUser.setFirstName("OldFirst");
                 existingUser.setLastName("OldLast");
+                existingUser.setRole(UserRole.INSTRUCTOR);
 
                 Users updatedUser = new Users();
                 updatedUser.setId(userId);
@@ -197,6 +202,7 @@ public class UsersControllerUnitTest {
                 updatedUser.setFirstName("NewFirstName");
                 updatedUser.setLastName("NewLastName");
                 updatedUser.setTitle("NewTitle");
+                updatedUser.setRole(UserRole.INSTRUCTOR);
                 updatedUser.setActive(true);
 
                 // IMPORTANT: Mock the UpdateUsersDTO overload, not the UsersDTO one

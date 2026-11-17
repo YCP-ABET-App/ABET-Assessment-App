@@ -35,6 +35,7 @@
             :indicator="ind"
             :editable="editable"
             :collapse-id="outcome.outcomeNumber * 1000 + idx"
+            :student-count-label="studentCountLabel"
             @update:indicator="updateIndicator(idx, $event)"
           />
         </div>
@@ -55,6 +56,7 @@ import { useReportCollapse } from "@/composables/use-report-collapse";
 const props = defineProps<{
   outcome: any;
   editable: boolean;
+  studentCountLabel?: string;
 }>();
 
 const emit = defineEmits(["update:outcome"]);
