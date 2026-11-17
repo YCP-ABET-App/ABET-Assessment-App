@@ -9,7 +9,7 @@ import api from '@/api';
 // A single measure attached to an indicator for a specific course
 export interface IndicatorMeasure {
   measureId: number;
-  courseIndicatorId: number;
+  courseIndicatorId?: number;
   courseCode: string;
   description: string;
 
@@ -32,8 +32,9 @@ export interface IndicatorMeasure {
 export interface IndicatorData {
   id: number;
   indicatorNumber: string;                  // e.g., "3.1"
+  indicatorDescription?: string;
   courseCode: string;
-  studentCount?: number;                    // ADDED: Number of students in the course
+  studentCount?: number;                    // Students in the course (all program sections combined)
   measures: IndicatorMeasure[];
 }
 
@@ -223,10 +224,20 @@ export function useSummaryReportData(props: SummaryReportProps) {
         const indicatorDataArray: IndicatorData[] = [];
         const recommendedActions: string[] = [];
 
+        const outcomeDescription =
+          outcome.description ??
+          outcome.outDescription ??
+          '';
+
         for (const indicator of indicators) {
-          // find courses assessing this indicator
+          const indicatorNumber =
+            indicator.indNumber ??
+            indicator.indicatorNumber ??
+            indicator.ind_number ??
+            indicator.indicator_number;
+          const indicatorDescription = indicator.description ?? '';
+
           for (const course of allCourses) {
-          // Get sections for this course
             const sectionsRes = await api.get(`/section`, {
               params: { courseId: course.id }
             });
@@ -238,23 +249,6 @@ export function useSummaryReportData(props: SummaryReportProps) {
               continue;
             }
 
-            // Get section IDs
-            const sectionIds = sections.map((s: any) => s.id);
-
-
-            // Get section-indicators for these sections that match this outcome's indicator
-            const sectionIndicatorsRes = await api.get(`/section-indicator`, {
-              params: {
-                sectionIds: sectionIds,
-                indicatorIds: [indicator.id]
-              }
-            });
-            const sectionIndicators = sectionIndicatorsRes.data.data ?? [];
-
-
-            if (sectionIndicators.length === 0) continue;
-
-            // Get section-program relationships for ALL sections
             const sectionPrograms: any[] = [];
 
             for (const section of sections) {
@@ -273,79 +267,92 @@ export function useSummaryReportData(props: SummaryReportProps) {
               continue;
             }
 
-            console.log('Section programs for course:', course.courseCode, sectionPrograms);
-
-      // Get measure results for ALL section-programs
-            const measureResults: any[] = [];
-
-            for (const sectionProgram of sectionPrograms) {
-              const measureResultsRes = await api.get('/measure-result', {
-                params: {
-                  sectionProgramId: sectionProgram.id
-                }
-              });
-
-              const results = measureResultsRes.data.data ?? [];
-
-              measureResults.push(...results);
-            }
-
-            console.log(
-              'Measure results for course:',
-              course.courseCode,
-              measureResults
+            const programSectionProgramIds = new Set(
+              sectionPrograms.map((sp: any) => Number(sp.id))
             );
+
+            const scheduleRes = await api.get('/schedule-entry', {
+              params: {
+                programId: programId.value,
+                semesterId: semesterId.value,
+                courseId: course.id,
+                indicatorId: indicator.id
+              }
+            });
+            const scheduleEntries = scheduleRes.data.data ?? [];
+
+            if (scheduleEntries.length === 0) {
+              continue;
+            }
 
             const formattedMeasures: IndicatorMeasure[] = [];
 
-            for (const measureResult of measureResults) {
-              const met = measureResult.studentsMet;
-              const exceeded = measureResult.studentsExceeded;
-              const below = measureResult.studentsBelow;
-
-              if (met == null || exceeded == null || below == null) continue;
-
-              const pct = calculateMetPercentage(met, exceeded, below);
-              const status = determineStatus(pct);
-
-              const desc =
-                measureResult.observation ||
-                'No description';
-
-              formattedMeasures.push({
-                measureId: measureResult.measureId,
-                courseIndicatorId: measureResult.sectionProgramId,
-                courseCode: course.courseCode,
-                description: desc,
-                studentsMet: met,
-                studentsExceeded: exceeded,
-                studentsBelow: below,
-                met,
-                exceeded,
-                below,
-                metPercentage: pct,
-                status,
-                note: measureResult.observation ?? undefined,
-                recommendedAction: measureResult.recommendedAction ?? null,
+            for (const entry of scheduleEntries) {
+              const measuresRes = await api.get('/measure', {
+                params: { scheduleEntryId: entry.id, active: true }
               });
+              const measures = measuresRes.data.data ?? [];
 
-              if (measureResult.recommendedAction) {
-                recommendedActions.push(measureResult.recommendedAction);
+              for (const measure of measures) {
+                const resultsRes = await api.get('/measure-result', {
+                  params: { measureId: measure.id }
+                });
+                const results = (resultsRes.data.data ?? []).filter((r: any) =>
+                  programSectionProgramIds.has(Number(r.sectionProgramId))
+                );
+
+                let met = 0;
+                let exceeded = 0;
+                let below = 0;
+                const notes: string[] = [];
+
+                for (const result of results) {
+                  met += Number(result.studentsMet) || 0;
+                  exceeded += Number(result.studentsExceeded) || 0;
+                  below += Number(result.studentsBelow) || 0;
+                  if (result.observation) {
+                    notes.push(result.observation);
+                  }
+                }
+
+                const pct = calculateMetPercentage(met, exceeded, below);
+                const status = determineStatus(pct);
+                const recAction = measure.recommendedAction ?? null;
+
+                formattedMeasures.push({
+                  measureId: measure.id,
+                  courseCode: course.courseCode,
+                  description: measure.description ?? 'No description',
+                  studentsMet: met,
+                  studentsExceeded: exceeded,
+                  studentsBelow: below,
+                  met,
+                  exceeded,
+                  below,
+                  metPercentage: pct,
+                  status,
+                  note: notes.length ? [...new Set(notes)].join(' ') : undefined,
+                  recommendedAction: recAction
+                });
+
+                if (recAction) {
+                  recommendedActions.push(recAction);
+                }
               }
             }
 
             if (formattedMeasures.length > 0) {
-              const indicatorNumber =
-                indicator.indNumber ??
-                indicator.indicatorNumber ??
-                indicator.ind_number ??
-                indicator.indicator_number;
+              const studentCount = formattedMeasures.reduce((max, m) => {
+                const total = (m.studentsMet ?? 0) + (m.studentsExceeded ?? 0) + (m.studentsBelow ?? 0);
+                return Math.max(max, total);
+              }, 0);
 
               indicatorDataArray.push({
                 id: indicator.id,
                 indicatorNumber: `${outcome.number}.${indicatorNumber}`,
+                indicatorDescription,
                 courseCode: course.courseCode,
-                studentCount: course.studentCount ?? 0,
+                studentCount,
                 measures: formattedMeasures
               });
             }
@@ -355,7 +362,7 @@ export function useSummaryReportData(props: SummaryReportProps) {
         if (indicatorDataArray.length > 0) {
           outcomeDataArray.push({
             outcomeNumber: outcome.number,
-            outcomeDescription: outcome.outDescription,
+            outcomeDescription,
             overallStatus: determineOutcomeStatus(indicatorDataArray),
             indicators: indicatorDataArray,
             recommendedActions: [...new Set(recommendedActions)]

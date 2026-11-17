@@ -27,8 +27,9 @@ export interface IndicatorMeasure {
 export interface IndicatorData {
   id: number;
   indicatorNumber: string; // e.g., "3.1"
+  indicatorDescription?: string;
   courseCode: string;
-  studentCount?: number; // Number of students in the course
+  studentCount?: number; // Students in the course (all program sections combined)
   measures: IndicatorMeasure[];
 }
 

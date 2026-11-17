@@ -9,7 +9,10 @@ import { useGoogleDrive } from '@/composables/use-google-drive';
 import ReportOutcome from "@/components/report/ReportOutcome.vue";
 import { BaseButton, BaseCard } from "@/components/ui";
 
-const props = defineProps<{ report: any }>();
+const props = defineProps<{
+  report: any;
+  studentCountLabel?: string;
+}>();
 
 const emit = defineEmits(["update:report", "import", "save", "regenerate", "reload"]);
 
@@ -364,6 +367,7 @@ function handleRegenerate() {
         :key="o.outcomeNumber"
         :outcome="o"
         :editable="editMode"
+        :student-count-label="studentCountLabel"
         @update:outcome="updateOutcome(o.outcomeNumber, $event)"
       />
     </div>
