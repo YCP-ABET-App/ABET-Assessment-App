@@ -2,6 +2,7 @@ package com.abetappteam.abetapp.util;
 
 import com.abetappteam.abetapp.entity.Program;
 import com.abetappteam.abetapp.entity.ProgramUser;
+import com.abetappteam.abetapp.entity.UserRole;
 import com.abetappteam.abetapp.entity.Users;
 import com.abetappteam.abetapp.dto.ProgramDTO;
 import com.abetappteam.abetapp.entity.Course;
@@ -161,6 +162,7 @@ public class TestDataBuilder {
         user.setFirstName(firstName);
         user.setLastName(lastName);
         user.setTitle(title);
+        user.setRole(UserRole.INSTRUCTOR);
         user.setActive(active);
         return user;
     }
@@ -183,6 +185,7 @@ public class TestDataBuilder {
         user.setFirstName(""); // Can't be empty
         user.setLastName(null); // Can't be null
         user.setTitle("Thisisaveryverylongtitlethatgoesoverthelimitthatwassetforhowlongatitlteshouldbe"); // Too long
+        user.setRole(UserRole.INSTRUCTOR);
         user.setActive(true);
         return user;
     }
@@ -195,7 +198,7 @@ public class TestDataBuilder {
     // Create custom user dto
     public static UsersDTO createUsersDTO(String email, String passwordHash, String firstName, String lastName,
             String title, Boolean active) {
-        UsersDTO dto = new UsersDTO(email, passwordHash, firstName, lastName, title, active);
+        UsersDTO dto = new UsersDTO(email, passwordHash, firstName, lastName, title, UserRole.INSTRUCTOR, active);
 
         return dto;
     }
@@ -203,7 +206,8 @@ public class TestDataBuilder {
     // Create invalid user dto
     public static UsersDTO createInvalidUsersDTO() {
         UsersDTO dto = new UsersDTO("email", null, "", null,
-                "Thisisaveryverylongtitlethatgoesoverthelimitthatwassetforhowlongatitlteshouldbe", true);
+                "Thisisaveryverylongtitlethatgoesoverthelimitthatwassetforhowlongatitlteshouldbe",
+                UserRole.INSTRUCTOR, true);
 
         return dto;
     }

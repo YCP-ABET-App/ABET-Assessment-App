@@ -5,13 +5,9 @@ import MultiYearReport from '@/components/MultiYearReport.vue';
 
 const route = useRoute();
 
-const program_id = ref(NaN);
-
-function initialize() {
-    program_id.value = parseInt(route.params.program_id as string, 10);
-}
-
-initialize();
+const program_id = ref(
+  Number(route.params.program_id)
+);
 </script>
 
 <template>

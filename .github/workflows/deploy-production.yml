@@ -143,14 +143,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Use appleboy (same as debug-deploy.yml) — handles key newlines + passphrase correctly
       - name: Ensure deploy directories on droplet
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.DROPLET_IP }}
           username: ${{ secrets.DROPLET_USER }}
-          key: ${{ secrets.DROPLET_SSH_KEY }}
-          passphrase: ${{ secrets.DROPLET_SSH_PASSPHRASE }}
+          key: ${{ secrets.STAGING_DROPLET_SSH_KEY }}
           script: |
             mkdir -p /opt/ABET-Assessment-App/dockercompose
 
@@ -159,8 +157,7 @@ jobs:
         with:
           host: ${{ secrets.DROPLET_IP }}
           username: ${{ secrets.DROPLET_USER }}
-          key: ${{ secrets.DROPLET_SSH_KEY }}
-          passphrase: ${{ secrets.DROPLET_SSH_PASSPHRASE }}
+          key: ${{ secrets.STAGING_DROPLET_SSH_KEY }}
           source: dockercompose/docker-compose.staging.yml
           target: /opt/ABET-Assessment-App/dockercompose/
           strip_components: 1
@@ -170,8 +167,7 @@ jobs:
         with:
           host: ${{ secrets.DROPLET_IP }}
           username: ${{ secrets.DROPLET_USER }}
-          key: ${{ secrets.DROPLET_SSH_KEY }}
-          passphrase: ${{ secrets.DROPLET_SSH_PASSPHRASE }}
+          key: ${{ secrets.STAGING_DROPLET_SSH_KEY }}
           command_timeout: 20m
           script: |
             set -e
@@ -252,7 +248,6 @@ jobs:
           host: ${{ secrets.DROPLET_IP }}
           username: ${{ secrets.DROPLET_USER }}
           key: ${{ secrets.DROPLET_SSH_KEY }}
-          passphrase: ${{ secrets.DROPLET_SSH_PASSPHRASE }}
           command_timeout: 20m
           script: |
             set -e

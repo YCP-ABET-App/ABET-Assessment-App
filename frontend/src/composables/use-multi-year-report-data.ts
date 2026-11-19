@@ -76,6 +76,15 @@ export function useMultiYearReportData(props: Ref<MultiYearReportProps>) {
 
       const responseData = reportRes.data.data;
 
+      console.log('Full multi-year response:', reportRes.data);
+      console.log('Report data:', responseData);
+      console.log('Selected date range:', {
+        programId: props.value.programId,
+        startDate: props.value.startDate,
+        endDate: props.value.endDate
+      });
+      console.log('Outcomes:', responseData?.outcomes);
+
       if (!responseData || responseData.outcomes.length === 0) {
         error.value = 'No measures found for the selected date range';
         loading.value = false;
@@ -84,8 +93,37 @@ export function useMultiYearReportData(props: Ref<MultiYearReportProps>) {
 
       reportData.value = responseData;
 
-    } catch (err: any) {
-      error.value = err.response?.data?.message ?? err.message ?? 'Failed to load multi-year report data';
+    } catch (err: unknown) {
+      console.error('Multi-Year Report Error:', err);
+
+      if (err instanceof Error) {
+        console.error('Error Message:', err.message);
+      }
+
+      if (typeof err === 'object' && err !== null && 'response' in err) {
+        const axiosError = err as {
+          response?: {
+            data?: { message?: string; error?: string };
+            status?: number;
+          };
+          config?: {
+            url?: string;
+            params?: unknown;
+          };
+        };
+
+        console.error('Backend Response:', axiosError.response?.data);
+        console.error('HTTP Status:', axiosError.response?.status);
+        console.error('Request URL:', axiosError.config?.url);
+        console.error('Request Parameters:', axiosError.config?.params);
+
+        error.value =
+          axiosError.response?.data?.message ??
+          axiosError.response?.data?.error ??
+          'Failed to load multi-year report data';
+      } else {
+        error.value = 'Failed to load multi-year report data';
+      }
     } finally {
       loading.value = false;
     }

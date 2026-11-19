@@ -5,15 +5,14 @@
 
     const route = useRoute();
 
-    const program_id = ref(NaN);
-    const semester_id = ref(NaN);
+    const program_id = ref(
+      Number(route.params.program_id)
+    );
 
-    async function initialize(){
-        program_id.value = parseInt(route.params.program_id as string, 10)
-        semester_id.value = parseInt(route.params.semester_id as string, 10)
-    }
+    const semester_id = ref(
+      Number(route.params.semester_id)
+    );
 
-    initialize();
 </script>
 
 <template>

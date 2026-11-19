@@ -211,6 +211,7 @@ onMounted(() => {
     <div v-else-if="reportDataInternal">
       <SummaryReportTemplate
         v-model:report="reportDataInternal"
+        student-count-label="Students in Course:"
         @save="saveReportToBackend"
         @import="() => console.log('import!')"
         @regenerate="loadReportData"
