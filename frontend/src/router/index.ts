@@ -16,6 +16,7 @@ import SchedulePage from '@/components/pages/SchedulePage.vue';
 import AccountRecoveryPage from '@/components/pages/AccountRecoveryPage.vue'
 import InstitutionSignup from '@/components/pages/InstitutionSignup.vue'
 import SuperAdminPage from "@/components/pages/SuperAdminPage.vue";
+import CombinedReportPage from "@/components/pages/CombinedReportPage.vue";
 
 const routes = [
   {
@@ -134,6 +135,12 @@ const routes = [
       requiresAuth: true,
       requiresSuperAdmin: true,
     },
+  },
+  {
+    path: '/:program_id/summary-reports',
+    name: 'Summary Reports',
+    component: CombinedReportPage,
+    meta: { requiresAuth: true, requiresAdmin: true }
   },
 ]
 
