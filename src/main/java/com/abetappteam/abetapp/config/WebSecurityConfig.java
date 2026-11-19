@@ -50,7 +50,9 @@ public class WebSecurityConfig {
                                 "/api/users/signup",
                                 "/api/institution/login",
                                 "/api/auth/recovery/send",
-                                "/api/auth/recovery/reset"
+                                "/api/auth/recovery/reset",
+                                "/api/setup/status",
+                                "/api/setup"
                         ).permitAll()
                         // Protected API endpoints
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")

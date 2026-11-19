@@ -1,84 +1,89 @@
 import type { NavigationGuardNext, RouteLocationNormalized } from 'vue-router'
 import { useUserStore } from '@/stores/user-store'
 
+let setupChecked = false
+let needsSetup = false
+
+export function markSetupComplete() {
+  needsSetup = false
+  setupChecked = true
+}
+
 export async function authGuard(
   to: RouteLocationNormalized,
   from: RouteLocationNormalized,
   next: NavigationGuardNext
 ) {
   const userStore = useUserStore()
-  const institutionId = localStorage.getItem('selectedInstitutionId')
 
-  // Load user data from storage if not already loaded
+  if (!setupChecked) {
+    try {
+      const res = await fetch('/api/setup/status')
+      const data = await res.json()
+      needsSetup = data.needsSetup
+    } catch {
+      needsSetup = false
+    }
+    setupChecked = true
+  }
+
+  if (needsSetup && to.name !== 'First Time Setup') {
+    next({ name: 'First Time Setup' })
+    return
+  }
+  if (!needsSetup && to.name === 'First Time Setup') {
+    next({ name: 'Institution Login' })
+    return
+  }
+
   if (!userStore.isLoggedIn && localStorage.getItem('authToken')) {
     userStore.loadFromStorage()
   }
 
-  const requiresAuth = to.meta.requiresAuth
-  const requiresAdmin = to.meta.requiresAdmin
-  const requiresMatchingInstructorId = to.meta.requiresMatchingInstructorId
-  const requiresSectionAccess = to.meta.requiresSectionAccess
+  const institutionId = localStorage.getItem('selectedInstitutionId')
+  const requiresAuth = !!to.meta.requiresAuth
+  const requiresAdmin = !!to.meta.requiresAdmin
+  const requiresMatchingInstructorId = !!to.meta.requiresMatchingInstructorId
+  const requiresSectionAccess = !!to.meta.requiresSectionAccess
 
-  // Allow institution login page for all users
-  if (to.name === 'Institution Log In') {
-    next()
-    return
-  }
-
-  // If user is logged in but trying to access login/signup pages, redirect to dashboard
-  if (userStore.isLoggedIn && (to.name === 'Log In')) {
+  // Logged-in users leave both gates
+  if (userStore.isLoggedIn && (to.name === 'Institution Login' || to.name === 'Login')) {
     next({ name: 'Home' })
     return
   }
 
-  // If user is not logged in and trying to access login/signup, ensure institution is selected
-  if (!userStore.isLoggedIn && (to.name === 'Log In')) {
-    if (!institutionId) {
-      next({
-        name: 'Institution Log In',
-        query: { redirect: to.fullPath }
-      })
-      return
-    }
-    // Institution is selected, allow access to login/signup
+  // Institution Login is always reachable when not logged in
+  // (so from Login you can go back and enter a different institution)
+  if (to.name === 'Institution Login') {
     next()
     return
   }
 
-  // If user is not logged in and trying to access a protected route
+  // Block Login until institution has been verified
+  if (to.name === 'Login' && !institutionId) {
+    next({ name: 'Institution Login', query: { redirect: to.fullPath } })
+    return
+  }
+
+  // Block protected routes the same way
   if (requiresAuth && !userStore.isLoggedIn) {
-    // If institution not selected, go to institution login
     if (!institutionId) {
-      next({
-        name: 'Institution Log In',
-        query: { redirect: to.fullPath }
-      })
-      return
+      next({ name: 'Institution Login', query: { redirect: to.fullPath } })
+    } else {
+      next({ name: 'Login', query: { redirect: to.fullPath } })
     }
-    // If institution selected but not logged in, go to login page
-    next({
-      name: 'Log In',
-      query: { redirect: to.fullPath }
-    })
     return
   }
 
   if (requiresMatchingInstructorId && !userStore.isAdmin) {
-    const instructorId = userStore.userId;
-    const routeId = Number(to.params.instructorId)
+    const instructorId = userStore.userId
+    const routeId = Number(to.params.instructor_id)
     if (instructorId != routeId) {
       next({ name: 'Home' })
       return
     }
   }
 
-  // If user is logged in but trying to access institution login, redirect to dashboard
-  if (userStore.isLoggedIn && to.name === 'Institution Log In') {
-    next({ name: 'Home' })
-    return
-  }
-
-  // Handle admin routes
   if (requiresAdmin && !userStore.isAdmin) {
     next({ name: 'Home' })
     return

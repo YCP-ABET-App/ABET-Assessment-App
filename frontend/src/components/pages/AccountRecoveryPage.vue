@@ -53,6 +53,11 @@ async function resetPassword() {
     return
   }
 
+  if (new_password_input.value.length < 4) {
+    showError('Password must be at least 4 characters', 'Error')
+    return
+  }
+
   if (!recovery_code_input.value.trim()) {
     showError('Please enter the recovery code', 'Error')
     return

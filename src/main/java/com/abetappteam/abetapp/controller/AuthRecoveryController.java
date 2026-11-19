@@ -47,11 +47,7 @@ public class AuthRecoveryController extends BaseController {
         recoveryService.resetPassword(email.trim(), code.trim(), newPassword);
 
         return ResponseEntity.ok(Map.of("message", "Password reset successfully."));
+    }
         
 }
 
-
-
-
-
-}

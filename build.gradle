@@ -58,6 +58,16 @@ bootRun {
             '-Dspring.devtools.restart.enabled=true',
             '-Dspring.devtools.livereload.enabled=true'
     ]
+    def envFile = file('.env')
+    if (envFile.exists()) {
+        envFile.eachLine { line ->
+            def trimmed = line.trim()
+            if (trimmed && !trimmed.startsWith('#') && trimmed.contains('=')) {
+                def (key, value) = trimmed.split('=', 2)
+                environment key.trim(), value.trim()
+            }
+        }
+    }
 }
 
 node {
@@ -311,9 +321,37 @@ tasks.register('dockerRun', Exec) {
 }
 
 tasks.register('runMariaDB', Exec) {
-    description 'Run MariaDB in docker standalone'
+    description 'Run MariaDB in docker standalone (with seed data)'
+    executable 'docker'
+    args 'compose', '-f', 'dockercompose/docker-compose.yml', 'down', '-v'
+    environment 'COMPOSE_BAKE', 'false'
+    finalizedBy 'runMariaDBUp'
+}
+
+tasks.register('runMariaDBUp', Exec) {
     executable 'docker'
     args 'compose', '-f', 'dockercompose/docker-compose.yml', 'up', '-d', 'local-database'
+    environment 'COMPOSE_BAKE', 'false'
+}
+
+tasks.register('runMariaDBEmpty', Exec) {
+    description 'Run MariaDB in docker standalone with empty database (schema only, no seed data)'
+    executable 'docker'
+    args 'compose',
+         '-f', 'dockercompose/docker-compose.yml',
+         '-f', 'dockercompose/docker-compose-empty.yml',
+         'down', '-v'
+    environment 'COMPOSE_BAKE', 'false'
+    finalizedBy 'runMariaDBEmptyUp'
+}
+
+tasks.register('runMariaDBEmptyUp', Exec) {
+    description 'Start the empty MariaDB container'
+    executable 'docker'
+    args 'compose',
+         '-f', 'dockercompose/docker-compose.yml',
+         '-f', 'dockercompose/docker-compose-empty.yml',
+         'up', '-d', 'local-database'
     environment 'COMPOSE_BAKE', 'false'
 }
 
