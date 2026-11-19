@@ -10,11 +10,10 @@
         <span class="indicator-number">{{ indicator.indicatorNumber }}</span>
         <span class="course-code">{{ indicator.courseCode }}</span>
 
-        <!-- STUDENTS IN CLASS -->
         <div class="student-inline" v-if="!isCollapsed(collapseId)">
           <template v-if="editable">
             <label class="inline-label">
-              Students in Class:
+              {{ studentCountLabel }}
               <input
                 type="number"
                 min="0"
@@ -27,7 +26,7 @@
 
           <template v-else>
           <span class="inline-readonly">
-            Students in Class: {{ indicator.studentCount }}
+            {{ studentCountLabel }} {{ indicator.studentCount }}
           </span>
           </template>
         </div>
@@ -40,6 +39,9 @@
     <!-- BODY -->
     <ReportCollapseTransition :show="!isCollapsed(collapseId)">
       <div class="indicator-body">
+        <p v-if="indicator.indicatorDescription" class="indicator-description">
+          {{ indicator.indicatorDescription }}
+        </p>
         <div class="measures-list">
           <ReportMeasure
             v-for="m in indicator.measures"
@@ -61,11 +63,14 @@ import ReportCollapseTransition from "./ReportCollapseTransition.vue";
 import { useReportCollapse } from "@/composables/use-report-collapse";
 import type { IndicatorData, IndicatorMeasure } from "@/types/summary";
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   indicator: IndicatorData;
   editable: boolean;
   collapseId: number;
-}>();
+  studentCountLabel?: string;
+}>(), {
+  studentCountLabel: 'Students in Class:'
+});
 
 const emit = defineEmits<{
   "update:indicator": [value: IndicatorData]
@@ -169,6 +174,13 @@ function updateMeasure(id: number, updated: Partial<IndicatorMeasure>) {
 
 .collapse-icon.open {
   transform: rotate(90deg);
+}
+
+.indicator-description {
+  margin: 0 0 0.75rem 0;
+  color: var(--color-text-secondary);
+  font-style: italic;
+  font-size: 0.9rem;
 }
 
 .measures-list {

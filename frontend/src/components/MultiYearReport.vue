@@ -32,6 +32,7 @@ onMounted(async () => {
     loadingUI.value = true;
     const res = await api.get('/semesters', {
       params: {
+        programId: props.programId
       }
     });
     allSemesters.value = (res.data.data ?? [])
@@ -112,6 +113,9 @@ const { loading, error, reportData, loadReportData } = useMultiYearReportData(re
 
 function generate() {
   if (!validateDates()) return;
+
+  console.log('Multi-Year Report Parameters:', reportProps.value);
+
   loadReportData();
 }
 
