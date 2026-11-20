@@ -1,19 +1,26 @@
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import api from '@/api';
 
-
+import { BaseSpinner } from '@/components/ui';
 import SummaryReportTemplate from '@/components/SummaryReportTemplate.vue';
-import { useSummaryReportData } from '@/composables/use-summary-report-data';
+
+import {
+  useSummaryReportData,
+  type SummaryReportData
+} from '@/composables/use-summary-report-data';
+
 import { useMultiYearReportData } from '@/composables/use-multi-year-report-data';
 
-
 const route = useRoute();
+
 const programId = computed(() => Number(route.params.program_id));
 
-
+// --------------------------------------------------
+// Types
+// --------------------------------------------------
 
 interface Semester {
   id: number;
@@ -25,6 +32,9 @@ interface Semester {
   isCurrent?: boolean;
 }
 
+// --------------------------------------------------
+// Page state
+// --------------------------------------------------
 
 const reportMode = ref<'single' | 'range'>('single');
 
@@ -36,17 +46,21 @@ const selectedSemesterId = ref<number | null>(null);
 const selectedStartSemesterId = ref<number | null>(null);
 const selectedEndSemesterId = ref<number | null>(null);
 
-const reportDataInternal = ref<any>(null);
+const reportDataInternal = ref<SummaryReportData | null>(null);
 const reportError = ref<string | null>(null);
+
 const generatingReport = ref(false);
+const savingReport = ref(false);
 
+// Used to prevent an older request from replacing newer report data.
+let requestVersion = 0;
 
-
-
+// --------------------------------------------------
+// Semester selection
+// --------------------------------------------------
 
 function semesterLabel(semester: Semester): string {
-  const year = semester.academicYear ?? '';
-  return `${semester.name} ${year}`;
+  return `${semester.name} (${semester.academicYear})`;
 }
 
 const selectedStartSemester = computed(() =>
@@ -57,29 +71,36 @@ const selectedEndSemester = computed(() =>
   semesters.value.find(s => s.id === selectedEndSemesterId.value)
 );
 
-// Keep the range within six years, as in the existing multi-year page.
+// Only allow ending semesters within six years of the starting semester.
 const endSemesterOptions = computed(() => {
   if (!selectedStartSemester.value) return [];
 
   const startDate = new Date(selectedStartSemester.value.startDate);
+
   const maxDate = new Date(startDate);
   maxDate.setFullYear(maxDate.getFullYear() + 6);
 
   return semesters.value.filter(semester => {
-    const endDate = new Date(semester.endDate);
-    return endDate >= startDate && endDate <= maxDate;
+    const semesterStart = new Date(semester.startDate);
+    const semesterEnd = new Date(semester.endDate);
+
+    return semesterStart >= startDate && semesterEnd <= maxDate;
   });
 });
 
+// --------------------------------------------------
+// Single-semester report composable
+// --------------------------------------------------
 
-
-// Single-semester report
 const singleReport = useSummaryReportData({
   programId,
   semesterId: selectedSemesterId
 });
 
-// Multi-year report
+// --------------------------------------------------
+// Multi-year report composable
+// --------------------------------------------------
+
 const multiYearProps = computed(() => ({
   programId: programId.value,
   startDate: selectedStartSemester.value?.startDate ?? '',
@@ -88,11 +109,13 @@ const multiYearProps = computed(() => ({
 
 const multiYearReport = useMultiYearReportData(multiYearProps);
 
-
+// --------------------------------------------------
+// Load semesters
+// --------------------------------------------------
 
 async function loadSemesters() {
   if (!programId.value || programId.value <= 0) {
-    semesterError.value = 'Invalid program ID';
+    semesterError.value = 'Invalid program ID.';
     return;
   }
 
@@ -108,8 +131,6 @@ async function loadSemesters() {
       }
     });
 
-    console.log('Semester API response:', response.data);
-
     const payload = response.data?.data ?? response.data;
 
     let semesterData: Semester[] = [];
@@ -122,15 +143,7 @@ async function loadSemesters() {
       semesterData = payload.semesters;
     }
 
-    console.log('Parsed semesters:', semesterData);
-
-    if (semesterData.length === 0) {
-      console.error('Could not find semester array in API response:', payload);
-      semesterError.value = 'No semesters were found or the semester response was unexpected.';
-      return;
-    }
-
-    semesters.value = [...semesterData].sort(
+    semesters.value = semesterData.sort(
       (a, b) =>
         new Date(a.startDate).getTime() -
         new Date(b.startDate).getTime()
@@ -141,26 +154,26 @@ async function loadSemesters() {
       return;
     }
 
-
+    // Default single-semester selection: current semester, or latest.
     const currentSemester =
-      semesters.value.find(s => s.isCurrent) ?? semesters.value[semesters.value.length - 1];
+      semesters.value.find(s => s.isCurrent) ??
+      semesters.value[semesters.value.length - 1];
 
     selectedSemesterId.value = currentSemester.id;
 
-
+    // Default range: earliest semester through the latest semester
+    // that falls within the six-year limit.
     selectedStartSemesterId.value = semesters.value[0].id;
-    selectedEndSemesterId.value = semesters.value[semesters.value.length - 1].id;
-
 
     const validEndSemesters = endSemesterOptions.value;
-    if (
-      !validEndSemesters.some(s => s.id === selectedEndSemesterId.value)
-    ) {
-      selectedEndSemesterId.value =
-        validEndSemesters[validEndSemesters.length - 1]?.id ?? null;
-    }
+
+    selectedEndSemesterId.value =
+      validEndSemesters[validEndSemesters.length - 1]?.id ??
+      semesters.value[0].id;
+
   } catch (error: any) {
     console.error('Failed to load semesters:', error);
+
     semesterError.value =
       error.response?.data?.message ?? 'Failed to load semesters.';
   } finally {
@@ -168,81 +181,118 @@ async function loadSemesters() {
   }
 }
 
+// --------------------------------------------------
+// Single-semester report
+// --------------------------------------------------
 
+async function loadSingleReport() {
+  if (!selectedSemesterId.value) {
+    reportError.value = 'Please select a semester.';
+    return;
+  }
 
-async function generateReport() {
+  const currentRequest = ++requestVersion;
 
-  console.log('========== GENERATE REPORT ==========');
-  console.log('Program ID:', programId.value);
-  console.log('Report mode:', reportMode.value);
-  console.log('Selected semester:', selectedSemesterId.value);
-  console.log('Start semester:', selectedStartSemester.value);
-  console.log('End semester:', selectedEndSemester.value);
-
+  generatingReport.value = true;
   reportError.value = null;
   reportDataInternal.value = null;
 
-  if (reportMode.value === 'single') {
-    if (!selectedSemesterId.value) {
-      reportError.value = 'Please select a semester.';
+  try {
+    await singleReport.loadReportData();
+
+    // Ignore results from outdated requests or another report mode.
+    if (
+      currentRequest !== requestVersion ||
+      reportMode.value !== 'single'
+    ) {
       return;
     }
 
-    generatingReport.value = true;
-
-    try {
-      await singleReport.loadReportData();
-
-      console.log('Single report loading:', singleReport.loading.value);
-      console.log('Single report error:', singleReport.error.value);
-      console.log('Single report data:', singleReport.reportData.value);
-
-      if (singleReport.error.value) {
-        reportError.value = singleReport.error.value;
-        return;
-      }
-
-      if (!singleReport.reportData.value) {
-        reportError.value = 'No report data was returned.';
-        return;
-      }
-
-      reportDataInternal.value = JSON.parse(
-        JSON.stringify(singleReport.reportData.value)
-      );
-    } catch (error: any) {
-      console.error('Failed to generate single-semester report:', error);
-      reportError.value =
-        error.message ?? 'Failed to generate the report.';
-    } finally {
-      generatingReport.value = false;
+    if (singleReport.error.value) {
+      reportError.value = singleReport.error.value;
+      return;
     }
 
-    return;
-  }
+    if (!singleReport.reportData.value) {
+      reportError.value = 'No report data was returned.';
+      return;
+    }
 
-  // Multi-year report
+    reportDataInternal.value = JSON.parse(
+      JSON.stringify(singleReport.reportData.value)
+    );
+
+  } catch (error: any) {
+    console.error('Failed to generate single-semester report:', error);
+
+    if (currentRequest === requestVersion) {
+      reportError.value =
+        error.message ?? 'Failed to generate the summary report.';
+    }
+  } finally {
+    if (currentRequest === requestVersion) {
+      generatingReport.value = false;
+    }
+  }
+}
+
+// --------------------------------------------------
+// Multi-year report
+// --------------------------------------------------
+
+function validateRange(): boolean {
+  reportError.value = null;
+
   if (!selectedStartSemesterId.value || !selectedEndSemesterId.value) {
     reportError.value = 'Please select both a starting and ending semester.';
-    return;
+    return false;
   }
 
-  if (
-    new Date(selectedEndSemester.value!.endDate) <
-    new Date(selectedStartSemester.value!.startDate)
-  ) {
-    reportError.value = 'The ending semester cannot be before the starting semester.';
-    return;
+  if (!selectedStartSemester.value || !selectedEndSemester.value) {
+    reportError.value = 'Invalid semester selection.';
+    return false;
   }
+
+  const startDate = new Date(selectedStartSemester.value.startDate);
+  const endDate = new Date(selectedEndSemester.value.endDate);
+
+  const maxDate = new Date(startDate);
+  maxDate.setFullYear(maxDate.getFullYear() + 6);
+
+  if (new Date(selectedEndSemester.value.startDate) < startDate) {
+    reportError.value =
+      'The ending semester cannot be before the starting semester.';
+    return false;
+  }
+
+  if (endDate > maxDate) {
+    reportError.value = 'The selected range cannot exceed six years.';
+    return false;
+  }
+
+  return true;
+}
+
+async function loadMultiYearReport() {
+  if (!validateRange()) return;
+
+  const currentRequest = ++requestVersion;
 
   generatingReport.value = true;
+  reportError.value = null;
+  reportDataInternal.value = null;
 
   try {
+    console.log('Multi-year report parameters:', multiYearProps.value);
+
     await multiYearReport.loadReportData();
 
-    console.log('Multi-year report loading:', multiYearReport.loading.value);
-    console.log('Multi-year report error:', multiYearReport.error.value);
-    console.log('Multi-year report data:', multiYearReport.reportData.value);
+    if (
+      currentRequest !== requestVersion ||
+      reportMode.value !== 'range'
+    ) {
+      return;
+    }
 
     if (multiYearReport.error.value) {
       reportError.value = multiYearReport.error.value;
@@ -257,40 +307,114 @@ async function generateReport() {
     reportDataInternal.value = JSON.parse(
       JSON.stringify(multiYearReport.reportData.value)
     );
+
   } catch (error: any) {
-    console.error('Failed to generate semester-range report:', error);
-    reportError.value =
-      error.message ?? 'Failed to generate the report.';
+    console.error('Failed to generate multi-year report:', error);
+
+    if (currentRequest === requestVersion) {
+      reportError.value =
+        error.message ?? 'Failed to generate the multi-year report.';
+    }
   } finally {
-    generatingReport.value = false;
+    if (currentRequest === requestVersion) {
+      generatingReport.value = false;
+    }
   }
 }
 
+// --------------------------------------------------
+// Generate report
+// --------------------------------------------------
+
+async function generateReport() {
+  if (generatingReport.value || savingReport.value) return;
+
+  if (reportMode.value === 'single') {
+    await loadSingleReport();
+  } else {
+    await loadMultiYearReport();
+  }
+}
+
+// --------------------------------------------------
+// Report mode and selection changes
+// --------------------------------------------------
+
+function changeReportMode(mode: 'single' | 'range') {
+  if (reportMode.value === mode) return;
+
+  // Invalidate any request that belongs to the previous mode.
+  requestVersion++;
+
+  reportMode.value = mode;
+  reportDataInternal.value = null;
+  reportError.value = null;
+  generatingReport.value = false;
+}
+
+function handleStartSemesterChange() {
+  const validOptions = endSemesterOptions.value;
+
+  if (!validOptions.some(s => s.id === selectedEndSemesterId.value)) {
+    selectedEndSemesterId.value =
+      validOptions[validOptions.length - 1]?.id ?? null;
+  }
+
+  reportDataInternal.value = null;
+  reportError.value = null;
+}
+
+// Automatically load the single-semester report when its semester changes
+// or when the user switches back to Single Semester.
+watch(
+  [reportMode, selectedSemesterId, programId],
+  ([mode, semesterId]) => {
+    if (mode === 'single' && semesterId && programId.value > 0) {
+      loadSingleReport();
+    }
+  }
+);
+
+// Reload semesters if the program changes.
+watch(programId, () => {
+  requestVersion++;
+  reportDataInternal.value = null;
+  selectedSemesterId.value = null;
+  selectedStartSemesterId.value = null;
+  selectedEndSemesterId.value = null;
+
+  loadSemesters();
+});
+
+// --------------------------------------------------
+// Save report
+// --------------------------------------------------
 
 async function saveReport() {
-  if (!reportDataInternal.value) return;
+  if (!reportDataInternal.value || savingReport.value) return;
+
+  savingReport.value = true;
+  reportError.value = null;
 
   try {
-    const outcomes = reportDataInternal.value.outcomes ?? [];
-
-    for (const outcome of outcomes) {
+    for (const outcome of reportDataInternal.value.outcomes ?? []) {
       for (const indicator of outcome.indicators ?? []) {
         for (const measure of indicator.measures ?? []) {
-          if (!measure.measureId) continue;
+          const m = measure as any;
 
-          await api.put(`/measure/${measure.measureId}`, {
-            id: measure.measureId,
-            courseIndicatorId: measure.courseIndicatorId,
-            description: measure.description,
-            observation: measure.observation ?? measure.note ?? '',
+          if (!m.measureId) continue;
+
+          await api.put(`/measure/${m.measureId}`, {
+            id: m.measureId,
+            courseIndicatorId: m.courseIndicatorId,
+            description: m.description,
+            observation: m.observation ?? m.note ?? '',
             recAction:
-              measure.recAction ??
-              measure.recommendedAction ??
-              '',
-            met: measure.met ?? measure.studentsMet ?? 0,
-            exceeded: measure.exceeded ?? measure.studentsExceeded ?? 0,
-            below: measure.below ?? measure.studentsBelow ?? 0,
-            metPercentage: measure.metPercentage ?? 0,
+              m.recAction ?? m.recommendedAction ?? '',
+            met: m.met ?? m.studentsMet ?? 0,
+            exceeded: m.exceeded ?? m.studentsExceeded ?? 0,
+            below: m.below ?? m.studentsBelow ?? 0,
+            metPercentage: m.metPercentage ?? 0,
             status: 'Complete',
             active: true
           });
@@ -298,17 +422,28 @@ async function saveReport() {
       }
     }
 
-    await generateReport();
+    console.log('Report saved successfully.');
+
+    // Reload whichever report mode is currently active.
+    if (reportMode.value === 'single') {
+      await loadSingleReport();
+    } else {
+      await loadMultiYearReport();
+    }
+
   } catch (error: any) {
     console.error('Failed to save report:', error);
+
     reportError.value =
       error.response?.data?.message ?? 'Failed to save the report.';
+  } finally {
+    savingReport.value = false;
   }
 }
 
-
-
-
+// --------------------------------------------------
+// Other template actions
+// --------------------------------------------------
 
 function handleImport() {
   console.log('Import report requested');
@@ -322,7 +457,9 @@ async function handleReload() {
   await generateReport();
 }
 
-
+// --------------------------------------------------
+// Lifecycle
+// --------------------------------------------------
 
 onMounted(() => {
   loadSemesters();
@@ -331,17 +468,23 @@ onMounted(() => {
 
 <template>
   <div class="summary-report-page">
+
+    <!-- Page heading -->
     <div class="page-header">
       <h1>Summary Reports</h1>
-      <p>Select the type of report and the semester or semester range.</p>
+      <p>
+        Select a single semester or a semester range to generate a report.
+      </p>
     </div>
 
+    <!-- Report selection -->
     <div class="report-selection">
+
       <div class="report-mode">
         <button
           type="button"
           :class="{ active: reportMode === 'single' }"
-          @click="reportMode = 'single'; reportDataInternal = null; reportError = null"
+          @click="changeReportMode('single')"
         >
           Single Semester
         </button>
@@ -349,21 +492,28 @@ onMounted(() => {
         <button
           type="button"
           :class="{ active: reportMode === 'range' }"
-          @click="reportMode = 'range'; reportDataInternal = null; reportError = null"
+          @click="changeReportMode('range')"
         >
           Semester Range
         </button>
       </div>
 
-      <div v-if="reportMode === 'single'" class="semester-selection">
-        <label for="single-semester">Semester</label>
+      <!-- Single semester selector -->
+      <div
+        v-if="reportMode === 'single'"
+        class="semester-selection"
+      >
+        <label for="single-semester">Select Semester</label>
 
         <select
           id="single-semester"
           v-model.number="selectedSemesterId"
           :disabled="loadingSemesters || semesters.length === 0"
         >
-          <option :value="null" disabled>Select a semester</option>
+          <option :value="null" disabled>
+            Select a semester
+          </option>
+
           <option
             v-for="semester in semesters"
             :key="semester.id"
@@ -374,8 +524,11 @@ onMounted(() => {
         </select>
       </div>
 
-
-      <div v-else class="semester-range-selection">
+      <!-- Semester range selectors -->
+      <div
+        v-else
+        class="semester-range-selection"
+      >
         <div class="semester-selection">
           <label for="start-semester">Starting Semester</label>
 
@@ -383,15 +536,12 @@ onMounted(() => {
             id="start-semester"
             v-model.number="selectedStartSemesterId"
             :disabled="loadingSemesters || semesters.length === 0"
-            @change="
-              selectedEndSemesterId = endSemesterOptions.some(
-                s => s.id === selectedEndSemesterId
-              )
-                ? selectedEndSemesterId
-                : (endSemesterOptions[endSemesterOptions.length - 1]?.id ?? null)
-            "
+            @change="handleStartSemesterChange"
           >
-            <option :value="null" disabled>Select a starting semester</option>
+            <option :value="null" disabled>
+              Select a starting semester
+            </option>
+
             <option
               v-for="semester in semesters"
               :key="semester.id"
@@ -408,9 +558,12 @@ onMounted(() => {
           <select
             id="end-semester"
             v-model.number="selectedEndSemesterId"
-            :disabled="!selectedStartSemesterId"
+            :disabled="!selectedStartSemesterId || loadingSemesters"
           >
-            <option :value="null" disabled>Select an ending semester</option>
+            <option :value="null" disabled>
+              Select an ending semester
+            </option>
+
             <option
               v-for="semester in endSemesterOptions"
               :key="semester.id"
@@ -422,31 +575,59 @@ onMounted(() => {
         </div>
       </div>
 
+      <!-- Generate button -->
       <button
         type="button"
         class="generate-button"
-        :disabled="loadingSemesters || generatingReport"
+        :disabled="loadingSemesters || generatingReport || savingReport"
         @click="generateReport"
       >
         {{ generatingReport ? 'Generating...' : 'Generate Report' }}
       </button>
+
     </div>
 
-
+    <!-- Semester loading -->
     <div v-if="loadingSemesters" class="status-message">
       Loading semesters...
     </div>
 
+    <!-- Semester error -->
     <div v-if="semesterError" class="error-message">
       {{ semesterError }}
     </div>
 
-    <div v-if="reportError" class="error-message">
-      {{ reportError }}
+    <!-- Report loading -->
+    <div v-if="generatingReport" class="loading-state">
+      <BaseSpinner
+        size="lg"
+        :text="reportMode === 'single'
+          ? 'Generating summary report...'
+          : 'Generating multi-year report...'"
+      />
     </div>
 
+    <!-- Report error -->
+    <div
+      v-else-if="reportError"
+      class="error-state"
+    >
+      <p>{{ reportError }}</p>
 
-    <div v-if="reportDataInternal" class="report-content">
+      <button
+        type="button"
+        class="generate-button"
+        @click="generateReport"
+      >
+        Retry
+      </button>
+    </div>
+
+    <!-- Shared report template -->
+    <div
+      v-else-if="reportDataInternal"
+      class="report-content"
+    >
       <SummaryReportTemplate
         v-model:report="reportDataInternal"
         student-count-label="Students in Course:"
@@ -456,16 +637,34 @@ onMounted(() => {
         @reload="handleReload"
       />
     </div>
+
+    <!-- Empty state -->
+    <div
+      v-else-if="!loadingSemesters && !semesterError"
+      class="empty-state"
+    >
+      <p v-if="reportMode === 'single'">
+        Select a semester to view its summary report.
+      </p>
+
+      <p v-else>
+        Select a starting and ending semester, then generate your report.
+      </p>
+    </div>
+
   </div>
 </template>
 
 <style scoped>
 .summary-report-page {
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
 .page-header {
-  margin-bottom: 1.5rem;
+  margin-bottom: 0.5rem;
 }
 
 .page-header h1 {
@@ -478,7 +677,6 @@ onMounted(() => {
 
 .report-selection {
   padding: 1.5rem;
-  margin-bottom: 1.5rem;
   border: 1px solid var(--border-color, #ddd);
   border-radius: 8px;
   background: var(--card-background, white);
@@ -504,12 +702,6 @@ onMounted(() => {
   color: white;
 }
 
-.semester-range-selection {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem;
-}
-
 .semester-selection {
   display: flex;
   flex-direction: column;
@@ -523,10 +715,18 @@ onMounted(() => {
 
 .semester-selection select {
   width: 100%;
+  min-width: 200px;
   padding: 0.7rem;
   border: 1px solid var(--border-color, #ccc);
   border-radius: 6px;
   background: var(--card-background, white);
+  color: var(--text-primary, inherit);
+}
+
+.semester-range-selection {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
 }
 
 .generate-button {
@@ -547,13 +747,24 @@ onMounted(() => {
   margin: 1rem 0;
 }
 
-.error-message {
-  margin: 1rem 0;
-  color: #dc2626;
+.error-message,
+.error-state {
+  color: var(--color-error, #dc2626);
+}
+
+.loading-state,
+.error-state,
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  gap: 1rem;
 }
 
 .report-content {
-  margin-top: 2rem;
+  margin-top: 1rem;
 }
 
 @media (max-width: 650px) {
