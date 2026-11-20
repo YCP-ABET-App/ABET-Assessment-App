@@ -79,10 +79,15 @@
   </div>
 </template>
 
+
 <script setup lang="ts">
 import { reactive, watch, computed } from "vue";
 
-const props = defineProps<{ measure: any; editable: boolean }>();
+const props = defineProps<{
+  measure: any;
+  editable: boolean;
+}>();
+
 const emit = defineEmits(["update:measure"]);
 
 const local = reactive({
@@ -91,10 +96,10 @@ const local = reactive({
   studentsBelow: props.measure.studentsBelow ?? 0
 });
 
-// Sync when parent replaces measure
+
 watch(
   () => props.measure,
-  newVal => {
+  (newVal) => {
     local.studentsExceeded = newVal.studentsExceeded ?? 0;
     local.studentsMet = newVal.studentsMet ?? 0;
     local.studentsBelow = newVal.studentsBelow ?? 0;
@@ -102,20 +107,37 @@ watch(
   { deep: true }
 );
 
-// Percent calculation
+function normalizeCount(value: unknown): number {
+  const number = Number(value);
+
+  if (!Number.isFinite(number)) return 0;
+
+  return Math.max(0, number);
+}
+
 const metPercentage = computed(() => {
-  const total = local.studentsExceeded + local.studentsMet + local.studentsBelow;
-  return total === 0 ? 0 : Math.round(((local.studentsExceeded + local.studentsMet) / total) * 100);
+  const exceeded = normalizeCount(local.studentsExceeded);
+  const met = normalizeCount(local.studentsMet);
+  const below = normalizeCount(local.studentsBelow);
+
+  const total = exceeded + met + below;
+
+  if (total === 0) return 0;
+
+  return Math.round(((exceeded + met) / total) * 100);
 });
 
-// UI only classification
+
 const status = computed(() => {
-  const pct = metPercentage.value;
-  if (pct >= 85) return "Met comfortably";
-  if (pct >= 70) return "Met";
-  if (pct >= 60) return "Barely not met";
+  const percentage = metPercentage.value;
+
+  if (percentage >= 85) return "Met comfortably";
+  if (percentage >= 70) return "Met";
+  if (percentage >= 60) return "Barely not met";
+
   return "Not met";
 });
+
 
 const statusClass = computed(() => ({
   "status-met-comfortably": status.value === "Met comfortably",
@@ -124,19 +146,22 @@ const statusClass = computed(() => ({
   "status-not-met": status.value === "Not met"
 }));
 
-function emitUpdate() {
-  emit("update:measure", {
-    ...props.measure,                     // preserve backend fields
-    courseIndicatorId: props.measure.courseIndicatorId,
 
+function emitUpdate() {
+  local.studentsExceeded = normalizeCount(local.studentsExceeded);
+  local.studentsMet = normalizeCount(local.studentsMet);
+  local.studentsBelow = normalizeCount(local.studentsBelow);
+
+  emit("update:measure", {
+    ...props.measure,
     studentsExceeded: local.studentsExceeded,
     studentsMet: local.studentsMet,
     studentsBelow: local.studentsBelow,
-
-    metPercentage: metPercentage.value    // saved
+    metPercentage: metPercentage.value
   });
 }
 </script>
+
 
 <style scoped>
 .measure-item {
@@ -160,7 +185,7 @@ function emitUpdate() {
 .measure-stats {
   margin-top: .75rem;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: .75rem;
   font-size: .85rem;
 }

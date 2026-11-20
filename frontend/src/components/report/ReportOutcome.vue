@@ -46,6 +46,7 @@
   </BaseCard>
 </template>
 
+
 <script setup lang="ts">
 import { computed } from "vue";
 import ReportIndicator from "./ReportIndicator.vue";
@@ -62,13 +63,26 @@ const props = defineProps<{
 const emit = defineEmits(["update:outcome"]);
 const { isCollapsed, toggle } = useReportCollapse();
 
+
 const statusClass = computed(() => {
-  switch (props.outcome.overallStatus) {
-    case "MET": return "status-met";
-    case "Partially Met": return "status-partial";
-    case "Not Met": return "status-not-met";
-    default: return "";
+  const status = props.outcome.overallStatus
+    ?.toLowerCase()
+    .replace(/[_-]/g, " ")
+    .trim();
+
+  if (status === "met" || status === "exceeds") {
+    return "status-met";
   }
+
+  if (status === "partially met") {
+    return "status-partial";
+  }
+
+  if (status === "not met" || status === "below") {
+    return "status-not-met";
+  }
+
+  return "";
 });
 
 function updateIndicator(idx: number, updated: any) {
@@ -81,6 +95,7 @@ function updateIndicator(idx: number, updated: any) {
   });
 }
 </script>
+
 
 <style scoped>
 .outcome-card {

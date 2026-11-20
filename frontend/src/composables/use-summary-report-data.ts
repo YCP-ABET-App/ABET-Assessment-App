@@ -237,15 +237,47 @@ export function useSummaryReportData(props: SummaryReportProps) {
             indicator.indicator_number;
           const indicatorDescription = indicator.description ?? '';
 
+
           for (const course of allCourses) {
-            const sectionsRes = await api.get(`/section`, {
-              params: { courseId: course.id }
+            const sectionsRes = await api.get('/section', {
+              params: {
+                courseId: course.id,
+                semesterId,
+                programId
+              }
             });
 
-            const sections = sectionsRes.data.data.sections ?? [];
+
+            console.log("COURSE:", course.courseCode);
+            console.log("COURSE OBJECT:", course);
+            console.log("COURSE ID:", course.id);
+            console.log("SECTIONS API RESPONSE:", sectionsRes.data);
+
+            const sectionData = sectionsRes.data?.data;
+
+            const sections = Array.isArray(sectionData)
+              ? sectionData
+              : Array.isArray(sectionData?.sections)
+                ? sectionData.sections
+                : Array.isArray(sectionData?.content)
+                  ? sectionData.content
+                  : Array.isArray(sectionsRes.data?.content)
+                    ? sectionsRes.data.content
+                    : [];
+
+            console.log(
+              `Found ${sections.length} sections for ${course.courseCode}`
+            );
 
             if (sections.length === 0) {
-              console.log(`No sections found for course ${course.courseCode}`);
+              console.warn(
+                `No sections found for course ${course.courseCode}`,
+                {
+                  courseId: course.id,
+                  semesterId: semesterId.value,
+                  response: sectionsRes.data
+                }
+              );
               continue;
             }
 

@@ -56,6 +56,7 @@
   </div>
 </template>
 
+
 <script setup lang="ts">
 import { reactive, watch } from "vue";
 import ReportMeasure from "./ReportMeasure.vue";
@@ -69,7 +70,7 @@ const props = withDefaults(defineProps<{
   collapseId: number;
   studentCountLabel?: string;
 }>(), {
-  studentCountLabel: 'Students in Class:'
+  studentCountLabel: "Students in Class:"
 });
 
 const emit = defineEmits<{
@@ -78,24 +79,26 @@ const emit = defineEmits<{
 
 const { isCollapsed, toggle } = useReportCollapse();
 
-// Local editable copy
 const local = reactive({
   studentCount: props.indicator?.studentCount ?? 0
 });
 
-// Sync local when parent changes
+
 watch(
   () => props.indicator.studentCount,
-  (val) => local.studentCount = val ?? 0
+  (val) => {
+    local.studentCount = val ?? 0;
+  }
 );
+
 
 function emitUpdate() {
   emit("update:indicator", {
     ...props.indicator,
-    studentCount: local.studentCount,
-    courseCode: props.indicator.courseCode
+    studentCount: local.studentCount
   });
 }
+
 
 function updateMeasure(id: number, updated: Partial<IndicatorMeasure>) {
   emit("update:indicator", {
@@ -106,6 +109,7 @@ function updateMeasure(id: number, updated: Partial<IndicatorMeasure>) {
   });
 }
 </script>
+
 
 <style scoped>
 .indicator-section {
