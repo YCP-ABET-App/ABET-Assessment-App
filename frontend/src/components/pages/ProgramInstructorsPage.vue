@@ -534,33 +534,10 @@ const roleOptions = [
 ];
 
 /* -----------------------------
- * Computed: Filter sections by current semester
+ * Sections already loaded for this program + current semester
  * ----------------------------- */
 const currentSemesterSections = computed(() => {
-  if (!selectedInstructor.value) {
-    return [];
-  }
-
-  if (!currentSemesterId.value) {
-    return selectedInstructor.value.sections || [];
-  }
-
-  const filtered = (selectedInstructor.value.sections || []).filter(section => {
-    const courseSemesterId = section.semesterId || section.semester?.id;
-    return courseSemesterId === currentSemesterId.value;
-  });
-
-  // Debug: Check for duplicates in filtered results
-  const sectionIds = filtered.map(s => s.id);
-  const uniqueSectionIds = new Set(sectionIds);
-  if (sectionIds.length !== uniqueSectionIds.size) {
-    console.warn(
-      'Duplicate courses detected after filtering for current semester:',
-      filtered.filter((s, index) => sectionIds.indexOf(s.id) !== index)
-    );
-  }
-
-  return filtered;
+  return selectedInstructor.value?.sections ?? [];
 });
 
 function openSectionDetails(sectionId: number) {
@@ -579,34 +556,29 @@ async function loadProgramInstructors() {
   try {
     const res = await api.get(`/program/${props.programId}/users`);
     const programUsers = res.data.data ?? [];
+    const programId = Number(props.programId);
+    const semesterId = currentSemesterId.value != null ? Number(currentSemesterId.value) : undefined;
+
+    const scheduleRes = await api.get(`/schedule-entry`, {
+      params: { programId, semesterId }
+    });
+    const scheduleEntries = scheduleRes.data?.data ?? [];
+    const measuresByEntryId = new Map<number, any[]>();
 
     const loaded = await Promise.all(
       programUsers.map(async (pu: ProgramUser) => {
         try {
           const userRes = await api.get(`/users/${pu.userId}`);
           const user = userRes.data.data;
-          // Fetch all sections for this instructor (API doesn't support semester filter)
           const sectionRes = await api.get(`/section`, {
             params: {
               userId: pu.userId,
-              semesterId: currentSemesterId.value,
-              programId: props.programId
+              semesterId,
+              programId
             }
           });
           const allSections = sectionRes.data.data.sections ?? [];
           const allCourses = sectionRes.data.data.courses ?? [];
-
-          // Debug: Log if there are duplicates
-          const sectionIds = allSections.map((c: Section) => c.id);
-          const uniqueSectionIds = new Set(sectionIds);
-          if (sectionIds.length !== uniqueSectionIds.size) {
-            console.warn(
-              `Instructor ${user.firstName} ${user.lastName} has duplicate sections from API:`,
-              allSections.filter((s: Section, index: number) =>
-                sectionIds.indexOf(s.id) !== index
-              )
-            );
-          }
 
           let formattedSections: { id: any; sectionNumber: any; courseName: any; formattedName: string; semesterId: any; indicators: any; }[] = [];
 
@@ -617,22 +589,20 @@ async function loadProgramInstructors() {
               continue;
             }
 
-            const indicatorData = await loadInstructorIndicatorData(section.id);
-
-            const indicators = (indicatorData || []).filter((i: SectionIndicatorInfo) => i.sectionId === section.id).map((i: SectionIndicatorInfo) => ({
-              sectionId: i.sectionId,
-              indicatorStatus: i.indicatorStatus
-            }));
-
-            console.log(indicators)
+            const indicators = await loadSectionPiProgress(
+              section,
+              programId,
+              scheduleEntries,
+              measuresByEntryId
+            );
 
             formattedSections.push({
               id: section.id,
               sectionNumber: section.sectionNumber,
               courseName: course.courseName,
               formattedName: `${course.courseCode} ${course.courseName} ${section.sectionNumber}`,
-              semesterId: section.semesterId,
-              indicators: indicators
+              semesterId: Number(section.semesterId),
+              indicators
             })
           }
 
@@ -728,28 +698,75 @@ async function addExistingInstructor() {
   }
 }
 
-async function loadInstructorIndicatorData(sectionId : number) : Promise<SectionIndicatorInfo[]> {
+function isMeasureResultComplete(result: any): boolean {
+  const status = String(result.status ?? '').toLowerCase();
+  if (status === 'complete') return true;
+  return result.studentsMet != null
+    && result.studentsExceeded != null
+    && result.studentsBelow != null;
+}
 
-  // Query the section indicator table for all indicators in the section
-  const sectionIndicatorRes = await api.get("/section-indicator", {
-    params: {
-      sectionIds: [sectionId]
-    }
+async function loadSectionPiProgress(
+  section: { id: number; courseId?: number },
+  programId: number,
+  scheduleEntries: any[],
+  measuresByEntryId: Map<number, any[]>
+): Promise<SectionIndicatorInfo[]> {
+  const courseEntries = scheduleEntries.filter(
+    (entry: any) => Number(entry.courseId) === Number(section.courseId)
+  );
+  const indicatorIds = [...new Set(
+    courseEntries.map((entry: any) => Number(entry.indicatorId))
+  )].filter((id) => Number.isFinite(id));
+
+  if (indicatorIds.length === 0) {
+    return [];
+  }
+
+  const sectionProgramRes = await api.get('/section-program', {
+    params: { sectionId: section.id, programId }
   });
+  const sectionProgramId = (sectionProgramRes.data?.data ?? [])[0]?.id;
 
-  let sectionIndicatorData: SectionIndicatorInfo[] = [];
+  const progress: SectionIndicatorInfo[] = [];
 
+  for (const indicatorId of indicatorIds) {
+    const entries = courseEntries.filter(
+      (entry: any) => Number(entry.indicatorId) === indicatorId
+    );
+    let measureCount = 0;
+    let completeCount = 0;
 
-  (sectionIndicatorRes.data?.data || []).forEach((indicator: any) => {
-    const info: SectionIndicatorInfo = {
-      sectionId: Number(indicator.sectionId),
-      indicatorStatus: Boolean(indicator.complete)
-    };
+    if (sectionProgramId != null) {
+      for (const entry of entries) {
+        const entryId = Number(entry.id);
+        if (!measuresByEntryId.has(entryId)) {
+          const measuresRes = await api.get('/measure', {
+            params: { scheduleEntryId: entryId, active: true }
+          });
+          measuresByEntryId.set(entryId, measuresRes.data?.data ?? []);
+        }
 
-    sectionIndicatorData.push(info);
-  })
+        for (const measure of measuresByEntryId.get(entryId) ?? []) {
+          measureCount += 1;
+          const resultsRes = await api.get('/measure-result', {
+            params: { measureId: measure.id, sectionProgramId }
+          });
+          const results = resultsRes.data?.data ?? [];
+          if (results.some(isMeasureResultComplete)) {
+            completeCount += 1;
+          }
+        }
+      }
+    }
 
-  return sectionIndicatorData;
+    progress.push({
+      sectionId: Number(section.id),
+      indicatorStatus: measureCount > 0 && completeCount === measureCount
+    });
+  }
+
+  return progress;
 }
 
 
@@ -844,13 +861,6 @@ async function saveInstructorInfo() {
     saving.value = false;
   }
 }
-
-// Watch for program or semester changes and reload
-watch(() => selectedInstructor.value, () => {
-  if (selectedInstructor.value) {
-    loadProgramInstructors();
-  }
-});
 
 watch(() => props.programId, () => {
   loadProgramInstructors();

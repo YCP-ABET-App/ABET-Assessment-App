@@ -49,6 +49,10 @@ function navigateToScheduleEntry() {
   router.push(`/${currentProgramId.value}/schedule-entry`);
 }
 
+function navigateToCourseCatalog() {
+  router.push('/course-catalog');
+}
+
 </script>
 
 <template>
@@ -91,6 +95,9 @@ function navigateToScheduleEntry() {
             class="ml-2"
           >
             Schedule Entry
+          </BaseButton>
+          <BaseButton @click="navigateToCourseCatalog">
+            Course Catalog
           </BaseButton>
         </div>
       </section>
