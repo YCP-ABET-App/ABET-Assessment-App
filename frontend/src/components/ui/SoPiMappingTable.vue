@@ -57,7 +57,7 @@ function openPi(so: OutcomeMapping, pi: PerformanceIndicatorDetail) {
 <template>
   <section class="mapping-section">
     <details class="so-pi-dropdown">
-      <summary>SO-PI Desc. Map Dropdown</summary>
+      <summary>Student Outcome - Performance Indicator Descriptions Map Dropdown</summary>
       <div class="dropdown-content">
         <div class="table-toolbar">
           <p class="hint">Open a performance indicator to edit the student outcome text. Student outcomes cannot be removed from this table.</p>
