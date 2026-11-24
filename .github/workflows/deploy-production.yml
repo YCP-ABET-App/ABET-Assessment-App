@@ -145,8 +145,7 @@ jobs:
 
       - name: Configure SSH for droplet
         env:
-          SSH_PRIVATE_KEY: ${{ secrets.DROPLET_SSH_KEY }}
-          SSH_PASSPHRASE: ${{ secrets.DROPLET_SSH_PASSPHRASE }}
+          SSH_PRIVATE_KEY: ${{ secrets.STAGING_DROPLET_SSH_KEY }}
         run: |
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
@@ -278,8 +277,7 @@ jobs:
       - name: Configure SSH for production
         env:
           SSH_PRIVATE_KEY: ${{ secrets.DROPLET_SSH_KEY }}
-          SSH_PASSPHRASE: ${{ secrets.DROPLET_SSH_PASSPHRASE }}
-        run: |
+        run: | 
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
 
@@ -418,7 +416,7 @@ jobs:
           docker image prune -af --filter "until=72h"
 
           echo "Production deployment completed successfully!"
-          echo "Public access: http://${{ secrets.DROPLET_IP }}:${APP_PORT}"
+          echo "Public access: http://${{ secret.DROPLET_IP }}:${APP_PORT}"
           PRODUCTION_DEPLOY
 
       - name: Cleanup production SSH configuration
