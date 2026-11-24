@@ -29,6 +29,11 @@ export function createTestRouter(initialPath = '/dashboard') {
         component: { template: '<div>Test</div>' },
       },
       {
+        path: '/:program_id/summary-report',
+        name: 'CombinedSummaryReport',
+        component:{ template: '<div>Combined Summary Report</div>' }
+      },
+      {
         path: '/login',
         name: 'Login',
         component: { template: '<div>Login</div>' },

@@ -677,9 +677,10 @@ onMounted(() => {
 
 .report-selection {
   padding: 1.5rem;
-  border: 1px solid var(--border-color, #ddd);
+  border: 1px solid var(--border-color, #444);
   border-radius: 8px;
-  background: var(--card-background, white);
+  background: var(--card-background, #1e1e1e);
+  color: var(--text-primary, #ffffff);
 }
 
 .report-mode {
@@ -690,16 +691,18 @@ onMounted(() => {
 
 .report-mode button {
   padding: 0.65rem 1rem;
-  border: 1px solid var(--border-color, #ccc);
+  border: 1px solid var(--border-color, #555);
   border-radius: 6px;
-  background: transparent;
+  background: var(--input-background, #2d2d2d);
+  color: var(--text-primary, #ffffff);
   cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
 }
 
 .report-mode button.active {
   background: var(--primary-color, #2563eb);
   border-color: var(--primary-color, #2563eb);
-  color: white;
+  color: #ffffff;
 }
 
 .semester-selection {
@@ -711,16 +714,17 @@ onMounted(() => {
 
 .semester-selection label {
   font-weight: 600;
+  color: var(--text-primary, #ffffff);
 }
 
 .semester-selection select {
   width: 100%;
   min-width: 200px;
   padding: 0.7rem;
-  border: 1px solid var(--border-color, #ccc);
+  border: 1px solid var(--border-color, #555);
   border-radius: 6px;
-  background: var(--card-background, white);
-  color: var(--text-primary, inherit);
+  background: var(--input-background, #2d2d2d);
+  color: var(--text-primary, #ffffff);
 }
 
 .semester-range-selection {

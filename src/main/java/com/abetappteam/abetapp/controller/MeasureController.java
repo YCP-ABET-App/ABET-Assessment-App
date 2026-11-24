@@ -14,12 +14,26 @@ import java.util.List;
 
 import jakarta.validation.Valid;
 
+import com.abetappteam.abetapp.entity.ScheduleEntry;
+import com.abetappteam.abetapp.repository.MeasureRepository;
+import com.abetappteam.abetapp.repository.ScheduleEntryRepository;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/measure")
 public class MeasureController extends BaseController{
     
     @Autowired
     private MeasureService service;
+
+    @Autowired
+    private MeasureRepository measureRepository;
+
+    @Autowired
+    private ScheduleEntryRepository scheduleEntryRepository;
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<Measure>>> searchMeasures(
@@ -64,5 +78,40 @@ public class MeasureController extends BaseController{
         logger.info("Deactivating measure with id: {}", id);
         service.deactivate(id);
         return success(null, "Measure deleted successfully");
+    }
+
+    @GetMapping("/debug")
+    public ResponseEntity<?> debugMeasures() {
+
+        List<Measure> measures = measureRepository.findAll();
+
+        List<Map<String, Object>> results = new ArrayList<>();
+
+        for (Measure measure : measures) {
+
+            Map<String, Object> row = new HashMap<>();
+
+            row.put("measureId", measure.getId());
+            row.put("scheduleEntryId", measure.getScheduleEntryId());
+            row.put("description", measure.getDescription());
+            row.put("active", measure.getActive());
+
+            ScheduleEntry scheduleEntry = scheduleEntryRepository
+                    .findById(measure.getScheduleEntryId())
+                    .orElse(null);
+
+            if (scheduleEntry != null) {
+                row.put("semesterId", scheduleEntry.getSemesterId());
+                row.put("courseId", scheduleEntry.getCourseId());
+                row.put("programId", scheduleEntry.getProgramId());
+                row.put("indicatorId", scheduleEntry.getIndicatorId());
+            } else {
+                row.put("scheduleEntryFound", false);
+            }
+
+            results.add(row);
+        }
+
+        return ResponseEntity.ok(results);
     }
 }

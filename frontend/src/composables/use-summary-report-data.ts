@@ -10,6 +10,7 @@ import api from '@/api';
 export interface IndicatorMeasure {
   measureId: number;
   courseIndicatorId?: number;
+  scheduleEntryId: number;
   courseCode: string;
   description: string;
 
@@ -242,8 +243,8 @@ export function useSummaryReportData(props: SummaryReportProps) {
             const sectionsRes = await api.get('/section', {
               params: {
                 courseId: course.id,
-                semesterId,
-                programId
+                semesterId: semesterId.value,
+                programId: programId.value
               }
             });
 
@@ -353,6 +354,7 @@ export function useSummaryReportData(props: SummaryReportProps) {
 
                 formattedMeasures.push({
                   measureId: measure.id,
+                  scheduleEntryId: entry.id,
                   courseCode: course.courseCode,
                   description: measure.description ?? 'No description',
                   studentsMet: met,

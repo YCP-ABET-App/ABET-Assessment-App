@@ -70,7 +70,11 @@ const statusClass = computed(() => {
     .replace(/[_-]/g, " ")
     .trim();
 
-  if (status === "met" || status === "exceeds") {
+  if (
+    status === "met" ||
+    status === "met comfortably" ||
+    status === "exceeds"
+  ) {
     return "status-met";
   }
 
@@ -78,7 +82,11 @@ const statusClass = computed(() => {
     return "status-partial";
   }
 
-  if (status === "not met" || status === "below") {
+  if (
+    status === "not met" ||
+    status === "below" ||
+    status === "no data"
+  ) {
     return "status-not-met";
   }
 
@@ -87,13 +95,39 @@ const statusClass = computed(() => {
 
 function updateIndicator(idx: number, updated: any) {
   const indicators = [...props.outcome.indicators];
-  indicators[idx] = { ...indicators[idx], ...updated };
+  indicators[idx] = {...indicators[idx], ...updated};
 
-  emit("update:outcome", {
+  const allMeasures = indicators.flatMap(
+    (indicator) => indicator.measures ?? []
+  );
+
+  let overallStatus = 'No Data';
+
+  if (allMeasures.length > 0) {
+    const metCount = allMeasures.filter(
+      (measure) =>
+        measure.status === 'Met comfortably' ||
+        measure.status === 'Met'
+    ).length;
+
+    const percentage = (metCount / allMeasures.length) * 100;
+
+    if (percentage >= 80) {
+      overallStatus = 'MET';
+    } else if (percentage >= 50) {
+      overallStatus = 'Partially Met';
+    } else {
+      overallStatus = 'Not Met';
+    }
+  }
+
+  emit('update:outcome', {
     ...props.outcome,
-    indicators
+    indicators,
+    overallStatus
   });
 }
+
 </script>
 
 

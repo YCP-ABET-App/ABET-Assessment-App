@@ -139,6 +139,17 @@ public class MultiYearReportService {
                 .map(s -> s.getId().intValue())
                 .collect(Collectors.toSet());
 
+        List<Integer> semesterIds = semesters.stream()
+                .map(s -> s.getId().intValue())
+                .toList();
+
+        List<Measure> measuresInRange =
+                measureRepository.findMeasuresByProgramAndSemesters(
+                        programId.intValue(),
+                        semesterIds,
+                        true
+                );
+
         // program → section_programs → sections in the semester range → course IDs
         List<SectionProgram> sectionPrograms = sectionProgramRepository.findByProgramId(programId.intValue());
         Set<Long> courseIdsInRange = new HashSet<>();
@@ -173,8 +184,17 @@ public class MultiYearReportService {
                     true);
 
             for (CourseIndicator ci : courseIndicators) {
-                // Get measures via course_indicator_id (old data path)
-                List<Measure> measures = measureRepository.findByCourseIndicatorId(ci.getId());
+                List<Measure> measures = measuresInRange.stream()
+                        .filter(m -> {
+                            ScheduleEntry se = scheduleEntryRepository.findById(
+                                    m.getScheduleEntryId()
+                            ).orElse(null);
+
+                            return se != null
+                                    && se.getCourseId() == courseId.intValue()
+                                    && se.getIndicatorId() == ci.getIndicatorId().intValue();
+                        })
+                        .toList();
 
                 // Also check schedule_entry for newer measures linked via schedule_entry_id
                 List<ScheduleEntry> scheduleEntries = scheduleEntryRepository.findByCourseId(courseId.intValue())

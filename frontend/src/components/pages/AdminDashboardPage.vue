@@ -40,6 +40,12 @@ function navigateToMultiYearReport() {
   }
 }
 
+function navigateToCombinedReport() {
+  if (currentProgramId.value) {
+    router.push(`/${currentProgramId.value}/summary-report`);
+  }
+}
+
 function navigateToScheduleEntry() {
   if (!currentProgramId.value) {
     console.error("No program selected!");
@@ -84,6 +90,12 @@ function navigateToScheduleEntry() {
           </BaseButton>
           <BaseButton @click="navigateToMultiYearReport">
             View Multi-Year Summary Report
+          </BaseButton>
+          <BaseButton
+            @click="navigateToCombinedReport"
+            variant="primary"
+          >
+            View Combined Summary Report
           </BaseButton>
           <BaseButton
             @click="navigateToScheduleEntry"

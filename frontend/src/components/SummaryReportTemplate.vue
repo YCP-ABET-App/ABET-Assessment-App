@@ -42,10 +42,14 @@ function cancelEdit() {
 }
 
 async function saveEdit() {
-  editMode.value = false;
-  emit("save", JSON.parse(JSON.stringify(localReport)));
-}
+  const updatedReport = JSON.parse(JSON.stringify(localReport));
 
+  emit("update:report", updatedReport);
+
+  emit("save", updatedReport);
+
+  editMode.value = false;
+}
 function handleImport() { emit("import"); }
 
 // Export functionality
@@ -73,7 +77,7 @@ async function generateSummaryReportPDF(): Promise<{ pdf: jsPDF, filename: strin
   const margin = 14;
 
   // ===== TITLE PAGE =====
-  let yPosition = pageHeight / 3; 
+  let yPosition = pageHeight / 3;
 
   // Main title - centered and large
   pdf.setFontSize(24);
@@ -269,14 +273,26 @@ async function exportToDrive() {
 
 function getStatusColor(status: string): [number, number, number] {
   const statusLower = status.toLowerCase();
-  if (statusLower.includes('met') || statusLower.includes('exceeds')) {
-    return [34, 139, 34]; // Green
-  } else if (statusLower.includes('not met') || statusLower.includes('below')) {
-    return [220, 20, 60]; // Red
-  } else if (statusLower.includes('partially')) {
-    return [255, 140, 0]; // Orange
+
+  if (
+    statusLower.includes('not met') ||
+    statusLower.includes('below')
+  ) {
+    return [220, 20, 60];
   }
-  return [100, 100, 100]; // Gray for unknown
+
+  if (statusLower.includes('partially') || statusLower.includes('barely')) {
+    return [255, 140, 0];
+  }
+
+  if (
+    statusLower.includes('met') ||
+    statusLower.includes('exceeds')
+  ) {
+    return [34, 139, 34];
+  }
+
+  return [100, 100, 100];
 }
 
 const { expandAll, collapseAll } = useReportCollapse();

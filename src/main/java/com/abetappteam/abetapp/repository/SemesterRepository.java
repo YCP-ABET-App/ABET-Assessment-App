@@ -24,8 +24,8 @@ public interface SemesterRepository extends JpaRepository<Semester, Long> {
             "(:id IS NULL OR s.id = :id) AND " +
             "(:status IS NULL OR s.status = :status) AND " +
             "(:academicYear IS NULL OR s.academicYear = :academicYear) AND " +
-            "(:startDate IS NULL OR s.startDate >= :startDate) AND " +
-            "(:endDate IS NULL OR s.endDate <= :endDate) AND " +
+            "(:startDate IS NULL OR s.startDate <= :endDate) AND " +
+            "(:endDate IS NULL OR s.endDate >= :startDate) AND " +
             "(:type IS NULL OR s.type = :type) AND " +
             "(:code IS NULL OR LOWER(s.code) LIKE LOWER(CONCAT('%', :code, '%'))) AND " +
             "(:name IS NULL OR LOWER(s.name) LIKE LOWER(CONCAT('%', :name, '%')))")

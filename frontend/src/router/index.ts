@@ -137,7 +137,7 @@ const routes = [
     },
   },
   {
-    path: '/:program_id/summary-reports',
+    path: '/:program_id/summary-report',
     name: 'Summary Reports',
     component: CombinedReportPage,
     meta: { requiresAuth: true, requiresAdmin: true }
