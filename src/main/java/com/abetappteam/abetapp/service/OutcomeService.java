@@ -30,9 +30,13 @@ public class OutcomeService extends BaseService<Outcome, Long, OutcomeRepository
         outcome.setNumber(dto.getNumber());
         outcome.setEvaluation(dto.getEvaluation());
         outcome.setSemesterId(dto.getSemesterId());
+        outcome.setProgramId(dto.getProgramId());
         outcome.setActive(dto.getActive());
         outcome.setValue(dto.getValue());
-        logger.info("Creating new student outcome: {}", outcome.getNumber());
+        logger.info("Creating outcome: {}, semesterId: {}, programId: {}",
+                outcome.getNumber(),
+                outcome.getSemesterId(),
+                outcome.getProgramId());
         return repository.save(outcome);
     }
 
@@ -44,6 +48,7 @@ public class OutcomeService extends BaseService<Outcome, Long, OutcomeRepository
         outcome.setNumber(dto.getNumber());
         outcome.setEvaluation(dto.getEvaluation());
         outcome.setSemesterId(dto.getSemesterId());
+        outcome.setProgramId(dto.getProgramId());
         outcome.setValue(dto.getValue());
 
         if(dto.getActive() != null){
