@@ -1,17 +1,27 @@
 package com.abetappteam.abetapp.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class MeasureResultDTO {
 
-    private final Long measureId;
-    private final Long sectionProgramId;
+    private Long measureId;
+    private Long sectionProgramId;
+    @JsonProperty("studentsMet")
+    @JsonAlias({"met", "studentsMet"})
     private Integer met;
+    @JsonProperty("studentsExceeded")
+    @JsonAlias({"exceeded", "studentsExceeded"})
     private Integer exceeded;
+    @JsonProperty("studentsBelow")
+    @JsonAlias({"below", "studentsBelow"})
     private Integer below;
     private String observation;
     private String status;
     private String rejectionNote;
 
-    // Constructors
+    public MeasureResultDTO() {
+    }
 
     public MeasureResultDTO(Long measureId, Long sectionProgramId, Integer met, Integer exceeded,
             Integer below, String observation, String status, String rejectionNote) {
@@ -32,8 +42,16 @@ public class MeasureResultDTO {
         return measureId;
     }
 
+    public void setMeasureId(Long measureId) {
+        this.measureId = measureId;
+    }
+
     public Long getSectionProgramId() {
         return sectionProgramId;
+    }
+
+    public void setSectionProgramId(Long sectionProgramId) {
+        this.sectionProgramId = sectionProgramId;
     }
 
     public Integer getStudentsMet() {

@@ -40,6 +40,7 @@ interface Measure {
   version: number | null
 }
 
+const viewing_rubric = ref(false)
 const indicator_obj = ref({
   id: NaN,
   ind_number: NaN,
@@ -49,7 +50,10 @@ const indicator_obj = ref({
   student_outcome_id: NaN,
   threshold_percentage: NaN,
   created_at: '',
-  is_active: false
+  is_active: false,
+  met_rubric: '',
+  exceeds_rubric: '',
+  below_rubric: ''
 })
 const measures = ref<any[]>([])
 
@@ -110,15 +114,34 @@ async function fetch_section_program_id(){
 }
 
 async function fetch_measures(){
-  //console.log('Fetching measures for scheduleEntryId:', props.schedule_entry_id, 'and sectionProgramId:', section_program_id.value);
-
   try {
     measures.value = [];
+    if (!Number.isFinite(section_program_id.value)) {
+      return;
+    }
     const { data: m_data } = await api.get(`/measure`, {params:{"scheduleEntryId": props.schedule_entry_id, "active": true}});
     for (const m_entry of m_data.data){
       const measure_id = m_entry.id;
-      const {data: mr_data} = await api.get(`measure-result`, {params: {"measureId": measure_id, "sectionProgramId": section_program_id.value}})
-      for (const mr_entry of mr_data.data){
+      let {data: mr_data} = await api.get(`measure-result`, {params: {"measureId": measure_id, "sectionProgramId": section_program_id.value}})
+      if (!mr_data.data || mr_data.data.length === 0) {
+        try {
+          await api.post(`/measure-result`, {
+            measureId: measure_id,
+            sectionProgramId: section_program_id.value,
+            studentsMet: null,
+            studentsExceeded: null,
+            studentsBelow: null,
+            observation: null,
+            status: 'InProgress',
+            rejectionNote: null
+          });
+        } catch (createError) {
+          console.error('Error creating missing measure result:', createError);
+        }
+        const created = await api.get(`measure-result`, {params: {"measureId": measure_id, "sectionProgramId": section_program_id.value}});
+        mr_data = created.data;
+      }
+      for (const mr_entry of mr_data.data ?? []){
         measures.value.push({
           id: mr_entry.id,
           measure_id: m_entry.id,
@@ -193,7 +216,10 @@ async function initialize(){
       student_outcome_id: data.data.studentOutcomeId,
       threshold_percentage: data.data.thresholdPercentage,
       created_at: data.data.createdAt,
-      is_active: data.data.isActive
+      is_active: data.data.isActive,
+      met_rubric: data.data.metRubric ?? '',
+      exceeds_rubric: data.data.exceedsRubric ?? '',
+      below_rubric: data.data.belowRubric ?? ''
     }
   } catch (error) {
     console.error('Error fetching or parsing indicator data:', error);
@@ -216,7 +242,12 @@ initialize()
 <template>
   <div id="indicator-box">
     <div id="title">
-      <span id="pi-label">Performance Indicator: </span>{{ indicator_obj.ind_description }}
+      <div class="title-text">
+        <span id="pi-label">Performance Indicator: </span>{{ indicator_obj.ind_description }}
+      </div>
+      <BaseButton variant="secondary" size="sm" class="rubric-btn" @click="viewing_rubric = true">
+        View Rubric
+      </BaseButton>
     </div>
     <div id="threshold-percent-title">Threshold: <span id="threshold-percent">{{ indicator_obj.threshold_percentage }}%</span></div>
     <MeasureListing
@@ -255,6 +286,21 @@ initialize()
     </div>
   </BaseModal>
 
+  <BaseModal v-model:isOpen="viewing_rubric" title="Performance Indicator Rubric" size="md">
+    <div class="rubric-block">
+      <h4>Exceeds</h4>
+      <p>{{ indicator_obj.exceeds_rubric || 'No exceeds rubric provided.' }}</p>
+    </div>
+    <div class="rubric-block">
+      <h4>Met</h4>
+      <p>{{ indicator_obj.met_rubric || 'No met rubric provided.' }}</p>
+    </div>
+    <div class="rubric-block">
+      <h4>Below</h4>
+      <p>{{ indicator_obj.below_rubric || 'No below rubric provided.' }}</p>
+    </div>
+  </BaseModal>
+
   <!-- Add Measure Modal -->
   <BaseModal v-model:isOpen="adding_measure" title="Add New Measure" size="md" class="form" id="add-measure-form">
     <div class="input-grid">
@@ -274,7 +320,40 @@ initialize()
 
 <style scoped>
 #title {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.title-text {
+  flex: 1;
+  min-width: 0;
   font-size: 24px;
+}
+
+.rubric-btn {
+  flex-shrink: 0;
+  margin-top: 0.15rem;
+  background-color: #6b7280 !important;
+  color: #fff !important;
+}
+
+.rubric-btn:hover {
+  background-color: #4b5563 !important;
+}
+
+.rubric-block {
+  text-align: left;
+  margin-bottom: 1rem;
+}
+
+.rubric-block h4 {
+  margin: 0 0 0.35rem;
+}
+
+.rubric-block p {
+  margin: 0;
+  white-space: pre-wrap;
 }
 
 #pi-label {

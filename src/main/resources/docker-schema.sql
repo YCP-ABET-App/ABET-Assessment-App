@@ -121,6 +121,9 @@ CREATE TABLE performance_indicator (
     evaluation TEXT NULL,
     student_outcome_id BIGINT NOT NULL,
     threshold_percentage DECIMAL(5,2) DEFAULT 70.00,
+    met_rubric TEXT NULL,
+    exceeds_rubric TEXT NULL,
+    below_rubric TEXT NULL,
     -- From BaseEntity
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
@@ -472,6 +475,11 @@ VALUES
     (49, 1, NULL, 'Conducts a reflective self-assessment of knowledge and knowledge gaps', 13, 70.00, TRUE),
     (50, 2, NULL, 'Acquires new knowledge', 13, 70.00, TRUE),
     (51, 3, NULL, 'Applies new knowledge to an engineering project/problem', 13, 70.00, TRUE);
+
+UPDATE performance_indicator SET
+    exceeds_rubric = 'Exceeds: work consistently goes beyond the indicator with clear, independent, and high-quality evidence.',
+    met_rubric = 'Met: work demonstrates the indicator at the expected level with only minor gaps.',
+    below_rubric = 'Below: work does not yet demonstrate the indicator and needs substantial improvement.';
 
 
 

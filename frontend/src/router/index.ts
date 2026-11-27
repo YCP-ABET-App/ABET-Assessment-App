@@ -129,6 +129,12 @@ const routes = [
     props: true
   },
   {
+    path: '/course-catalog',
+    name: 'Course Catalog',
+    component: () => import('@/components/pages/CourseCatalogPage.vue'),
+    meta: { requiresAuth: true, requiresAdmin: true }
+  },
+  {
     path: '/super-admin', name: 'SuperAdmin',
     component: SuperAdminPage,
     meta: {
