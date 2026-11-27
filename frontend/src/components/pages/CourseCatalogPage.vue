@@ -14,7 +14,7 @@ interface CatalogCourse {
   courseCode: string;
   courseName: string;
   courseDescription?: string;
-  isActive?: boolean;
+  isActive: boolean;
 }
 
 interface ProgramOption {
@@ -140,9 +140,14 @@ async function loadCatalog() {
       api.get('/schedule-entry')
     ]);
 
-    courses.value = (courseRes.data?.data ?? []).slice().sort((a: CatalogCourse, b: CatalogCourse) =>
-      String(a.courseCode).localeCompare(String(b.courseCode))
-    );
+    courses.value = (courseRes.data?.data ?? [])
+      .map((course: Omit<CatalogCourse, 'isActive'> & { isActive?: boolean }) => ({
+        ...course,
+        isActive: course.isActive ?? true
+      }))
+      .sort((a: CatalogCourse, b: CatalogCourse) =>
+        String(a.courseCode).localeCompare(String(b.courseCode))
+      );
 
     programs.value = (programRes.data?.content ?? programRes.data?.data ?? []).map((program: any) => ({
       id: Number(program.id),
@@ -259,7 +264,7 @@ onMounted(loadCatalog);
               class="simple-edit-btn"
               type="button"
               title="Edit course"
-              @click="editingCourse = { ...course, isActive: course.isActive ?? true }"
+              @click="editingCourse = course"
             >
               <img src="@/assets/icons/edit-pencil.svg" alt="Edit" class="edit-icon" />
             </button>
