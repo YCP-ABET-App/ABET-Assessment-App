@@ -4,8 +4,8 @@ import { useRouter } from "vue-router";
 import { useUserStore } from "@/stores/user-store";
 import { storeToRefs } from "pinia";
 import api from "@/api";
-import MeasureListing from "@/components/MeasureListing.vue";
-import { BaseCard, BaseButton } from "@/components/ui";
+import { BaseCard } from "@/components/ui";
+import { loadSectionPiProgress } from "@/utils/pi-progress";
 
 const router = useRouter();
 
@@ -93,8 +93,6 @@ async function loadInstructorSections() {
     sectionIds.push(su.sectionId);
   })
 
-  const indicatorData = await loadInstructorIndicatorData(sectionIds);
-
   const sectionRes = await api.get("/section", {
     params: {
       ids: sectionIds,
@@ -103,61 +101,44 @@ async function loadInstructorSections() {
     },
   });
 
-  // Parse out sections and courses from the response, assemble section titles
-
   const responseData = sectionRes.data.data;
-
   const rawSections = responseData.sections;
   const rawCourses = responseData.courses;
 
+  const scheduleRes = await api.get("/schedule-entry", {
+    params: {
+      programId: programId.value,
+      semesterId: semesterId.value
+    }
+  });
+  const scheduleEntries = scheduleRes.data?.data ?? [];
+  const measuresByEntryId = new Map<number, any[]>();
 
   const results: InstructorDashboardSection[] = [];
 
-  rawSections.forEach((section: any) => {
-
+  for (const section of rawSections) {
     const course = rawCourses.find((c: any) => c.id === section.courseId);
     if (!course) {
       console.warn(`No course found for section ${section.id}`);
-      return;
+      continue;
     }
 
-    const indicators = (indicatorData || []).filter((i: SectionIndicatorInfo) => i.sectionId === section.id).map((i: SectionIndicatorInfo) => ({
-      sectionId: i.sectionId,
-      indicatorStatus: i.indicatorStatus
-    }));
+    const indicators = await loadSectionPiProgress(
+      section,
+      Number(programId.value),
+      scheduleEntries,
+      measuresByEntryId
+    );
 
     results.push({
       id: section.id,
       courseCode: `${course.courseCode} ${course.courseName} ${section.sectionNumber}`,
       instructorName: `${userStore.user?.firstName} ${userStore.user?.lastName}`,
-      indicators: indicators
+      indicators
     });
-  });
+  }
 
   sections.value = results;
-}
-
-async function loadInstructorIndicatorData(sectionIds : any[] = []) : Promise<SectionIndicatorInfo[]> {
-
-  // Query the section indicator table for all indicators in the section
-  const sectionIndicatorRes = await api.get("/section-indicator", {
-    params: {
-      sectionIds: sectionIds
-    }
-  });
-
-  let sectionIndicatorData: SectionIndicatorInfo[] = [];
-
-  (sectionIndicatorRes.data?.data || []).forEach((indicator: any) => {
-    const info: SectionIndicatorInfo = {
-      sectionId: Number(indicator.sectionId),
-      indicatorStatus: Boolean(indicator.complete)
-    };
-
-    sectionIndicatorData.push(info);
-  })
-
-  return sectionIndicatorData;
 }
 
 function openSectionDetails(sectionId: number) {

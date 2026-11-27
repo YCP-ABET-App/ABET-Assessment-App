@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useUserStore } from '@/stores/user-store.ts'
 import { BaseButton } from '@/components/ui'
 import { BaseInput } from '@/components/ui'
@@ -12,8 +12,11 @@ const props = defineProps({measure_prop: {type: Object, required:true}, instruct
 const emits = defineEmits(["refresh"])
 
 const isAdmin = userStore.isAdmin
-const userId = userStore.userId
-const isInstructor = ref(false)
+const isInstructor = computed(() => {
+  const uid = Number(userStore.userId)
+  const iid = Number(props.instructor_id)
+  return Number.isFinite(uid) && uid > 0 && Number.isFinite(iid) && uid === iid
+})
 
 const completing = ref(false)
 const editing = ref(false)
@@ -390,14 +393,6 @@ async function initialize(){
   edit_form_data.value.description = measure_obj.value.measure_description
 
   set_status()
-
-  //Check if the logged in user is the instructor for the section
-  if (userId == props.instructor_id){
-    isInstructor.value = true
-  }
-  else{
-    isInstructor.value = false
-  }
 }
 
 initialize()

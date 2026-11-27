@@ -77,10 +77,11 @@ public class MeasureService extends BaseService<Measure, Long, MeasureRepository
 
         int courseId = se.getCourseId();
         int programId = se.getProgramId();
+        int semesterId = se.getSemesterId();
 
-        // Find relevant Sections of this Course
+        // Find sections of this course in the same semester
         SectionSearchRequest sectionSearchRequest = new SectionSearchRequest(
-                null, null, null, courseId, null);
+                null, semesterId, null, courseId, null);
         List<Section> sections = sectionService.searchSections(sectionSearchRequest);
 
         // Find program specific sections

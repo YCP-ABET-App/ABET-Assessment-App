@@ -1,9 +1,14 @@
 package com.abetappteam.abetapp.service;
 
+import com.abetappteam.abetapp.entity.Measure;
+import com.abetappteam.abetapp.entity.MeasureResult;
+import com.abetappteam.abetapp.entity.ScheduleEntry;
 import com.abetappteam.abetapp.entity.Section;
 import com.abetappteam.abetapp.entity.SectionProgram;
 import com.abetappteam.abetapp.entity.Requests.SectionProgram.SectionProgramSearchRequest;
 import com.abetappteam.abetapp.exception.ResourceNotFoundException;
+import com.abetappteam.abetapp.repository.MeasureRepository;
+import com.abetappteam.abetapp.repository.MeasureResultRepository;
 import com.abetappteam.abetapp.repository.ScheduleEntryRepository;
 import com.abetappteam.abetapp.repository.SectionProgramRepository;
 import com.abetappteam.abetapp.repository.SectionRepository;
@@ -27,6 +32,12 @@ public class SectionProgramService extends BaseService<SectionProgram, Long, Sec
 
     @Autowired
     private ScheduleEntryRepository scheduleEntryRepository;
+
+    @Autowired
+    private MeasureRepository measureRepository;
+
+    @Autowired
+    private MeasureResultRepository measureResultRepository;
 
     @Override
     protected String getEntityName() { return "SectionProgram"; }
@@ -57,7 +68,30 @@ public class SectionProgramService extends BaseService<SectionProgram, Long, Sec
         sectionProgram.setProgramId(programId);
 
         logger.info("Creating new SectionProgram mapping: {}", sectionProgram);
-        return repository.save(sectionProgram);
+        SectionProgram saved = repository.save(sectionProgram);
+        createMissingMeasureResults(section, saved);
+        return saved;
+    }
+
+    private void createMissingMeasureResults(Section section, SectionProgram sectionProgram) {
+        List<ScheduleEntry> scheduleEntries = scheduleEntryRepository.findBySemesterIdAndCourseIdAndProgramId(
+                section.getSemesterId(), section.getCourseId(), sectionProgram.getProgramId());
+        Long sectionProgramId = sectionProgram.getId();
+        for (ScheduleEntry scheduleEntry : scheduleEntries) {
+            for (Measure measure : measureRepository.findByScheduleEntryId(scheduleEntry.getId())) {
+                if (Boolean.FALSE.equals(measure.getActive())) {
+                    continue;
+                }
+                if (measureResultRepository.existsByMeasureIdAndSectionProgramId(measure.getId(), sectionProgramId)) {
+                    continue;
+                }
+                MeasureResult result = new MeasureResult();
+                result.setMeasureId(measure.getId());
+                result.setSectionProgramId(sectionProgramId);
+                result.setStatus("InProgress");
+                measureResultRepository.save(result);
+            }
+        }
     }
 
     @Transactional

@@ -323,7 +323,7 @@ initialize();
               <IndicatorListing
                 :piid="entry.indicatorId"
                 :section_id="section_id"
-                :instructor_id="instructors[0]?.id"
+                :instructor_id="instructors.some((instructor) => Number(instructor.id) === Number(userStore.userId)) ? userStore.userId : undefined"
                 :program_id="column.programId"
                 :schedule_entry_id="entry.scheduleEntryId"
                 :semester_id="section_obj.semester_id"

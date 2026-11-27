@@ -44,12 +44,12 @@ function handleLogout() {
         <GlobalSelectors />
       </div>
 
-      <!-- Instructor: show semester selector only -->
+      <!-- Instructor: program and semester selectors -->
       <div
         class="selectors-div"
         v-else-if="userStore.isLoggedIn && isHomePage && userStore.isInstructor"
       >
-        <GlobalSelectors :show-program-selector="false" />
+        <GlobalSelectors />
       </div>
 
     <!-- PAGE CONTENT -->
