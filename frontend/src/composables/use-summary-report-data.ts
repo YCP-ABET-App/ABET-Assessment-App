@@ -142,7 +142,7 @@ export function useSummaryReportData(props: SummaryReportProps) {
     reportData.value = null;
 
     try {
-      console.log('Loading summary report for program:', programId.value, 'semester:', semesterId.value);
+      // console.log('Loading summary report for program:', programId.value, 'semester:', semesterId.value);
 
       // ------------------------------
       // Load Semester
@@ -151,7 +151,11 @@ export function useSummaryReportData(props: SummaryReportProps) {
         params: { id: semesterId.value }
       });
 
-      const semester = semesterRes.data.data;
+      const semester = Array.isArray(semesterRes.data.data)
+        ? semesterRes.data.data[0]
+        : semesterRes.data.data;
+      console.log('SEMESTER KEYS:', Object.keys(semester));
+      console.log('FULL SEMESTER:', JSON.stringify(semester, null, 2));
 
       if (!semester) throw new Error('Semester not found');
 
@@ -159,6 +163,14 @@ export function useSummaryReportData(props: SummaryReportProps) {
       // Load Outcomes
       // ------------------------------
       const outcomesRes = await api.get(`/outcome/bySemester/${semesterId.value}`);
+      console.log('========== SINGLE REPORT DEBUG ==========');
+      console.log('SEMESTER ID:', semesterId.value);
+      console.log(
+        'OUTCOME RESPONSE:',
+        JSON.stringify(outcomesRes.data, null, 2)
+      );
+      console.log('=========================================');
+
       const outcomes = outcomesRes.data.data ?? [];
       console.log('Loaded outcomes:', outcomes.length, outcomes);
 
@@ -204,7 +216,7 @@ export function useSummaryReportData(props: SummaryReportProps) {
         });
 
         allCourses = coursesRes.data.content ?? coursesRes.data.data ?? [];
-        console.log('Loaded active courses:', allCourses.length, allCourses);
+        // console.log('Loaded active courses:', allCourses.length, allCourses);
       } catch (err: any) {
         throw new Error('Failed to load courses');
       }
@@ -221,7 +233,7 @@ export function useSummaryReportData(props: SummaryReportProps) {
         });
 
         const indicators = indicatorsRes.data.data ?? [];
-        console.log(`Outcome ${outcome.number}: found ${indicators.length} indicators`);
+        // console.log(`Outcome ${outcome.number}: found ${indicators.length} indicators`);
         const indicatorDataArray: IndicatorData[] = [];
         const recommendedActions: string[] = [];
 
@@ -240,6 +252,13 @@ export function useSummaryReportData(props: SummaryReportProps) {
 
 
           for (const course of allCourses) {
+            console.log('SECTION REQUEST:', {
+              course: course.courseCode,
+              courseId: course.id,
+              semesterId: semesterId.value,
+              programId: programId.value
+            });
+
             const sectionsRes = await api.get('/section', {
               params: {
                 courseId: course.id,
@@ -249,10 +268,10 @@ export function useSummaryReportData(props: SummaryReportProps) {
             });
 
 
-            console.log("COURSE:", course.courseCode);
-            console.log("COURSE OBJECT:", course);
-            console.log("COURSE ID:", course.id);
-            console.log("SECTIONS API RESPONSE:", sectionsRes.data);
+            // console.log("COURSE:", course.courseCode);
+            // console.log("COURSE OBJECT:", course);
+            // console.log("COURSE ID:", course.id);
+            // console.log("SECTIONS API RESPONSE:", sectionsRes.data);
 
             const sectionData = sectionsRes.data?.data;
 
@@ -408,11 +427,7 @@ export function useSummaryReportData(props: SummaryReportProps) {
       // FINAL REPORT OBJECT
       // ==============================
 
-      const startYear = Number(semester.academicYear);
-
-      const academicYear = Number.isFinite(startYear)
-        ? `${startYear}-${String((startYear + 1) % 100).padStart(2, '0')}`
-        : new Date().getFullYear().toString();
+      const academicYear = String(semester.academicYear);
 
       reportData.value = {
         semesterId: semesterId.value!,
@@ -422,6 +437,8 @@ export function useSummaryReportData(props: SummaryReportProps) {
         generatedBy: adminNames.length ? adminNames : ['System Administrator'],
         outcomes: outcomeDataArray
       };
+
+      console.log('FINAL REPORT DATA:', reportData.value);
 
     } catch (err: any) {
       error.value = err.message ?? 'Failed to load summary report data';

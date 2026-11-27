@@ -71,6 +71,8 @@ async function exportToPDF() {
 
 // Helper to generate the PDF and return the jsPDF instance and filename
 async function generateSummaryReportPDF(): Promise<{ pdf: jsPDF, filename: string }> {
+  console.log('PDF report data:', JSON.parse(JSON.stringify(localReport)));
+
   const pdf = new jsPDF('p', 'mm', 'a4');
   const pageWidth = pdf.internal.pageSize.getWidth();
   const pageHeight = pdf.internal.pageSize.getHeight();
@@ -90,7 +92,7 @@ async function generateSummaryReportPDF(): Promise<{ pdf: jsPDF, filename: strin
   // Academic year - centered
   pdf.setFontSize(18);
   pdf.setFont('helvetica', 'normal');
-  const academicYear = localReport.academicYear;
+  const academicYear = `Academic Year: ${localReport.academicYear}`;
   const yearWidth = pdf.getTextWidth(academicYear);
   pdf.text(academicYear, (pageWidth - yearWidth) / 2, yPosition);
   yPosition += 20;
@@ -194,8 +196,8 @@ async function generateSummaryReportPDF(): Promise<{ pdf: jsPDF, filename: strin
 
         // Recommended actions column
         let actions = '';
-        if (measure.recommendedAction && measure.recommendedAction.trim()) {
-          actions = measure.recommendedAction;
+        if (measure.recommendedAction?.trim()) {
+          actions = `• ${measure.recommendedAction}`;
         }
 
         // Notes column
@@ -238,19 +240,11 @@ async function generateSummaryReportPDF(): Promise<{ pdf: jsPDF, filename: strin
         3: { cellWidth: 32 }    // Notes
       },
       margin: { left: margin, right: margin },
-      didDrawCell: (data) => {
-        // Add bullet points for recommended actions
-        if (data.column.index === 2 && data.section === 'body' && data.cell.text.length > 0) {
-          const text = data.cell.text;
-          if (text.length > 0 && text[0] !== '●' && text[0] !== '•') {
-            data.cell.text = ['● ' + text[0], ...text.slice(1)];
-          }
-        }
-      }
     });
   }
 
   const filename = `Summary_Report_${localReport.academicYear}_${new Date().toISOString().split('T')[0]}.pdf`;
+  console.log('PDF generation completed');
   return { pdf, filename };
 }
 
@@ -369,7 +363,7 @@ function handleRegenerate() {
 
     <!-- Header -->
     <BaseCard>
-      <h2>Summary Results {{ localReport.academicYear }}</h2>
+      <h2>Summary Results - Academic Year: {{ localReport.academicYear }}</h2>
       <p class="header-meta">
         {{ localReport.generatedDate }} |
         {{ localReport.generatedBy.join(", ") }}

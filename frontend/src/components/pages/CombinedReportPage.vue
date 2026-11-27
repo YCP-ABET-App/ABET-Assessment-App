@@ -60,7 +60,7 @@ let requestVersion = 0;
 // --------------------------------------------------
 
 function semesterLabel(semester: Semester): string {
-  return `${semester.name} (${semester.academicYear})`;
+  return semester.name;
 }
 
 const selectedStartSemester = computed(() =>
